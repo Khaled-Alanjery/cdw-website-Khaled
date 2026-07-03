@@ -1,33 +1,14 @@
-body {
-  margin: 0;
-  min-height: 100vh;
-  overflow: hidden;
-  font-family: 'Roboto', sans-serif;
-  background: #111;
-  color: #fff;
-}
-
 #waveCanvas {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
   width: 100vw;
   height: 100vh;
   z-index: 9999;
-  display: block;
   background: #000;
+  display: block;
 }
 
 #demoButton {
   cursor: pointer;
-}
-
-body > header,
-body > main {
-  position: relative;
-  z-index: 10000;
-}
-
-#messageDisplay {
-  color: #fff;
-  margin-top: 1rem;
 }
