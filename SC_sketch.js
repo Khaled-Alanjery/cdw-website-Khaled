@@ -1,5 +1,9 @@
 function setup() {
-  createCanvas(800, 600);
+  const container = document.getElementById('sc-container');
+  const w = container ? container.clientWidth : window.innerWidth;
+  const h = container ? container.clientHeight : Math.min(window.innerHeight * 0.7, 800);
+  const cnv = createCanvas(w, h);
+  if (container) cnv.parent(container);
   noLoop();
   noStroke();
 }
@@ -25,4 +29,13 @@ function draw() {
     // every circle is tangent to the same point (tipX, tipY)
     circle(tipX, tipY - r, r * 2);
   }
+}
+
+function windowResized() {
+  const container = document.getElementById('sc-container');
+  if (!container) return;
+  const w = container.clientWidth;
+  const h = container.clientHeight || Math.min(window.innerHeight * 0.7, 800);
+  resizeCanvas(w, h);
+  redraw();
 }
