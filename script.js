@@ -141,8 +141,12 @@ function loop(timestamp) {
   requestAnimationFrame(loop);
 }
 
-startBtn.textContent = 'Turn On Camera';
-startBtn.addEventListener('click', startCameraWave);
+if (startBtn) {
+  startBtn.textContent = 'Turn On Camera';
+  startBtn.addEventListener('click', startCameraWave);
+} else {
+  console.warn('demoButton not found — camera button unavailable');
+}
 
 // reveal the spatial canvas when it scrolls into view
 function initRevealObserver() {
@@ -152,6 +156,9 @@ function initRevealObserver() {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
         target.classList.add('visible');
+        // ensure p5 canvas resizes and redraws when revealed
+        if (typeof windowResized === 'function') windowResized();
+        if (typeof redraw === 'function') redraw();
       } else {
         target.classList.remove('visible');
       }
@@ -160,4 +167,8 @@ function initRevealObserver() {
   obs.observe(target);
 }
 
-document.addEventListener('DOMContentLoaded', initRevealObserver);
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initRevealObserver);
+} else {
+  initRevealObserver();
+}
