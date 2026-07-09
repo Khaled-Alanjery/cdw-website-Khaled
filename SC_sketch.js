@@ -1,9 +1,16 @@
 function setup() {
+  console.log('SC_sketch setup()');
   const container = document.getElementById('sc-container');
   const w = container ? container.clientWidth : window.innerWidth;
   const h = container ? container.clientHeight : Math.min(window.innerHeight * 0.7, 800);
   const cnv = createCanvas(w, h);
   if (container) cnv.parent(container);
+  noLoop();
+  noStroke();
+}
+
+function setup() {
+  createCanvas(800, 600);
   noLoop();
   noStroke();
 }
