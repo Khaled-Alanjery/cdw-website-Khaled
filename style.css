@@ -1,8 +1,14 @@
-body {
+html, body {
   margin: 0;
-  padding: 0px;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #000;
+}
+
+body {
   font-family: 'Roboto', sans-serif;
-  background: #f7f7f7;
   color: #111;
 }
 
@@ -10,25 +16,17 @@ body {
 .canvas-block {
   display: block;
   width: 100%;
-  max-width: 100%;
-  margin: 0 auto;
+  height: 50vh;
+  margin: 0;
   padding: 0;
 }
 
-#sc-container-1,
-#threejs-1 {
-  margin-bottom: 0px;
+#sc-container-1 {
+  margin: 0;
+  padding: 0;
 }
 
-#sc-container-2,
-#threejs-2 {
-  margin-top: 0px;
-}
-
-/* Adjust these values to change spacing between the two sections */
-#sc-container-1,
-#sc-container-2,
-#threejs-1,
-#threejs-2 {
-  padding: 0 0 0 0;
+#sc-container-2 {
+  margin: 0;
+  padding: 0;
 }
