@@ -35,3 +35,17 @@
   opacity: 1;
   transform: translateY(0);
 }
+.sc-container, #sc-container {
+  min-height: 70vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 700ms ease, transform 700ms ease;
+}
+
+#sc-container.visible, .sc-container.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
