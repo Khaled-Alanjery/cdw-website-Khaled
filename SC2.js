@@ -36,11 +36,7 @@
         p.fill(p.lerpColor(p.color(210, 235, 40), p.color(8, 8, 2), t));
         p.circle(cx, cy, r * 2);
       }
-    };
-
-    p.windowResized = function () {
-      p.resizeCanvas(container.clientWidth, container.clientHeight || Math.min(window.innerHeight * 0.7, 800));
-    };
+    };    };
   };
 
   new p5(sketch);
