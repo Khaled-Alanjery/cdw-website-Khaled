@@ -8,7 +8,7 @@ header .center { font-weight: 400; text-align: center; }
 header .center span { font-size: 12px; color: #888; }
 header .right a { color: #000; text-decoration: none; }
 
-main { max-width: 900px; margin: 60px auto; padding: 0 20px; }
+main { max-width: 900px; margin: 60px auto; padding: 0px; }
 .project-meta { font-size: 14px; color: #999; margin-bottom: 8px; }
 .project-title { font-size: 24px; font-weight: 400; margin-bottom: 4px; }
 .project-subtitle { font-size: 16px; color: #999; margin-bottom: 24px; }
