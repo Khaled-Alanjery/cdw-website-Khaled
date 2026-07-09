@@ -1,48 +1,52 @@
+// Responsive, interactive spatial canvas
+let attractPos = { x: 0, y: 0 };
+const attractEase = 0.12;
+
 function setup() {
-  console.log('SC_sketch setup()');
   const container = document.getElementById('sc-container');
   const w = container ? container.clientWidth : window.innerWidth;
   const h = container ? container.clientHeight : Math.min(window.innerHeight * 0.7, 800);
   const cnv = createCanvas(w, h);
   if (container) cnv.parent(container);
-  noLoop();
+  frameRate(60);
   noStroke();
-}
-
-function setup() {
-  createCanvas(800, 600);
-  noLoop();
-  noStroke();
+  attractPos.x = width / 2;
+  attractPos.y = height / 2;
 }
 
 function draw() {
   background(240, 247, 220);
 
-  let tipX = width / 2;   // tangent point
-  let tipY = height;    // bottom center
-  let maxR = 400;         // big enough to fill past the canvas edges
-  let minR = 10;           // smallest circle at the center
-  let steps = 35;          // more steps = smoother gradient, more circles
+  const tipX = width / 2;
+  const tipY = height;
+  const maxR = Math.max(width, height) * 0.55;
+  const minR = 10;
+  const steps = 35;
 
-  // draw largest circle first, smallest last, so it "tunnels" inward
+  const hasMouse = typeof mouseX !== 'undefined' && typeof mouseY !== 'undefined';
+  const targetX = hasMouse ? mouseX : width / 2;
+  const targetY = hasMouse ? mouseY : height / 2;
+
+  attractPos.x = lerp(attractPos.x, targetX, attractEase);
+  attractPos.y = lerp(attractPos.y, targetY, attractEase);
+
   for (let i = 0; i <= steps; i++) {
-    let t = i / steps; // 0 = outer edge, 1 = center
-    let r = lerp(maxR, minR, t);
+    const t = i / steps;
+    const r = lerp(maxR, minR, t);
+    const influence = pow(t, 1.4);
+    const origCx = tipX;
+    const origCy = tipY - r;
+    const cx = lerp(origCx, attractPos.x, influence);
+    const cy = lerp(origCy, attractPos.y, influence);
 
-    // color ramps from light yellow-green to near black
-    let col = lerpColor(color(210, 235, 40), color(8, 8, 2), t);
+    const col = lerpColor(color(210, 235, 40), color(8, 8, 2), t);
     fill(col);
-
-    // every circle is tangent to the same point (tipX, tipY)
-    circle(tipX, tipY - r, r * 2);
+    circle(cx, cy, r * 2);
   }
 }
 
 function windowResized() {
   const container = document.getElementById('sc-container');
   if (!container) return;
-  const w = container.clientWidth;
-  const h = container.clientHeight || Math.min(window.innerHeight * 0.7, 800);
-  resizeCanvas(w, h);
-  redraw();
+  resizeCanvas(container.clientWidth, container.clientHeight || Math.min(window.innerHeight * 0.7, 800));
 }
