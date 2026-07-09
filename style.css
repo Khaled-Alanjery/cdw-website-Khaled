@@ -9,8 +9,8 @@ header .center span { font-size: 12px; color: #888; }
 header .right a { color: #000; text-decoration: none; }
 
 main { max-width: 900px; margin: 60px auto; padding: 0px; }
-.project-meta { font-size: 14px; color: #999; margin-bottom: 8px; }
-.project-title { font-size: 24px; font-weight: 400; margin-bottom: 4px; }
-.project-subtitle { font-size: 16px; color: #999; margin-bottom: 24px; }
-.section-title { font-weight: 700; text-transform: uppercase; margin-top: 40px; margin-bottom: 12px; font-size: 14px; }
-p { font-size: 16px; line-height: 1.6; margin-bottom: 24px; }
+.project-meta { font-size: 14px; color: #999; margin-bottom: 0px; }
+.project-title { font-size: 24px; font-weight: 400; margin-bottom: 0px; }
+.project-subtitle { font-size: 16px; color: #999; margin-bottom: 0px; }
+.section-title { font-weight: 700; text-transform: uppercase; margin-top:0px; margin-bottom: 0px; font-size: 14px; }
+p { font-size: 16px; line-height: 1.6; margin-bottom: 0px; }
