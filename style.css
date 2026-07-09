@@ -1,14 +1,37 @@
-#waveCanvas {
-  position: fixed;
+#camera-container {
+  position: relative;
+  width: 100%;
+  height: 100vh; /* hero fills viewport */
+  overflow: hidden;
+  background: #000;
+  display: block;
+}
+
+#camera-container canvas#waveCanvas {
+  position: absolute;
   top: 0;
   left: 0;
-  width: 100vw;
-  height: 100vh;
-  z-index: 9999;
-  background: #000;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
   display: block;
 }
 
 #demoButton {
   cursor: pointer;
+}
+
+.sc-container {
+  min-height: 70vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 700ms ease, transform 700ms ease;
+}
+
+.sc-container.visible {
+  opacity: 1;
+  transform: translateY(0);
 }
