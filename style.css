@@ -23,7 +23,7 @@ button:hover { background-color: #333; }
 /* Full-bleed canvas blocks: camera, SC1, SC2 */
 .canvas-block {
   box-sizing: border-box;
-  width: calc(100vw - 20px);
+  width: calc(100%);
   margin: 10px 0 10px calc(50% - 50vw + 10px);
   overflow: hidden;
 }
