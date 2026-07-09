@@ -44,6 +44,13 @@
     emissive: 0x141400
   });
 
+  const ringMaterial = new THREE.MeshStandardMaterial({
+    color: 0xb9c92c,
+    roughness: 0.2,
+    metalness: 0.08,
+    emissive: 0x111200
+  });
+
   const orbitMaterial = new THREE.MeshStandardMaterial({
     color: 0x080802,
     roughness: 0.6,
