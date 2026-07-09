@@ -1,52 +1,47 @@
-// Responsive, interactive spatial canvas
-let attractPos = { x: 0, y: 0 };
-const attractEase = 0.12;
+(function () {
+  const sketch = function (p) {
+    let attractPos = { x: 0, y: 0 };
+    const attractEase = 0.12;
+    let container;
 
-function setup() {
-  const container = document.getElementById('sc-container');
-  const w = container ? container.clientWidth : window.innerWidth;
-  const h = container ? container.clientHeight : Math.min(window.innerHeight * 0.7, 800);
-  const cnv = createCanvas(w, h);
-  if (container) cnv.parent(container);
-  frameRate(60);
-  noStroke();
-  attractPos.x = width / 2;
-  attractPos.y = height / 2;
-}
+    p.setup = function () {
+      container = document.getElementById('sc-container-2');
+      const w = container.clientWidth;
+      const h = container.clientHeight || Math.min(window.innerHeight * 0.7, 800);
+      const cnv = p.createCanvas(w, h);
+      cnv.parent(container);
+      p.frameRate(60);
+      p.noStroke();
+      attractPos.x = p.width / 2;
+      attractPos.y = p.height / 2;
+    };
 
-function draw() {
-  background(240, 247, 220);
+    p.draw = function () {
+      p.background(240, 247, 220);
+      const tipX = p.width / 2;
+      const tipY = p.height;
+      const maxR = Math.max(p.width, p.height) * 0.55;
+      const minR = 10, steps = 35;
 
-  const tipX = width / 2;
-  const tipY = height;
-  const maxR = Math.max(width, height) * 0.55;
-  const minR = 10;
-  const steps = 35;
+      attractPos.x = p.lerp(attractPos.x, p.mouseX, attractEase);
+      attractPos.y = p.lerp(attractPos.y, p.mouseY, attractEase);
 
-  const hasMouse = typeof mouseX !== 'undefined' && typeof mouseY !== 'undefined';
-  const targetX = hasMouse ? mouseX : width / 2;
-  const targetY = hasMouse ? mouseY : height / 2;
+      for (let i = 0; i <= steps; i++) {
+        const t = i / steps;
+        const r = p.lerp(maxR, minR, t);
+        const influence = Math.pow(t, 1.4);
+        const cx = p.lerp(tipX, attractPos.x, influence);
+        const cy = p.lerp(tipY - r, attractPos.y, influence);
 
-  attractPos.x = lerp(attractPos.x, targetX, attractEase);
-  attractPos.y = lerp(attractPos.y, targetY, attractEase);
+        p.fill(p.lerpColor(p.color(210, 235, 40), p.color(8, 8, 2), t));
+        p.circle(cx, cy, r * 2);
+      }
+    };
 
-  for (let i = 0; i <= steps; i++) {
-    const t = i / steps;
-    const r = lerp(maxR, minR, t);
-    const influence = pow(t, 1.4);
-    const origCx = tipX;
-    const origCy = tipY - r;
-    const cx = lerp(origCx, attractPos.x, influence);
-    const cy = lerp(origCy, attractPos.y, influence);
+    p.windowResized = function () {
+      p.resizeCanvas(container.clientWidth, container.clientHeight || Math.min(window.innerHeight * 0.7, 800));
+    };
+  };
 
-    const col = lerpColor(color(210, 235, 40), color(8, 8, 2), t);
-    fill(col);
-    circle(cx, cy, r * 2);
-  }
-}
-
-function windowResized() {
-  const container = document.getElementById('sc-container');
-  if (!container) return;
-  resizeCanvas(container.clientWidth, container.clientHeight || Math.min(window.innerHeight * 0.7, 800));
-}
+  new p5(sketch);
+})();
