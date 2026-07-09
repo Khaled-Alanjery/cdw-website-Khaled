@@ -1,13 +1,59 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My First Website — Khaled Alanjery</title>
 
-  <!-- scripts loaded last, after the elements they attach to -->
-<div id="sc1.js"></div>
-<div id="sc2.js"></div>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
 
-<script src="sc1.js"></script>
-<script src="sc2.js"></script>
+  <!-- p5.js library, needed by SC1.js and SC2.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+</head>
+<body>
+  <header>
+    <div class="left">Columbia GSAPP</div>
+    <div class="center">
+      Computational Design Practices<br>
+      <span>Project Archive</span>
+    </div>
+    <div class="right"><a href="#">About</a></div>
+  </header>
 
+  <main>
+    <div class="project-meta">2026</div>
+    <div class="project-title">My First Website</div>
+    <div class="project-subtitle">Khaled Alanjery!</div>
+
+    <div class="section-title">Interactive Demo</div>
+    <p>Click the button below to turn on your camera:</p>
+    <button id="demoButton">Click Me!</button>
+    <div id="messageDisplay"></div>
+    <div id="camera-container"></div>
+
+    <div class="section-title">Spatial Canvas 1</div>
+    <p>A tunnel of rotating rounded squares, drawn toward your cursor.</p>
+    <div id="sc-container-1" class="sc-container"></div>
+
+    <div class="section-title">Spatial Canvas 2</div>
+    <p>Same tunnel logic, rendered with circles instead.</p>
+    <div id="sc-container-2" class="sc-container"></div>
+  </main>
+
+  <script src="script.js"></script>
+  <script src="SC1.js"></script>
+  <script src="SC2.js"></script>
+
+  <script>
+    // reveals each .sc-container as you scroll to it
+    const revealEls = document.querySelectorAll('.sc-container');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) entry.target.classList.add('visible');
+      });
+    }, { threshold: 0.2 });
+    revealEls.forEach(el => observer.observe(el));
+  </script>
 </body>
 </html>
