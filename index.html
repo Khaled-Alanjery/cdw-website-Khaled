@@ -9,15 +9,10 @@
 </head>
 <body>
 
-    <div id="messageDisplay"></div>
-    <div id="camera-container" class="canvas-block"></div>
-
     <div id="sc-container-1" class="sc-container canvas-block"></div>
-
     <div id="sc-container-2" class="sc-container canvas-block"></div>
   </main>
 
-  <script src="script.js"></script>
   <script src="SC1.js"></script>
   <script src="SC2.js"></script>
 
@@ -27,7 +22,7 @@
       entries.forEach(entry => {
         if (entry.isIntersecting) entry.target.classList.add('visible');
       });
-    }, { threshold: 0.2 });
+    }, { threshold: 0 });
     revealEls.forEach(el => observer.observe(el));
   </script>
 </body>
