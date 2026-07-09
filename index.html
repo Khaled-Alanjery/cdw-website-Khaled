@@ -2,9 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Module 1</title>
+
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+
+  <!-- p5.js library -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
 </head>
 <body>
@@ -26,11 +30,14 @@
     <p>Click the button below to see JavaScript in action:</p>
     <button id="demoButton">Click Me!</button>
     <div id="messageDisplay"></div>
+    <div id="camera-container"></div>
 
     <div class="section-title">Spatial Canvas</div>
+    <p>A generative tunnel of concentric circles, all tangent to a single point.</p>
     <div id="sc-container"></div>
   </main>
 
+  <!-- scripts loaded last, after the elements they attach to -->
   <script src="script.js"></script>
   <script src="SC_sketch.js"></script>
 </body>
