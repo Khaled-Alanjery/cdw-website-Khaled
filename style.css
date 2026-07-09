@@ -1,25 +1,27 @@
-#camera-container {
-  position: relative;
-  width: 100%;
-  height: 100vh; /* hero fills viewport */
-  overflow: hidden;
-  background: #000;
-  display: block;
-}
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap');
 
-#camera-container canvas#waveCanvas {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
+body { font-family: 'Roboto', sans-serif; background-color: #fff; color: #111; margin: 0; padding: 0; }
 
-#demoButton {
-  cursor: pointer;
-}
+header { display: flex; justify-content: space-between; align-items: center; padding: 24px 40px; border-bottom: 1px solid #ccc; font-size: 14px; }
+header .left { color: #aaa; }
+header .center { font-weight: 400; text-align: center; }
+header .center span { font-size: 12px; color: #888; }
+header .right a { color: #000; text-decoration: none; }
+
+main { max-width: 900px; margin: 60px auto; padding: 0 20px; }
+.project-meta { font-size: 14px; color: #999; margin-bottom: 8px; }
+.project-title { font-size: 24px; font-weight: 400; margin-bottom: 4px; }
+.project-subtitle { font-size: 16px; color: #999; margin-bottom: 24px; }
+.section-title { font-weight: 700; text-transform: uppercase; margin-top: 40px; margin-bottom: 12px; font-size: 14px; }
+p { font-size: 16px; line-height: 1.6; margin-bottom: 24px; }
+
+button { background-color: #111; color: white; border: none; padding: 12px 24px; font-size: 14px; cursor: pointer; margin-bottom: 20px; transition: background-color 0.3s; border-radius: 4px; }
+button:hover { background-color: #333; }
+
+#messageDisplay { font-size: 16px; line-height: 1.6; margin-top: 20px; padding: 16px; border: 1px solid #ccc; background-color: #f9f9f9; border-radius: 4px; min-height: 20px; }
+
+#camera-container { position: relative; width: 100%; height: 100vh; overflow: hidden; background: #000; margin: 20px 0; }
+#camera-container canvas#waveCanvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
 
 .sc-container {
   min-height: 70vh;
@@ -30,22 +32,4 @@
   transform: translateY(24px);
   transition: opacity 700ms ease, transform 700ms ease;
 }
-
-.sc-container.visible {
-  opacity: 1;
-  transform: translateY(0);
-}
-.sc-container, #sc-container {
-  min-height: 70vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  transform: translateY(24px);
-  transition: opacity 700ms ease, transform 700ms ease;
-}
-
-#sc-container.visible, .sc-container.visible {
-  opacity: 1;
-  transform: translateY(0);
-}
+.sc-container.visible { opacity: 1; transform: translateY(0); }
