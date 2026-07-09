@@ -1,4 +1,4 @@
-const startBtn = document.getElementById('demoButton');
+// script.js — camera wave effect, auto-starts when camera-container scrolls into view
 const display = document.getElementById('messageDisplay');
 const MESSAGE = 'HELLO WORLD';
 
@@ -8,6 +8,8 @@ let mirror = true;
 
 async function startCameraWave() {
   if (running) return;
+  running = true;
+
   const container = document.getElementById('camera-container');
 
   try {
@@ -32,12 +34,11 @@ async function startCameraWave() {
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
 
-    startBtn.style.display = 'none';
-    display.textContent = '';
-    running = true;
+    if (display) display.textContent = '';
     requestAnimationFrame(loop);
   } catch (err) {
-    display.textContent = 'Camera access failed: ' + err.message;
+    running = false;
+    if (display) display.textContent = 'Camera access failed: ' + err.message;
   }
 }
 
@@ -99,5 +100,12 @@ function loop(timestamp) {
   requestAnimationFrame(loop);
 }
 
-startBtn.textContent = 'Turn On Camera';
-startBtn.addEventListener('click', startCameraWave);
+// Auto-start when the camera section scrolls into view
+const cameraObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) startCameraWave();
+  });
+}, { threshold: 0.3 });
+
+const cameraEl = document.getElementById('camera-container');
+if (cameraEl) cameraObserver.observe(cameraEl);
