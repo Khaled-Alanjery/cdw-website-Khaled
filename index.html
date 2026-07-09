@@ -6,15 +6,22 @@
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 </head>
 <body>
 
+    
+  </main>
     <div id="sc-container-1" class="sc-container canvas-block"></div>
     <div id="sc-container-2" class="sc-container canvas-block"></div>
-  </main>
+    <div class="section-title">3D Canvas 1</div>
+    <div id="threejs-1" class="canvas-block"></div>
+    <div class="section-title">3D Canvas 2</div>
+    <div id="threejs-2" class="canvas-block"></div>
 
-  <script src="SC1.js"></script>
-  <script src="SC2.js"></script>
+    <script src="SC1.js"></script>
+    <script src="SC2.js"></script>
 
   <script>
     const revealEls = document.querySelectorAll('.sc-container');
