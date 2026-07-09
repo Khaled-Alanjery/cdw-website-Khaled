@@ -19,6 +19,7 @@ const cameraContainer = document.getElementById('camera-container');
 
 async function startCameraWave() {
   if (running) return;
+  console.log('startCameraWave() called');
 
   try {
     const stream = await navigator.mediaDevices.getUserMedia({
@@ -37,10 +38,12 @@ async function startCameraWave() {
     });
 
     await video.play();
+    console.log('video play() succeeded');
 
     canvas = document.createElement('canvas');
     canvas.id = 'waveCanvas';
     (cameraContainer || document.body).appendChild(canvas);
+    console.log('appended camera canvas to', cameraContainer || 'body');
     ctx = canvas.getContext('2d');
 
     resizeCanvas();
@@ -51,12 +54,14 @@ async function startCameraWave() {
     running = true;
     requestAnimationFrame(loop);
   } catch (err) {
+    console.error('startCameraWave error', err);
     display.textContent = 'Camera access failed: ' + err.message;
   }
 }
 
 function resizeCanvas() {
   if (!canvas) return;
+  console.log('resizeCanvas to camera container size');
   const w = (cameraContainer && cameraContainer.clientWidth) || window.innerWidth;
   const h = (cameraContainer && cameraContainer.clientHeight) || window.innerHeight;
   canvas.width = w;
