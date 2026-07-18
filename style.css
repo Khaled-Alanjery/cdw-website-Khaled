@@ -27,24 +27,16 @@ body {
   max-width: 900px;
 }
 
-.canvas-section {
-  width: 100%;
+.intro-block a {
+  color: #9fd8ff;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(159, 216, 255, 0.4);
+  transition: border-color 0.15s ease, color 0.15s ease;
 }
 
-.sc-container,
-.canvas-block,
-.three-canvas {
-  display: block;
-  width: 100%;
-  height: 50vh;
-  min-height: 320px;
-  margin: 0;
-  padding: 0;
-}
-
-.three-canvas canvas {
-  display: block;
-  width: 100%;
-  height: 100%;
+.intro-block a:hover,
+.intro-block a:focus {
+  color: #ffffff;
+  border-bottom-color: #9fd8ff;
 }
 
