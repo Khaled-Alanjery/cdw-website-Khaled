@@ -5,6 +5,15 @@ An interactive web project by **Khaled Alanjery** showcasing the integration of 
 
 ---
 
+## Projects
+
+### Al-Adiliyah Mosque — Matrix / Ontology / Intensity Sphere
+An interactive, real-data-only visualization of the Al-Adiliyah Mosque (Jami' al-'Adiliyya) in Aleppo, Syria: a procedural 3D model built from a CAD survey, a chronological ontology graph, a non-linear timeline spanning a real NOAA weather-station record and documented conflict events, and an "Intensity Sphere" that blends real conflict, environmental, and structural-damage intensities into a single point cloud. Every figure traces to a cited source — the Rapid Damage Assessment report, the CAD/DXF survey, NOAA GHCN station data, or Wikipedia — with no synthetic or estimated data.
+
+→ [Open the visualization](adiliyah-mosque-matrix.html)
+
+---
+
 ## Content Structure
 
 ### Header Section
