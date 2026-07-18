@@ -1,0 +1,4 @@
+zone,building_part,cc_class,uc_class,overall_loss_pct,scope_detail,cause,response_deadline,response_window_days
+Minaret,"Minaret shaft (41m), balcony and spire",CC3,UC3,30,"Masonry loss in shaft 25 sq m; stairway loss 50%; gallery damage 30%; metal spire cover loss 50%","War effects: projectiles/shelling, vibrations, shrapnel",2019-09-25,92
+Central dome,"Central dome of prayer hall (brickwork, hemispherical, tambour + 8 buttresses)",CC3,UC3,90,"Collapsed dome surface 600 sq m; rubble remains in prayer hall","War effects: projectiles/shelling; secondary: exposure to weather",2019-09-25,92
+Portico,"Double arcaded portico, 11x3 external bays + 5 internal, 5 brick domes",CC3,UC2,40,"Collapsed ceiling surface 85 sq m; 3 columns and 4 arches lost","War effects: projectiles/shelling",2020-06-25,366

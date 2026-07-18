@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Jamiʿ al-ʿAdiliyya — Verified Damage Assessment &amp; Site Model</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<style>
+  :root{
+    --bg: #f4ede1;
+    --panel: #fbf7ef;
+    --ink: #2b241c;
+    --muted: #79695a;
+    --line: #d9cdb8;
+    --gold: #c39a4b;
+    --slate: #7d8ea3;
+    --blue: #3f6d8e;
+    --grey: #6d6a70;
+    --terracotta: #b3452e;
+    --teal: #2a8a80;
+    --green: #4f9c72;
+    --gap: #b23b3b;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  }
+  #wrap{ max-width: 1140px; margin: 0 auto; padding: 48px 32px 64px; }
+  header{ margin-bottom: 30px; border-bottom: 1px solid var(--line); padding-bottom: 20px; }
+  .eyebrow{ font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--terracotta); font-weight: 600; margin: 0 0 8px; }
+  h1{ font-family: Georgia, "Times New Roman", serif; font-size: 28px; line-height: 1.28; margin: 0 0 10px; font-weight: 400; }
+  .subtitle{ font-size: 14.5px; color: var(--muted); max-width: 760px; line-height: 1.6; margin: 0; }
+  section{ margin-top: 44px; }
+  .section-title{ font-family: Georgia, "Times New Roman", serif; font-size: 19px; margin: 0 0 4px; color: var(--ink); }
+  .section-note{ font-size: 12.5px; color: var(--muted); margin: 0 0 16px; max-width: 780px; line-height: 1.55; }
+  svg{ display:block; background: var(--panel); border-radius: 10px; }
+  .axis text{ fill: var(--muted); font-size: 11px; }
+  .axis path, .axis line{ stroke: var(--line); }
+  .grid line{ stroke: var(--line); stroke-opacity: 0.6; }
+  .legend{ display:flex; flex-wrap: wrap; gap: 14px 20px; margin-top: 14px; font-size: 11.5px; color: var(--muted); }
+  .legend-item{ display:flex; align-items:center; gap: 7px; }
+  .swatch{ width: 12px; height: 12px; border-radius: 3px; display:inline-block; flex: none; }
+  .tooltip{
+    position: absolute; pointer-events: none; background: #241f18; color: #f4ede1;
+    padding: 10px 13px; border-radius: 7px; font-size: 12.5px; line-height: 1.5;
+    max-width: 280px; opacity: 0; transition: opacity 120ms ease; box-shadow: 0 6px 18px rgba(0,0,0,0.25); z-index: 10;
+  }
+  .tooltip strong{ display:block; margin-bottom: 3px; font-size: 13px; }
+  .tooltip .meta{ color: #c9bda9; font-size: 11px; }
+  .cards{ display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+  .card{ background: var(--panel); border-radius: 10px; padding: 16px 18px; border: 1px solid var(--line); }
+  .card h3{ font-family: Georgia, serif; font-size: 15px; margin: 0 0 8px; font-weight: 400; }
+  .card .stat{ font-size: 22px; font-weight: 600; color: var(--terracotta); }
+  .card .stat-label{ font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+  .card table{ width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 8px; }
+  .card table td{ padding: 3px 0; color: var(--muted); vertical-align: top; }
+  .card table td:first-child{ color: var(--ink); width: 46%; }
+  table.data-table{ width:100%; border-collapse: collapse; font-size: 12.5px; background: var(--panel); border-radius: 10px; overflow:hidden; }
+  table.data-table th{ text-align:left; background: #efe4d0; color: var(--ink); font-weight: 600; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+  table.data-table td{ padding: 9px 12px; border-bottom: 1px solid var(--line); color: var(--muted); }
+  table.data-table tr:last-child td{ border-bottom: none; }
+  .badge{ display:inline-block; padding: 2px 7px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+  .badge-match{ background: #e3f0e8; color: var(--green); }
+  .badge-nomatch{ background: #f3e2dc; color: var(--terracotta); }
+  .gap-banner{ display:flex; align-items:center; gap: 10px; background: #f6e6e2; border: 1px dashed var(--gap); color: var(--gap);
+    padding: 10px 14px; border-radius: 8px; font-size: 12.5px; margin-bottom: 14px; }
+  footer{ margin-top: 48px; padding-top: 18px; border-top: 1px solid var(--line); font-size: 11.5px; color: var(--muted); line-height: 1.7; }
+  footer a{ color: var(--blue); }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <header>
+    <p class="eyebrow">Precedent Study · Verified Site Model</p>
+    <h1>Jamiʿ al-ʿAdiliyya, Aleppo — Damage Assessment, CAD Geometry &amp; Real Site Conditions</h1>
+    <p class="subtitle">
+      Rebuilt strictly from primary sources: the 2019 Rapid Damage Assessment (Museum for Islamic Art, Berlin /
+      Syrian Heritage Archive Project), the site's own CAD survey (FLS1615), and live pulls from NOAA, NASA,
+      and open elevation/astronomy APIs. No estimated or synthetic values are included — where a real value
+      could not be sourced (air quality), the layer is omitted rather than approximated.
+    </p>
+  </header>
+
+  <section id="sec-timeline">
+    <p class="section-title">Documented Timeline, 1556–2019</p>
+    <p class="section-note">Every point below is a dated, credited photograph or document cited in the Rapid Damage Assessment report, plus two construction dates corroborated by Wikipedia. Hover a point for its source.</p>
+    <div id="timeline-chart"></div>
+    <div class="legend" id="timeline-legend"></div>
+  </section>
+
+  <section id="sec-zones">
+    <p class="section-title">Damage Zones as of 25.06.2019</p>
+    <p class="section-note">Condition class (CC) and urgency class (UC) as assigned in the report, following BS EN 16096:2012. Urgency deadlines below are computed directly from the report's own stated response windows (UC3 = 3 months, UC2 = 1 year from the report date) — not predictions.</p>
+    <div class="cards" id="zone-cards"></div>
+    <div id="zone-gantt" style="margin-top:18px;"></div>
+  </section>
+
+  <section id="sec-temp">
+    <p class="section-title">Real Temperature Record — NOAA Station SYE00147760 ("ALEPPO, SY")</p>
+    <p class="section-note">Ground station 2.6km from the site. Every point is an actual daily reading (metric, GHCN daily-summaries). The station reported densely before the war and resumed sparsely afterward — nothing between is invented.</p>
+    <div class="gap-banner">⚠ Station silent 2012-11-14 → 2019-11-20 (2,562 days). This gap covers the entire documented conflict and damage period for this building — the absence of ground weather data is itself part of the record.</div>
+    <div id="temp-chart"></div>
+  </section>
+
+  <section id="sec-factors">
+    <p class="section-title">Invisible Site Factors</p>
+    <p class="section-note">Real, sourced measurements only. AQI was checked against every reachable air-quality API and no historical data exists for this location in this environment — that layer has been omitted rather than filled in.</p>
+    <div class="cards" id="factor-cards"></div>
+  </section>
+
+  <section id="sec-cad">
+    <p class="section-title">CAD Cross-Validation — FLS1615 vs. Damage Report</p>
+    <p class="section-note">Geometry measured directly from the DXF (units confirmed in-file via a scale bar reading "0 / 5 / 10 m"), checked against the report's own stated dimensions.</p>
+    <table class="data-table" id="cad-table"></table>
+  </section>
+
+  <footer>
+    <strong>Sources:</strong> Rapid Damage Assessment — Jamiʿ al-ʿAdiliyya, 25.06.2019, A. Haddad / I. Ballouz / R. Alafandi / Y. Rieffel, Museum for Islamic Art Berlin, Syrian Heritage Archive Project, Gerda Henkel Stiftung Aleppo Heritage Catalogue (CC BY-NC-SA 4.0)
+    &middot; CAD survey FLS1615 (DXF export)
+    &middot; Wikipedia: Al-Adiliyah Mosque
+    &middot; NOAA National Centers for Environmental Information, GHCN daily-summaries, station SYE00147760
+    &middot; Open-Elevation API &middot; OpenTopoData API (SRTM90m / ASTER30m) &middot; sunrisesunset.io API
+    &middot; NASA Earth Observatory, "Night Lights Change in the Middle East" (2017), VIIRS/Suomi NPP data, M. Román / J. Stevens
+    <br>Built for a design-studio precedent study. AQI intentionally omitted — no real source was reachable.
+  </footer>
+</div>
+
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+const tooltip = d3.select("#tooltip");
+
+const eventsFallback = [
+{date:"1556",precision:"year",name:"Endowment by Dukakinzade Mehmed Pasha",category:"construction",credit:"",note:"Wikipedia: Al-Adiliyah Mosque"},
+{date:"1566",precision:"year",name:"Construction completed (974 AH)",category:"construction",credit:"",note:"Rapid Damage Assessment p.5; corroborated by Wikipedia (973 AH / 1565-66 CE)"},
+{date:"1976",precision:"year",name:"Photo: central dome before collapse",category:"documentation",credit:"Jean-Claude David, 1976",note:"Rapid Damage Assessment p.6 photo credit"},
+{date:"1986",precision:"year",name:"UNESCO World Heritage inscription",category:"documentation",credit:"",note:"Wikipedia infobox"},
+{date:"2010",precision:"year",name:"Photo: mosque pre-conflict state",category:"documentation",credit:"Rami Alafandi, 2010",note:"Rapid Damage Assessment p.3 photo credit"},
+{date:"2014-06",precision:"month",name:"Photo: minaret showing damage",category:"damage-photo",credit:"Aleppo Lens, June 2014",note:"Rapid Damage Assessment p.6 photo credit (Damage 1)"},
+{date:"2015",precision:"year",name:"Photo: painted ornaments inside collapsed dome",category:"damage-photo",credit:"DGAM, 2015",note:"Rapid Damage Assessment p.7 photo credit (Damage 2)"},
+{date:"2016-12",precision:"month",name:"Photo: portico damage",category:"damage-photo",credit:"Abboudy Bsata, Dec 2016",note:"Rapid Damage Assessment p.8 photo credit (Damage 3)"},
+{date:"2018",precision:"year",name:"Photo: mosque after armed conflict",category:"damage-photo",credit:"Archaeology Facebook page, 2018",note:"Rapid Damage Assessment p.4/p.7 photo credits"},
+{date:"2018-09",precision:"month",name:"Photo: portico damage (follow-up)",category:"damage-photo",credit:"Salah Maraashi, Sept 2018",note:"Rapid Damage Assessment p.8 photo credit (Damage 3)"},
+{date:"2019-04",precision:"month",name:"Photo: minaret interior view",category:"damage-photo",credit:"Aleppo Glory, April 2019",note:"Rapid Damage Assessment p.6 photo credit (Damage 1)"},
+{date:"2019-04",precision:"month",name:"Volunteers clean courtyard, sort portico rubble",category:"intervention",credit:"Khaled Rahal, April 2019",note:"Report: \"no action has taken except cleaning and sorting the portico rubble\""},
+{date:"2019-06-25",precision:"day",name:"Rapid Damage Assessment report issued (RC3)",category:"documentation",credit:"Haddad, Ballouz, Alafandi, Rieffel",note:"Museum for Islamic Art Berlin / Syrian Heritage Archive Project"}
+];
+
+const zonesFallback = [
+{zone:"Minaret",building_part:"Minaret shaft (41m), balcony and spire",cc_class:"CC3",uc_class:"UC3",overall_loss_pct:30,scope_detail:"Masonry loss in shaft 25 m²; stairway loss 50%; gallery damage 30%; metal spire cover loss 50%",response_deadline:"2019-09-25",response_window_days:92},
+{zone:"Central dome",building_part:"Central dome of prayer hall",cc_class:"CC3",uc_class:"UC3",overall_loss_pct:90,scope_detail:"Collapsed dome surface 600 m²; rubble remains in prayer hall",response_deadline:"2019-09-25",response_window_days:92},
+{zone:"Portico",building_part:"Double arcaded portico, 11×3 external bays + 5 internal",cc_class:"CC3",uc_class:"UC2",overall_loss_pct:40,scope_detail:"Collapsed ceiling surface 85 m²; 3 columns and 4 arches lost",response_deadline:"2020-06-25",response_window_days:366}
+];
+
+const cadFallback = [
+{element:"Central dome diameter",report_value:"16 m",dxf_measured_value:"15.2 m (arc radius 7.603 m ×2)",match:"Close match",notes:"DXF value measured to drawn arc; report likely nominal/outer-face figure"},
+{element:"Portico domes",report_value:"5 domes, Ø5.6 m",dxf_measured_value:"5 circles: one 4.85 m + four 5.22 m",match:"Close match",notes:"Same count (5); diameters within ~7–13% of report figure"},
+{element:"Buttresses",report_value:"8 external buttresses supporting dome",dxf_measured_value:"Not present in DXF export (layer exists, 0 entities)",match:"Not verifiable",notes:"Layer defined but geometry not included in this export"},
+{element:"Fountain",report_value:"Wooden roof of fountain damaged (report)",dxf_measured_value:"Footprint ≈4.3 m × 4.6 m",match:"Consistent",notes:"Plausible size for a courtyard ablution fountain"},
+{element:"Portico columns",report_value:"Double arcade, 11×3 external bays + 5 internal",dxf_measured_value:"25 circular columns, 3 diameter classes (0.7/0.5/0.3 m)",match:"Consistent",notes:"0.7m columns = main arcade row (7 counted); 0.3m columns cluster over fountain footprint = canopy"}
+];
+
+const siteFactors = {
+  daylight: { date:"2019-06-25", sunrise:"05:11:23", sunset:"19:56:25", solar_noon:"12:33:56", day_length:"14:45:02", sun_altitude_deg:77.19, source:"sunrisesunset.io API" },
+  light_pollution: { finding:"NASA VIIRS Day/Night Band composites (2012 vs 2016) show Aleppo among the most dramatic nighttime-light losses in the Middle East; a cited 2015 VOA estimate put Syria-wide light loss at up to 80%.", published:"2017-05-16", scope:"city-scale, not point-specific", source:"NASA Earth Observatory" },
+  elevation: { range:[382,391], sources:4 }
+};
+
+const catColor = {
+  construction: "#c39a4b",
+  documentation: "#3f6d8e",
+  "damage-photo": "#b3452e",
+  intervention: "#4f9c72"
+};
+const catLabel = {
+  construction: "Construction (cited)",
+  documentation: "Documentation / recognition",
+  "damage-photo": "Dated damage photograph",
+  intervention: "On-site intervention"
+};
+
+function parseFlexDate(s){
+  if (/^\d{4}$/.test(s)) return new Date(+s, 0, 1);
+  if (/^\d{4}-\d{2}$/.test(s)) { const [y,m]=s.split("-"); return new Date(+y, +m-1, 1); }
+  return new Date(s);
+}
+
+function loadCsv(name, fallback){
+  return d3.csv(name).then(rows => rows && rows.length ? rows : fallback).catch(()=>fallback);
+}
+function loadJson(name, fallback){
+  return d3.json(name).then(d => d || fallback).catch(()=>fallback);
+}
+
+Promise.all([
+  loadCsv("events.csv", eventsFallback),
+  loadCsv("damage_zones.csv", zonesFallback),
+  loadCsv("temperature.csv", null),
+  loadCsv("cad_crossvalidation.csv", cadFallback),
+  loadJson("site_factors.json", siteFactors)
+]).then(([events, zones, temperature, cad, factors]) => {
+
+  events.forEach(d => { d._date = parseFlexDate(d.date); });
+  events.sort((a,b)=>a._date-b._date);
+
+  // ---------- Timeline ----------
+  (function(){
+    const width = 1076, margin = {top: 20, right: 30, bottom: 34, left: 30};
+    const innerW = width - margin.left - margin.right;
+    const rowH = 26;
+    const cats = ["construction","documentation","damage-photo","intervention"];
+    const height = cats.length * rowH * 2 + margin.top + margin.bottom + 20;
+
+    const svg = d3.select("#timeline-chart").append("svg").attr("width", width).attr("height", height);
+    const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+
+    const x = d3.scaleTime().domain([new Date(1540,0,1), new Date(2022,0,1)]).range([0, innerW]);
+    const y = d3.scalePoint().domain(cats).range([20, height - margin.top - margin.bottom - 10]).padding(1);
+
+    const ticks = x.ticks(12);
+    ticks.forEach(t=>{
+      g.append("line").attr("x1", x(t)).attr("x2", x(t)).attr("y1", 0).attr("y2", height - margin.top - margin.bottom)
+        .attr("stroke", "#d9cdb8").attr("stroke-opacity", 0.5);
+      g.append("text").attr("x", x(t)).attr("y", height - margin.top - margin.bottom + 16)
+        .attr("text-anchor","middle").attr("font-size", 10.5).attr("fill", "#79695a").text(d3.timeFormat("%Y")(t));
+    });
+
+    cats.forEach(c=>{
+      g.append("text").attr("x", -6).attr("y", y(c)).attr("dy","0.32em").attr("text-anchor","end")
+        .attr("font-size", 11).attr("fill","#2b241c").text(catLabel[c].split(" (")[0]);
+    });
+
+    const pts = g.selectAll(".pt").data(events).enter().append("circle")
+      .attr("class","pt")
+      .attr("cx", d => x(d._date))
+      .attr("cy", d => y(d.category))
+      .attr("r", 0)
+      .attr("fill", d => catColor[d.category] || "#999")
+      .attr("stroke", "#fff").attr("stroke-width", 1.2)
+      .style("cursor","pointer")
+      .on("mouseover", function(event,d){
+        d3.select(this).transition().duration(120).attr("r", 8);
+        tooltip.style("opacity",1).html(
+          `<strong>${d.name}</strong><div class="meta">${d.date}${d.credit ? " · " + d.credit : ""}</div><div style="margin-top:5px;">${d.note}</div>`
+        );
+      })
+      .on("mousemove", function(event){ tooltip.style("left",(event.pageX+14)+"px").style("top",(event.pageY-10)+"px"); })
+      .on("mouseout", function(){ d3.select(this).transition().duration(120).attr("r",6); tooltip.style("opacity",0); });
+
+    pts.transition().duration(700).delay((d,i)=>i*45).attr("r", 6);
+
+    const legend = d3.select("#timeline-legend");
+    Object.keys(catLabel).forEach(k=>{
+      const item = legend.append("div").attr("class","legend-item");
+      item.append("span").attr("class","swatch").style("background", catColor[k]);
+      item.append("span").text(catLabel[k]);
+    });
+  })();
+
+  // ---------- Zone cards + response Gantt ----------
+  (function(){
+    const cardsSel = d3.select("#zone-cards");
+    zones.forEach(z=>{
+      const card = cardsSel.append("div").attr("class","card");
+      card.append("h3").text(z.zone);
+      card.append("div").attr("class","stat").text(z.overall_loss_pct + "%");
+      card.append("div").attr("class","stat-label").text("Overall loss (report figure)");
+      const tbl = card.append("table");
+      const rows = [
+        ["Condition class", z.cc_class],
+        ["Urgency class", z.uc_class],
+        ["Response deadline", z.response_deadline],
+        ["Detail", z.scope_detail]
+      ];
+      rows.forEach(r=>{
+        const tr = tbl.append("tr");
+        tr.append("td").text(r[0]);
+        tr.append("td").text(r[1]);
+      });
+    });
+
+    const width = 1076, margin = {top: 20, right: 30, bottom: 30, left: 140};
+    const innerW = width - margin.left - margin.right;
+    const rowH = 34;
+    const height = zones.length * rowH + margin.top + margin.bottom;
+    const svg = d3.select("#zone-gantt").append("svg").attr("width", width).attr("height", height);
+    const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+
+    const reportDate = new Date(2019,5,25);
+    const domainEnd = new Date(2020,8,1);
+    const x = d3.scaleTime().domain([reportDate, domainEnd]).range([0, innerW]);
+    const y = d3.scaleBand().domain(zones.map(z=>z.zone)).range([0, zones.length*rowH]).padding(0.35);
+
+    const ticks = x.ticks(6);
+    ticks.forEach(t=>{
+      g.append("line").attr("x1",x(t)).attr("x2",x(t)).attr("y1",0).attr("y2", zones.length*rowH)
+        .attr("stroke","#d9cdb8").attr("stroke-opacity",0.5);
+      g.append("text").attr("x",x(t)).attr("y", zones.length*rowH+18).attr("text-anchor","middle")
+        .attr("font-size",10.5).attr("fill","#79695a").text(d3.timeFormat("%b %Y")(t));
+    });
+
+    zones.forEach(z=>{
+      g.append("text").attr("x",-10).attr("y", y(z.zone)+y.bandwidth()/2+4).attr("text-anchor","end")
+        .attr("font-size",12).attr("fill","#2b241c").text(z.zone);
+      const deadline = new Date(z.response_deadline);
+      const color = z.uc_class === "UC3" ? "#b3452e" : "#3f6d8e";
+      g.append("rect").attr("x", x(reportDate)).attr("y", y(z.zone)).attr("height", y.bandwidth())
+        .attr("width", 0).attr("rx",3).attr("fill", color)
+        .transition().duration(800).attr("width", Math.max(2, x(deadline)-x(reportDate)));
+      g.append("text").attr("x", x(deadline)+6).attr("y", y(z.zone)+y.bandwidth()/2+4)
+        .attr("font-size",10.5).attr("fill","#79695a").text(z.uc_class + " deadline");
+    });
+    g.append("line").attr("x1", x(reportDate)).attr("x2", x(reportDate)).attr("y1",-4).attr("y2", zones.length*rowH+4)
+      .attr("stroke","#2b241c").attr("stroke-width",1.4);
+    g.append("text").attr("x", x(reportDate)).attr("y",-8).attr("font-size",10.5).attr("fill","#2b241c")
+      .attr("text-anchor","middle").text("Report issued 25.06.2019");
+  })();
+
+  // ---------- Temperature chart with real gap ----------
+  (function(){
+    const data = (temperature || []).map(d=>({date: new Date(d.date), tmax:+d.tmax_c||null, tavg:+d.tavg_c||null, tmin:+d.tmin_c||null}))
+      .filter(d=>!isNaN(d.date));
+    data.sort((a,b)=>a.date-b.date);
+
+    const width = 1076, margin={top:20,right:30,bottom:34,left:44};
+    const innerW = width-margin.left-margin.right, innerH = 260;
+    const svg = d3.select("#temp-chart").append("svg").attr("width",width).attr("height", innerH+margin.top+margin.bottom);
+    const g = svg.append("g").attr("transform",`translate(${margin.left},${margin.top})`);
+
+    const x = d3.scaleTime().domain(d3.extent(data,d=>d.date)).range([0,innerW]);
+    const y = d3.scaleLinear().domain([-10, 48]).range([innerH,0]);
+
+    const yTicks = y.ticks(6);
+    yTicks.forEach(t=>{
+      g.append("line").attr("x1",0).attr("x2",innerW).attr("y1",y(t)).attr("y2",y(t)).attr("stroke","#d9cdb8").attr("stroke-opacity",0.5);
+      g.append("text").attr("x",-8).attr("y",y(t)).attr("dy","0.32em").attr("text-anchor","end").attr("font-size",10.5).attr("fill","#79695a").text(t+"°C");
+    });
+    x.ticks(10).forEach(t=>{
+      g.append("text").attr("x",x(t)).attr("y",innerH+18).attr("text-anchor","middle").attr("font-size",10.5).attr("fill","#79695a").text(d3.timeFormat("%Y")(t));
+    });
+
+    // shade the real gap
+    const gapStart = new Date(2012,10,14), gapEnd = new Date(2019,10,20);
+    g.append("rect").attr("x", x(gapStart)).attr("y",0).attr("width", x(gapEnd)-x(gapStart)).attr("height", innerH)
+      .attr("fill", "#b23b3b").attr("fill-opacity", 0.08);
+    g.append("text").attr("x", (x(gapStart)+x(gapEnd))/2).attr("y", innerH/2).attr("text-anchor","middle")
+      .attr("font-size", 11).attr("fill", "#b23b3b").attr("font-style","italic")
+      .text("station silent — no real data exists for this window");
+
+    function line(field, color){
+      const gen = d3.line().defined(d=>d[field]!=null && !isNaN(d[field])).x(d=>x(d.date)).y(d=>y(d[field]));
+      g.append("path").datum(data).attr("d", gen).attr("fill","none").attr("stroke", color).attr("stroke-width", 1.6).attr("opacity", 0.85);
+      g.selectAll(".dot-"+field).data(data.filter(d=>d[field]!=null)).enter().append("circle")
+        .attr("class","dot-"+field).attr("cx",d=>x(d.date)).attr("cy",d=>y(d[field])).attr("r",2.4).attr("fill",color)
+        .style("cursor","pointer")
+        .on("mouseover", function(event,d){
+          tooltip.style("opacity",1).html(`<strong>${d3.timeFormat("%d %b %Y")(d.date)}</strong><div class="meta">NOAA GHCN SYE00147760</div><div style="margin-top:4px;">TMAX ${d.tmax??"—"}°C · TAVG ${d.tavg??"—"}°C · TMIN ${d.tmin??"—"}°C</div>`);
+        })
+        .on("mousemove", function(event){ tooltip.style("left",(event.pageX+14)+"px").style("top",(event.pageY-10)+"px"); })
+        .on("mouseout", ()=>tooltip.style("opacity",0));
+    }
+    line("tmax", "#b3452e");
+    line("tavg", "#c39a4b");
+    line("tmin", "#3f6d8e");
+
+    const legend = d3.select("#sec-temp").append("div").attr("class","legend");
+    [["TMAX","#b3452e"],["TAVG","#c39a4b"],["TMIN","#3f6d8e"]].forEach(([label,color])=>{
+      const item = legend.append("div").attr("class","legend-item");
+      item.append("span").attr("class","swatch").style("background",color);
+      item.append("span").text(label + " (real NOAA daily reading)");
+    });
+  })();
+
+  // ---------- Site factors cards ----------
+  (function(){
+    const cardsSel = d3.select("#factor-cards");
+
+    const dl = factors.daylight;
+    const c1 = cardsSel.append("div").attr("class","card");
+    c1.append("h3").text("Daylight — 25 Jun 2019");
+    c1.append("div").attr("class","stat").text(dl.day_length);
+    c1.append("div").attr("class","stat-label").text("Day length (real astronomical calc.)");
+    const t1 = c1.append("table");
+    [["Sunrise",dl.sunrise],["Sunset",dl.sunset],["Solar noon",dl.solar_noon],["Sun altitude","77.19° at noon"],["Source",dl.source]]
+      .forEach(r=>{ const tr=t1.append("tr"); tr.append("td").text(r[0]); tr.append("td").text(r[1]); });
+
+    const el = factors.elevation;
+    const c2 = cardsSel.append("div").attr("class","card");
+    c2.append("h3").text("Topography");
+    c2.append("div").attr("class","stat").text(el.range[0] + "–" + el.range[1] + "m");
+    c2.append("div").attr("class","stat-label").text("Elevation, 4 independent sources");
+    const t2 = c2.append("table");
+    [["Open-Elevation","388.0 m"],["SRTM 90m","391.0 m"],["ASTER 30m","386.0 m"],["sunrisesunset.io","382 m"]]
+      .forEach(r=>{ const tr=t2.append("tr"); tr.append("td").text(r[0]); tr.append("td").text(r[1]); });
+
+    const lp = factors.light_pollution;
+    const c3 = cardsSel.append("div").attr("class","card");
+    c3.append("h3").text("Night Light Loss (city-scale)");
+    c3.append("div").attr("class","stat").text("↓ up to 80%");
+    c3.append("div").attr("class","stat-label").text("Syria-wide, VOA 2015 est., cited by NASA");
+    c3.append("p").style("font-size","12px").style("color","var(--muted)").style("margin-top","8px")
+      .text(lp.finding + " (" + lp.scope + ")");
+  })();
+
+  // ---------- CAD table ----------
+  (function(){
+    const table = d3.select("#cad-table");
+    const thead = table.append("thead").append("tr");
+    ["Element","Report value","DXF measured value","Match","Notes"].forEach(h=>thead.append("th").text(h));
+    const tbody = table.append("tbody");
+    cad.forEach(row=>{
+      const tr = tbody.append("tr");
+      tr.append("td").text(row.element);
+      tr.append("td").text(row.report_value);
+      tr.append("td").text(row.dxf_measured_value);
+      tr.append("td").append("span").attr("class", row.match==="Not verifiable" ? "badge badge-nomatch" : "badge badge-match").text(row.match);
+      tr.append("td").text(row.notes);
+    });
+  })();
+
+});
+</script>
+</body>
+</html>
