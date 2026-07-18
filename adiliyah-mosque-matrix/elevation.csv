@@ -1,9 +1,0 @@
-label,lat,lng,elevation_m,dataset,source
-Site center,36.1975,37.1578,388.0,Open-Elevation (SRTM-derived),Open-Elevation API
-Site center,36.1975,37.1578,391.0,SRTM 90m,OpenTopoData API
-Site center,36.1975,37.1578,386.0,ASTER 30m,OpenTopoData API
-Site center,36.1975,37.1578,382.0,Elevation service,sunrisesunset.io API
-NE offset ~140m,36.1985,37.1588,387.0,ASTER 30m,OpenTopoData API
-SW offset ~140m,36.1965,37.1568,377.0,ASTER 30m,OpenTopoData API
-E offset ~110m,36.1975,37.1588,384.0,ASTER 30m,OpenTopoData API
-W offset ~110m,36.1975,37.1568,385.0,ASTER 30m,OpenTopoData API
