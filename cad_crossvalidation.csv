@@ -1,0 +1,6 @@
+element,report_value,dxf_measured_value,match,notes
+Central dome diameter,16 m,15.2 m (arc radius 7.603 m x2),Close match,DXF value measured to drawn arc; report likely nominal/outer-face figure
+Portico domes,"5 domes, Ø5.6 m",5 circles: one 4.85 m + four 5.22 m,Close match,Same count (5); diameters within ~7-13% of report figure
+Buttresses,8 external buttresses supporting dome,Not present in DXF export (BUTTRESS layer exists but has 0 entities),Not verifiable,Layer defined but geometry not included in this export
+Fountain,Wooden roof of fountain damaged (report),Footprint approx 4.3 m x 4.6 m on FOUNTAIN layer,Consistent,Size plausible for a courtyard ablution fountain
+Portico columns,"Double arcade, 11x3 external bays + 5 internal",25 circular columns across 3 diameter classes (0.7 m / 0.5 m / 0.3 m),Consistent,"0.7 m columns = main arcade row (7 counted); 0.3 m columns cluster directly over fountain footprint = canopy"
