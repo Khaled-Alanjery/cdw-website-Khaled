@@ -49,10 +49,6 @@
   #map-libre{ position:absolute; inset:0; z-index:0; background:var(--w5); }
   #map-libre .maplibregl-ctrl-attrib{ font-size:9px; }
   #map-libre .maplibregl-ctrl-bottom-right{ transform:scale(0.85); transform-origin:bottom right; }
-  #model-3d-layer{ position:absolute; z-index:1; pointer-events:none; opacity:0; transition:opacity 0.25s ease; }
-  #model-3d-layer.active{ pointer-events:auto; opacity:1; }
-  #model-3d-layer canvas{ display:block; }
-  #map-site-marker{ position:absolute; z-index:1; width:9px; height:9px; border-radius:50%; background:#111111; border:2px solid #ffffff; box-shadow:0 0 0 1px #111111; transform:translate(-50%,-50%); pointer-events:none; }
   #map-controls{ position:absolute; left:14px; top:44px; z-index:2; display:flex; flex-direction:column; gap:5px; }
   #map-controls button{ font-size:10.5px; border:1px solid var(--line); background:rgba(255,255,255,0.92); color:var(--ink); padding:5px 9px; border-radius:5px; cursor:pointer; text-align:left; }
   #map-controls button:hover{ background:var(--w4); }
@@ -125,8 +121,6 @@
       <div class="pane-head"><span>Procedural Model (grayscale) - click a zone</span><span id="model-selected">none selected</span></div>
       <div class="pane-body" id="model-body">
         <div id="map-libre"></div>
-        <div id="model-3d-layer"></div>
-        <div id="map-site-marker" style="display:none;"></div>
         <div id="map-tooltip"></div>
         <div id="map-controls">
           <button id="zoom-district-btn">Zoom to Aleppo district</button>
@@ -135,7 +129,7 @@
         <div id="map-legend"></div>
       </div>
       <div id="model-legend"></div>
-      <div id="model-hint">Map layer: real UNOSAT neighborhood damage % (grayscale) under a procedural site model. Zoomed out shows the district; zoom to the site to activate the 3D model, geo-anchored to the mosque's real coordinates. Drag to orbit the model · scroll to zoom · click a building part to select it. Minaret plan position is triangulated (see footer); its height (41m) and all dome/column/fountain geometry are measured from the CAD file or the damage report.</div>
+      <div id="model-hint">The procedural mosque model is a real 3D layer embedded directly in the map's own scene (MapLibre GL custom layer, sharing one WebGL context) - not a separate overlay - so it sits on the terrain at the mosque's true geo-coordinate at every zoom/tilt level, alongside the UNOSAT neighborhood damage extrusions (grayscale, height = % buildings damaged x 6m, a disclosed visualization scale). Drag to orbit/tilt the whole scene · scroll to zoom · click a building part to select it. Minaret plan position is triangulated (see footer); its height (41m) and all dome/column/fountain geometry are measured from the CAD file or the damage report.</div>
     </div>
     <div id="right-col">
       <div class="pane" id="pane-graph">
@@ -178,7 +172,6 @@
 </div>
 
 <script src="https://unpkg.com/three@0.128.0/build/three.min.js"></script>
-<script src="https://unpkg.com/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 <script>
 window.onerror = function(msg, src, line, col, err){
   var el = document.getElementById('model-body');
@@ -190,7 +183,8 @@ window.onerror = function(msg, src, line, col, err){
 };
 </script>
 <script>
-// OrbitControls (r128 non-module build) attaches itself to THREE.OrbitControls
+// The model is rendered inside a MapLibre GL custom layer (shared WebGL context), so it uses
+// the map's own camera/interaction (drag to orbit/tilt, scroll to zoom) instead of OrbitControls.
 
 const GREY = { wall:0x9a9a9a, dome:0xd8d8d8, column:0xb8b8b8, fountain:0xc4c4c4, minaret:0x8f8f8f,
                damaged:0x2a2a2a, ground:0xe6e6e6, edge:0x1a1a1a, selected:0x111111 };
@@ -1212,8 +1206,8 @@ Promise.all([
     "<strong>Data sources</strong> - Mosque &amp; damage: Rapid Damage Assessment (25.06.2019, Museum for Islamic Art Berlin / Syrian Heritage Archive Project, RC3) · CAD survey FLS1615 (DXF, layers WALL/PLAN/DOME/COLUMN/FOUNTAIN) · Wikipedia: Al-Adiliyah Mosque. " +
     "Environment: NOAA GHCN Daily Summaries, station SYE00147760 (Aleppo) - " + temperature.length + " real daily readings, " + (temperature.length?d3.timeFormat('%Y')(temperature[0].date):'') + "–" + (temperature.length?d3.timeFormat('%Y')(temperature[temperature.length-1].date):'') + ", including the real ~7-year station gap 14 Nov 2012–20 Nov 2019 · Open-Elevation API + OpenTopoData API (SRTM90m/ASTER30m) - 8 readings · sunrisesunset.io API (25 Jun 2019 solar calc.) · NASA Earth Observatory VIIRS Day/Night Band (city-scale, published 16 May 2017). " +
     "Conflict: <a class=\"wiki-link\" href=\"" + CONFLICT_WIKI_URL + "\" target=\"_blank\" rel=\"noopener\">Wikipedia - Battle of Aleppo (2012–2016)</a> and <a class=\"wiki-link\" href=\"" + CONFLICT_2024_WIKI_URL + "\" target=\"_blank\" rel=\"noopener\">Battle of Aleppo (2024)</a>, casualty figures via the Violations Documentation Center in Syria. " +
-    "Map: " + neighborhoodsFallback.features.length + " real Aleppo neighborhood polygons with % buildings damaged, from UNOSAT (UNITAR's Operational Satellite Applications Programme) Comprehensive/Shelter Damage Assessment (2016 release), via the Humanitarian Data Exchange, CC BY-SA · landmark coordinates (Al-Adiliyah Mosque, Umayyad Mosque, Aleppo Citadel) cross-referenced against those same UNOSAT neighborhood polygons · elevation points as elsewhere on this page. Rendered with MapLibre GL JS from this embedded data only - no basemap tiles are fetched, so the map layer works fully offline like the rest of this page. " +
-    "<strong>Disclosed interpretive choices</strong> (not sourced measurements): minaret plan position is triangulated from the DXF elevation-view height profile plus the nearest real wall corner; wall extrusion height (10m) and portico height (6.5m) are defaults for 3D visualization; the timeline's stop-index scale, node-appearance dates in the ontology graph, and the Intensity Sphere's point positions (a 2D disc standing in for a sphere) are visualization choices - the underlying figures behind them (event counts, station-reading recency, real % structural loss) are not; the procedural model's on-map size and its zoom-activation threshold are also visualization choices (a 41m building is sub-pixel at true district scale, so it is represented by a point marker until zoomed to site level), while its anchor position is the mosque's real coordinate. " +
+    "Map: " + neighborhoodsFallback.features.length + " real Aleppo neighborhood polygons with % buildings damaged, from UNOSAT (UNITAR's Operational Satellite Applications Programme) Comprehensive/Shelter Damage Assessment (2016 release), via the Humanitarian Data Exchange, CC BY-SA · landmark coordinates (Al-Adiliyah Mosque, Umayyad Mosque, Aleppo Citadel) cross-referenced against those same UNOSAT neighborhood polygons · elevation points as elsewhere on this page. Rendered with MapLibre GL JS from this embedded data only - no basemap tiles are fetched, so the map layer works fully offline like the rest of this page. The procedural mosque model is embedded as a real 3D layer inside this same MapLibre WebGL scene (a MapLibre custom layer sharing one GL context and camera with the neighborhood extrusions), geo-anchored to the mosque's true coordinate at true scale - not a separately composited image or canvas. " +
+    "<strong>Disclosed interpretive choices</strong> (not sourced measurements): minaret plan position is triangulated from the DXF elevation-view height profile plus the nearest real wall corner; wall extrusion height (10m) and portico height (6.5m) are defaults for 3D visualization; the timeline's stop-index scale, node-appearance dates in the ontology graph, and the Intensity Sphere's point positions (a 2D disc standing in for a sphere) are visualization choices - the underlying figures behind them (event counts, station-reading recency, real % structural loss) are not; the neighborhood damage extrusion height (6 meters per percentage point of buildings damaged) is a visualization scale choice, not a real building height; the model's compass bearing/yaw is not corrected to true north (the CAD survey did not document one), so only the geometrically required axis correction is applied - the model's anchor position, however, is the mosque's real coordinate. " +
     "This page makes no live API calls at runtime - it is a static local file, and NOAA/NASA/Open-Elevation do not expose browser CORS for arbitrary local origins. Every number shown was fetched once during research and is stored here as-is.";
 
   if (!geometry){
@@ -1227,7 +1221,7 @@ Promise.all([
 });
 
 // ============================ THREE.JS MODEL ============================
-let scene, camera, renderer, controls, raycaster, mouse, zoneMeshes = {}, selectedZone = null, selectedNodeId = null;
+let scene, camera, renderer, raycaster, mouse, zoneMeshes = {}, selectedZone = null, selectedNodeId = null;
 const zoneState = { minaret:{visible:true,damaged:false}, dome:{visible:true,damaged:false}, portico:{visible:true,damaged:false} };
 const zoneIdToKey = {"Zone:Minaret":"minaret","Zone:Dome":"dome","Zone:Portico":"portico","Zone:Fountain":"fountain","Zone:Courtyard wall":"courtyard"};
 const zoneKeyToId = {minaret:"Zone:Minaret", dome:"Zone:Dome", portico:"Zone:Portico", fountain:"Zone:Fountain", courtyard:"Zone:Courtyard wall"};
@@ -1251,7 +1245,6 @@ const siteLandmarks = [
 // Real bounding box of all 115 UNOSAT Aleppo neighborhood polygons - used for the district-wide zoom.
 const ALEPPO_DISTRICT_BOUNDS = [[37.03305, 36.14888],[37.33558, 36.28403]];
 const SITE_ZOOM_CENTER = [37.1578, 36.1975];
-const SITE_ACTIVE_ZOOM = 15.2; // below this zoom the 3D model layer is hidden (a building is sub-pixel at district scale)
 
 let map, mapLoaded = false;
 
@@ -1269,20 +1262,29 @@ function initMap(){
     style: { version:8, sources:{}, layers:[ { id:"bg", type:"background", paint:{ "background-color":"#f2f2f2" } } ] },
     center: SITE_ZOOM_CENTER,
     zoom: 12,
+    pitch: 50,
+    bearing: -15,
+    maxPitch: 75,
+    antialias: true,
     attributionControl: false,
-    dragRotate: false,
-    pitchWithRotate: false
+    dragRotate: true,
+    pitchWithRotate: true
   });
   map.addControl(new maplibregl.AttributionControl({ compact:true, customAttribution:"UNOSAT / HDX (neighborhood damage) · CAD survey (site) · Wikipedia (landmarks)" }));
-  map.addControl(new maplibregl.NavigationControl({ showCompass:false }), "top-right");
+  map.addControl(new maplibregl.NavigationControl({ showCompass:true, visualizePitch:true }), "top-right");
 
   map.on("load", ()=>{
     map.addSource("neighborhoods", { type:"geojson", data:neighborhoodsFallback });
+    // Real attribute (percent_damaged) extruded into a 3D bar per neighborhood, one unified 3D
+    // scene with the procedural model below - not a flat choropleth. The 6m-per-percentage-point
+    // height multiplier is a disclosed visualization scale, not a measured unit (see footer).
     map.addLayer({
-      id:"neigh-fill", type:"fill", source:"neighborhoods",
+      id:"neigh-fill", type:"fill-extrusion", source:"neighborhoods",
       paint:{
-        "fill-color": ["interpolate", ["linear"], ["get","percent_damaged"], 0, "#f0f0f0", 20, "#b0b0b0", 40, "#707070", 70, "#101010"],
-        "fill-opacity": 0.88
+        "fill-extrusion-color": ["interpolate", ["linear"], ["get","percent_damaged"], 0, "#f0f0f0", 20, "#b0b0b0", 40, "#707070", 70, "#101010"],
+        "fill-extrusion-height": ["*", ["get","percent_damaged"], 6],
+        "fill-extrusion-opacity": 0.92,
+        "fill-extrusion-vertical-gradient": true
       }
     });
     map.addLayer({
@@ -1344,97 +1346,56 @@ function initMap(){
       <div style="margin-top:5px;">● black = named landmark &nbsp; ● gray = real elevation reading</div>
     `;
 
-    map.fitBounds(ALEPPO_DISTRICT_BOUNDS, { padding:24, duration:0 });
+    map.fitBounds(ALEPPO_DISTRICT_BOUNDS, { padding:40, pitch:50, bearing:-15, duration:0 });
     mapLoaded = true;
-    map.on("move", syncModelToMap);
-    map.on("zoom", syncModelToMap);
-    syncModelToMap();
+    initMosqueLayer(); // adds the procedural model as a real layer inside this same map/GL context
   });
-}
-
-function syncModelToMap(){
-  if (!mapLoaded || !renderer) return;
-  const layer = document.getElementById("model-3d-layer");
-  const marker = document.getElementById("map-site-marker");
-  const pt = map.project(SITE_ZOOM_CENTER);
-  marker.style.display = "block";
-  marker.style.left = pt.x + "px";
-  marker.style.top = pt.y + "px";
-
-  const zoom = map.getZoom();
-  if (zoom < SITE_ACTIVE_ZOOM){
-    layer.classList.remove("active");
-    return;
-  }
-  layer.classList.add("active");
-  // real-scale-ish sizing: model footprint grows with zoom, capped to the pane size
-  const container = document.getElementById("model-body");
-  const maxDim = Math.min(container.clientWidth, container.clientHeight) * 0.92;
-  const t = Math.min(1, (zoom - SITE_ACTIVE_ZOOM) / 3.3);
-  const size = Math.round(180 + t * (maxDim - 180));
-  layer.style.width = size + "px";
-  layer.style.height = size + "px";
-  layer.style.left = (pt.x - size/2) + "px";
-  layer.style.top = (pt.y - size/2) + "px";
-  if (camera && renderer){
-    camera.aspect = 1;
-    camera.updateProjectionMatrix();
-    renderer.setSize(size, size);
-  }
 }
 
 function initMapControls(){
   document.getElementById("zoom-district-btn").addEventListener("click", ()=>{
-    map.fitBounds(ALEPPO_DISTRICT_BOUNDS, { padding:24, duration:600 });
+    map.fitBounds(ALEPPO_DISTRICT_BOUNDS, { padding:40, pitch:50, bearing:-15, duration:800 });
   });
   document.getElementById("zoom-site-btn").addEventListener("click", ()=>{
-    map.flyTo({ center:SITE_ZOOM_CENTER, zoom:17.5, duration:800 });
+    map.flyTo({ center:SITE_ZOOM_CENTER, zoom:17.6, pitch:62, bearing:-20, duration:1000 });
   });
 }
 
 
 function dxfToWorld(x, y){ return new THREE.Vector3(x - 20, 0, -(y - 65)); } // center roughly, DXF y -> world -z
 
+let currentGeo = null;
+
 function initThree(geo){
-  const container = document.getElementById("model-body");
-  const modelLayer = document.getElementById("model-3d-layer");
-  scene = new THREE.Scene();
-  scene.background = null; // transparent - the real map layer shows through beneath the model
+  currentGeo = geo;
+  raycaster = new THREE.Raycaster();
+  mouse = new THREE.Vector2();
+  initMap();
+  initMapControls();
+}
 
-  camera = new THREE.PerspectiveCamera(45, 1, 0.1, 500);
-  camera.position.set(46, 42, 56);
-
-  renderer = new THREE.WebGLRenderer({antialias:true, alpha:true});
-  renderer.setSize(320,320);
-  renderer.setPixelRatio(Math.min(devicePixelRatio,2));
-  modelLayer.appendChild(renderer.domElement);
-
-  controls = new THREE.OrbitControls(camera, renderer.domElement);
-  controls.target.set(0,6,0);
-  controls.enableDamping = true;
-
-  scene.add(new THREE.HemisphereLight(0xffffff, 0x777777, 1.1));
+// Builds every real mesh (walls, domes, columns, minaret, fountain, ground) directly into the
+// scene used by the MapLibre custom layer below - this is now ONE unified 3D scene shared with
+// the map, not a separate composited canvas. Geometry/material logic is unchanged from before.
+function buildMosqueScene(geo, targetScene){
+  targetScene.add(new THREE.HemisphereLight(0xffffff, 0x777777, 1.1));
   const dl = new THREE.DirectionalLight(0xffffff, 0.7);
-  dl.position.set(30,50,20); scene.add(dl);
+  dl.position.set(30,50,20); targetScene.add(dl);
 
-  // ground grid
   const grid = new THREE.GridHelper(90, 45, 0xbbbbbb, 0xd8d8d8);
-  scene.add(grid);
+  targetScene.add(grid);
   const groundGeo = new THREE.PlaneGeometry(90,90);
   const groundMat = new THREE.MeshStandardMaterial({color:GREY.ground, roughness:1});
   const ground = new THREE.Mesh(groundGeo, groundMat);
   ground.rotation.x = -Math.PI/2; ground.position.y = -0.02;
-  scene.add(ground);
+  targetScene.add(ground);
 
   const WALL_H = 10; // interpretive default, disclosed in footer/hint
   const PORTICO_H = 6.5; // interpretive default
   const TAMBOUR_H = 2.5; // real, from report
 
   const structure = new THREE.Group();
-
-  // wall + plan lines -> thin extruded panels
   const wallMat = new THREE.MeshStandardMaterial({color:GREY.wall, roughness:0.9, side:THREE.DoubleSide});
-  const edgeMat = new THREE.LineBasicMaterial({color:GREY.edge, transparent:true, opacity:0.35});
   function extrudeLine(x1,y1,x2,y2,height, mat){
     const p1 = dxfToWorld(x1,y1), p2 = dxfToWorld(x2,y2);
     const len = p1.distanceTo(p2);
@@ -1455,9 +1416,8 @@ function initThree(geo){
     const m = extrudeLine(x1,y1,x2,y2,WALL_H*0.55, wallMat);
     if (m) { m.material = m.material.clone(); m.material.opacity=0.6; m.material.transparent=true; structure.add(m); }
   });
-  scene.add(structure);
+  targetScene.add(structure);
 
-  // fountain
   if (geo.fountain_bbox){
     const [x1,y1,x2,y2] = geo.fountain_bbox;
     const cx=(x1+x2)/2, cy=(y1+y2)/2, w2=Math.abs(x2-x1), d2=Math.abs(y2-y1);
@@ -1467,11 +1427,10 @@ function initThree(geo){
     const c = dxfToWorld(cx,cy);
     fMesh.position.set(c.x, 0.45, c.z);
     fMesh.userData.zone = "fountain";
-    scene.add(fMesh);
+    targetScene.add(fMesh);
     zoneMeshes.fountain = [fMesh];
   }
 
-  // domes
   const domeMeshes = {minaret:[], dome:[], portico:[]};
   (geo.domes||[]).forEach(d=>{
     const isCentral = d.kind === "central";
@@ -1482,19 +1441,18 @@ function initThree(geo){
     const c = dxfToWorld(d.center[0], d.center[1]);
     mesh.position.set(c.x, baseH, c.z);
     mesh.userData.zone = isCentral ? "dome" : "portico";
-    scene.add(mesh);
+    targetScene.add(mesh);
     (isCentral ? domeMeshes.dome : domeMeshes.portico).push(mesh);
     if (isCentral){
       const tGeo = new THREE.CylinderGeometry(d.r*0.96, d.r, TAMBOUR_H, 24);
       const tMesh = new THREE.Mesh(tGeo, wallMat);
       tMesh.position.set(c.x, WALL_H + TAMBOUR_H/2, c.z);
       tMesh.userData.zone = "dome";
-      scene.add(tMesh);
+      targetScene.add(tMesh);
       domeMeshes.dome.push(tMesh);
     }
   });
 
-  // columns
   const colMat = new THREE.MeshStandardMaterial({color:GREY.column, roughness:0.85});
   (geo.columns||[]).forEach(cdata=>{
     const cGeo = new THREE.CylinderGeometry(cdata.r, cdata.r, PORTICO_H, 14);
@@ -1502,11 +1460,10 @@ function initThree(geo){
     const c = dxfToWorld(cdata.center[0], cdata.center[1]);
     mesh.position.set(c.x, PORTICO_H/2, c.z);
     mesh.userData.zone = "portico";
-    scene.add(mesh);
+    targetScene.add(mesh);
     domeMeshes.portico.push(mesh);
   });
 
-  // minaret
   if (geo.minaret){
     const m = geo.minaret;
     const mGeo = new THREE.CylinderGeometry(m.shaft_radius_m, m.shaft_radius_m*1.15, m.height_m, 18);
@@ -1515,7 +1472,7 @@ function initThree(geo){
     const c = dxfToWorld(m.plan_position[0], m.plan_position[1]);
     mesh.position.set(c.x, m.height_m/2, c.z);
     mesh.userData.zone = "minaret";
-    scene.add(mesh);
+    targetScene.add(mesh);
     domeMeshes.minaret.push(mesh);
   }
 
@@ -1523,7 +1480,6 @@ function initThree(geo){
   zoneMeshes.portico = domeMeshes.portico;
   zoneMeshes.minaret = domeMeshes.minaret;
 
-  // legend
   const legend = document.getElementById("model-legend");
   legend.innerHTML = `
     <div><span class="sw" style="background:#d8d8d8"></span>Dome geometry (real, DXF)</div>
@@ -1532,25 +1488,53 @@ function initThree(geo){
     <div><span class="sw" style="background:#9a9a9a"></span>Walls (real outline; height interpretive)</div>
     <div><span class="sw" style="background:#111111"></span>Selected / damaged zone</div>
   `;
+}
 
-  raycaster = new THREE.Raycaster();
-  mouse = new THREE.Vector2();
-  renderer.domElement.addEventListener("click", onModelClick);
+// Model georeferencing: the mosque's real coordinate, embedded as a genuine layer inside this
+// same MapLibre WebGL context (not a separately composited canvas) - so panning/zooming/tilting
+// the map moves the model exactly as it would move any other real map layer.
+// Bearing/yaw alignment to true north was not available from the CAD survey, so only the
+// required Y-up -> Z-up axis correction is applied (disclosed limitation, see footer).
+const MODEL_ROTATE = [Math.PI/2, 0, 0];
 
-  window.addEventListener("resize", ()=>{ if (mapLoaded) syncModelToMap(); });
+function initMosqueLayer(){
+  const modelAsMercator = maplibregl.MercatorCoordinate.fromLngLat(SITE_ZOOM_CENTER, 0);
+  const modelScale = modelAsMercator.meterInMercatorCoordinateUnits();
 
-  (function animate(){
-    requestAnimationFrame(animate);
-    controls.update();
-    renderer.render(scene, camera);
-  })();
-
-  initMap();
-  initMapControls();
+  const mosqueLayer = {
+    id: "mosque-model",
+    type: "custom",
+    renderingMode: "3d",
+    onAdd(mapInstance, gl){
+      camera = new THREE.Camera();
+      scene = new THREE.Scene();
+      buildMosqueScene(currentGeo, scene);
+      renderer = new THREE.WebGLRenderer({ canvas: mapInstance.getCanvas(), context: gl, antialias:true });
+      renderer.autoClear = false;
+      mapInstance.getCanvas().addEventListener("click", onModelClick);
+    },
+    render(gl, matrix){
+      const rotX = new THREE.Matrix4().makeRotationAxis(new THREE.Vector3(1,0,0), MODEL_ROTATE[0]);
+      const rotY = new THREE.Matrix4().makeRotationAxis(new THREE.Vector3(0,1,0), MODEL_ROTATE[1]);
+      const rotZ = new THREE.Matrix4().makeRotationAxis(new THREE.Vector3(0,0,1), MODEL_ROTATE[2]);
+      const m = new THREE.Matrix4().fromArray(matrix);
+      const l = new THREE.Matrix4()
+        .makeTranslation(modelAsMercator.x, modelAsMercator.y, modelAsMercator.z)
+        .scale(new THREE.Vector3(modelScale, -modelScale, modelScale))
+        .multiply(rotX).multiply(rotY).multiply(rotZ);
+      camera.projectionMatrix = m.multiply(l);
+      camera.projectionMatrixInverse = camera.projectionMatrix.clone().invert();
+      renderer.resetState();
+      renderer.render(scene, camera);
+      map.triggerRepaint();
+    }
+  };
+  map.addLayer(mosqueLayer);
 }
 
 function onModelClick(event){
-  const rect = renderer.domElement.getBoundingClientRect();
+  if (!camera || !renderer) return;
+  const rect = map.getCanvas().getBoundingClientRect();
   mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
   mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
   raycaster.setFromCamera(mouse, camera);
