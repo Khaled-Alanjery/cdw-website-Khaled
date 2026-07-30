@@ -200,12 +200,19 @@
 
   /* lineage grid: text synced directly above its own photo-window placeholder */
   .lineage-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:24px; width:100%; margin-top:12px; }
-  .lineage-item{ display:flex; flex-direction:column; gap:14px; opacity:0; transform:scale(.9); transition:opacity .18s cubic-bezier(.2,1.9,.5,1), transform .18s cubic-bezier(.2,1.9,.5,1); }
-  .narrative-section.in-view .lineage-item{ opacity:1; transform:scale(1); }
-  .lineage-item:nth-child(2){ transition-delay:.05s; }
-  .lineage-item:nth-child(3){ transition-delay:.1s; }
-  .lineage-item:nth-child(4){ transition-delay:.15s; }
-  .lineage-photo{ width:100%; }
+  .lineage-item{ display:flex; flex-direction:column; gap:14px; }
+  /* text reveals on scroll, same springy pop as before - now scoped to just the text */
+  .lineage-item p{ opacity:0; transform:scale(.9); transition:opacity .18s cubic-bezier(.2,1.9,.5,1), transform .18s cubic-bezier(.2,1.9,.5,1); }
+  .narrative-section.in-view .lineage-item p{ opacity:1; transform:scale(1); }
+  .lineage-item:nth-child(2) p{ transition-delay:.05s; }
+  .lineage-item:nth-child(3) p{ transition-delay:.1s; }
+  .lineage-item:nth-child(4) p{ transition-delay:.15s; }
+  /* photos stay hidden until Visualize is clicked, same instant-snap stagger as the photo-window stacks */
+  .lineage-photo{ width:100%; opacity:0; transition:opacity 0s; }
+  .narrative-section.photos-visible .lineage-photo{ opacity:1; }
+  .lineage-item:nth-child(2) .lineage-photo{ transition-delay:.02s; }
+  .lineage-item:nth-child(3) .lineage-photo{ transition-delay:.04s; }
+  .lineage-item:nth-child(4) .lineage-photo{ transition-delay:.06s; }
   @media (max-width:900px){ .lineage-grid{ grid-template-columns:repeat(2,1fr); } }
   @media (max-width:560px){ .lineage-grid{ grid-template-columns:1fr; } }
 
@@ -479,6 +486,7 @@
       </div>
       </div>
     </div>
+    <button type="button" class="visualize-btn" style="left:55.56%; top:49.17%;"><span class="nt-bar"></span><span class="nt-label">Visualize</span></button>
   </div>
 
 </section>
