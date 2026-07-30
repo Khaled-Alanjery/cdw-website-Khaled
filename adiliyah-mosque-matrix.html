@@ -159,17 +159,25 @@
   .metalogue p{ font-family:"IBM Plex Mono",monospace; font-size:11.5px; line-height:1.8; color:var(--ink); margin:0 0 10px; max-width:none; }
   .metalogue-title{ font-family:"IBM Plex Mono",monospace; font-weight:500; text-transform:uppercase; letter-spacing:.05em; font-size:10.5px; color:var(--muted); margin-bottom:14px; opacity:1; transform:none; }
 
-  /* ---- draggable photo-window placeholders (no chrome - plain, freely movable panels) ---- */
-  .win{ position:relative; background:#fff; box-shadow:0 18px 40px rgba(0,0,0,.32); cursor:grab; user-select:none; -webkit-user-select:none; touch-action:none; }
+  /* ---- draggable photo-window placeholders (no chrome - plain, freely movable panels, no shadow) ---- */
+  .win{ position:relative; background:#fff; cursor:grab; user-select:none; -webkit-user-select:none; touch-action:none; }
   .win:active{ cursor:grabbing; }
   .win-body{ width:100%; height:100%; display:block; pointer-events:none; }
 
-  /* photo-window: pops open FAST and frantic, bigger, cascading like a stack of desktop windows */
-  .photo-window{ position:absolute; opacity:0; transform:scale(.5); transform-origin:center center; transition:opacity .16s cubic-bezier(.2,1.9,.5,1), transform .16s cubic-bezier(.2,1.9,.5,1); }
-  .narrative-section.in-view .photo-window{ opacity:1; transform:scale(1); }
-  .photo-window.pw-2{ transition-delay:.05s; }
-  .photo-window.pw-3{ transition-delay:.1s; }
-  .photo-window.pw-4{ transition-delay:.15s; }
+  /* photo-window: plain opacity pop (matches reference - no scale bounce), fast staggered cascade across 12 windows */
+  .photo-window{ position:absolute; opacity:0; transition:opacity .09s linear; }
+  .narrative-section.in-view .photo-window{ opacity:1; }
+  .photo-window.pw-2{ transition-delay:.02s; }
+  .photo-window.pw-3{ transition-delay:.04s; }
+  .photo-window.pw-4{ transition-delay:.06s; }
+  .photo-window.pw-5{ transition-delay:.08s; }
+  .photo-window.pw-6{ transition-delay:.1s; }
+  .photo-window.pw-7{ transition-delay:.12s; }
+  .photo-window.pw-8{ transition-delay:.14s; }
+  .photo-window.pw-9{ transition-delay:.16s; }
+  .photo-window.pw-10{ transition-delay:.18s; }
+  .photo-window.pw-11{ transition-delay:.2s; }
+  .photo-window.pw-12{ transition-delay:.22s; }
   .win.pw-closed{ display:none; }
 
   /* lineage grid: text synced directly above its own photo-window placeholder */
@@ -321,17 +329,41 @@
 <section id="tab-prosthesis" class="tab-panel">
 
   <div class="narrative-section" id="loop-1">
-    <div class="photo-window win pw-1" style="top:36%; left:46%; width:440px; z-index:4;">
-      <div class="win-body" style="height:280px; background:var(--ph2);"></div>
+    <div class="photo-window win pw-1" style="top:36%; left:46%; width:560px; z-index:12;">
+      <div class="win-body" style="height:340px; background:var(--ph2);"></div>
     </div>
-    <div class="photo-window win pw-2" style="top:calc(36% - 55px); left:calc(46% - 55px); width:400px; z-index:3;">
-      <div class="win-body" style="height:340px; background:var(--ph4);"></div>
+    <div class="photo-window win pw-2" style="top:calc(36% - 24px); left:calc(46% - 24px); width:560px; z-index:11;">
+      <div class="win-body" style="height:300px; background:var(--ph4);"></div>
     </div>
-    <div class="photo-window win pw-3" style="top:calc(36% - 110px); left:calc(46% - 110px); width:320px; z-index:2;">
-      <div class="win-body" style="height:220px; background:var(--ph3);"></div>
+    <div class="photo-window win pw-3" style="top:calc(36% - 48px); left:calc(46% - 48px); width:400px; z-index:10;">
+      <div class="win-body" style="height:260px; background:var(--ph3);"></div>
     </div>
-    <div class="photo-window win pw-4" style="top:calc(36% - 165px); left:calc(46% - 165px); width:280px; z-index:1;">
-      <div class="win-body" style="height:280px; background:var(--ph1);"></div>
+    <div class="photo-window win pw-4" style="top:calc(36% - 72px); left:calc(46% - 72px); width:320px; z-index:9;">
+      <div class="win-body" style="height:400px; background:var(--ph1);"></div>
+    </div>
+    <div class="photo-window win pw-5" style="top:calc(36% - 96px); left:calc(46% - 96px); width:400px; z-index:8;">
+      <div class="win-body" style="height:260px; background:var(--ph2);"></div>
+    </div>
+    <div class="photo-window win pw-6" style="top:calc(36% - 120px); left:calc(46% - 120px); width:400px; z-index:7;">
+      <div class="win-body" style="height:300px; background:var(--ph4);"></div>
+    </div>
+    <div class="photo-window win pw-7" style="top:calc(36% - 144px); left:calc(46% - 144px); width:560px; z-index:6;">
+      <div class="win-body" style="height:360px; background:var(--ph3);"></div>
+    </div>
+    <div class="photo-window win pw-8" style="top:calc(36% - 168px); left:calc(46% - 168px); width:560px; z-index:5;">
+      <div class="win-body" style="height:300px; background:var(--ph1);"></div>
+    </div>
+    <div class="photo-window win pw-9" style="top:calc(36% - 192px); left:calc(46% - 192px); width:560px; z-index:4;">
+      <div class="win-body" style="height:340px; background:var(--ph2);"></div>
+    </div>
+    <div class="photo-window win pw-10" style="top:calc(36% - 216px); left:calc(46% - 216px); width:560px; z-index:3;">
+      <div class="win-body" style="height:280px; background:var(--ph4);"></div>
+    </div>
+    <div class="photo-window win pw-11" style="top:calc(36% - 240px); left:calc(46% - 240px); width:400px; z-index:2;">
+      <div class="win-body" style="height:320px; background:var(--ph3);"></div>
+    </div>
+    <div class="photo-window win pw-12" style="top:calc(36% - 264px); left:calc(46% - 264px); width:400px; z-index:1;">
+      <div class="win-body" style="height:260px; background:var(--ph1);"></div>
     </div>
     <div class="narrative-inner">
       <h2 class="narr-heading">Prosthesis for Memoir</h2>
@@ -346,16 +378,40 @@
   </div>
 
   <div class="narrative-section" id="loop-2">
-    <div class="photo-window win pw-1" style="top:36%; left:46%; width:420px; z-index:4;">
+    <div class="photo-window win pw-1" style="top:36%; left:46%; width:560px; z-index:12;">
       <div class="win-body" style="height:300px; background:var(--ph3);"></div>
     </div>
-    <div class="photo-window win pw-2" style="top:calc(36% - 55px); left:calc(46% - 55px); width:380px; z-index:3;">
+    <div class="photo-window win pw-2" style="top:calc(36% - 24px); left:calc(46% - 24px); width:560px; z-index:11;">
       <div class="win-body" style="height:230px; background:var(--ph1);"></div>
     </div>
-    <div class="photo-window win pw-3" style="top:calc(36% - 110px); left:calc(46% - 110px); width:300px; z-index:2;">
+    <div class="photo-window win pw-3" style="top:calc(36% - 48px); left:calc(46% - 48px); width:400px; z-index:10;">
       <div class="win-body" style="height:340px; background:var(--ph4);"></div>
     </div>
-    <div class="photo-window win pw-4" style="top:calc(36% - 165px); left:calc(46% - 165px); width:260px; z-index:1;">
+    <div class="photo-window win pw-4" style="top:calc(36% - 72px); left:calc(46% - 72px); width:320px; z-index:9;">
+      <div class="win-body" style="height:230px; background:var(--ph2);"></div>
+    </div>
+    <div class="photo-window win pw-5" style="top:calc(36% - 96px); left:calc(46% - 96px); width:400px; z-index:8;">
+      <div class="win-body" style="height:300px; background:var(--ph3);"></div>
+    </div>
+    <div class="photo-window win pw-6" style="top:calc(36% - 120px); left:calc(46% - 120px); width:400px; z-index:7;">
+      <div class="win-body" style="height:260px; background:var(--ph1);"></div>
+    </div>
+    <div class="photo-window win pw-7" style="top:calc(36% - 144px); left:calc(46% - 144px); width:560px; z-index:6;">
+      <div class="win-body" style="height:320px; background:var(--ph4);"></div>
+    </div>
+    <div class="photo-window win pw-8" style="top:calc(36% - 168px); left:calc(46% - 168px); width:560px; z-index:5;">
+      <div class="win-body" style="height:280px; background:var(--ph2);"></div>
+    </div>
+    <div class="photo-window win pw-9" style="top:calc(36% - 192px); left:calc(46% - 192px); width:560px; z-index:4;">
+      <div class="win-body" style="height:300px; background:var(--ph3);"></div>
+    </div>
+    <div class="photo-window win pw-10" style="top:calc(36% - 216px); left:calc(46% - 216px); width:560px; z-index:3;">
+      <div class="win-body" style="height:260px; background:var(--ph1);"></div>
+    </div>
+    <div class="photo-window win pw-11" style="top:calc(36% - 240px); left:calc(46% - 240px); width:400px; z-index:2;">
+      <div class="win-body" style="height:300px; background:var(--ph4);"></div>
+    </div>
+    <div class="photo-window win pw-12" style="top:calc(36% - 264px); left:calc(46% - 264px); width:400px; z-index:1;">
       <div class="win-body" style="height:230px; background:var(--ph2);"></div>
     </div>
     <div class="narrative-inner">
