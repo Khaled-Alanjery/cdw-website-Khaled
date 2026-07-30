@@ -105,19 +105,14 @@
   footer{ padding:8px 18px; font-size:10.5px; color:var(--muted); border-top:1px solid var(--line); background:var(--panel); }
 
   /* ---- shell / top nav / tabs ---- */
-  /* nav is hidden by default site-wide - each label only fades in while its own hitbox is hovered,
-     matching the mockup exactly (labels sit invisible in their fixed position until hovered) */
+  /* the small bar/icon markers are STATIC and always visible - they're the permanent visual anchor.
+     only the text label next to each one is hidden by default, fading in when you hover that marker. */
   #shell{ display:flex; flex-direction:column; height:100vh; }
   #site-nav{ position:fixed; top:0; left:0; width:100%; height:80px; z-index:200; pointer-events:none; }
   #site-nav .nav-tabs{ position:relative; width:100%; height:100%; }
   .nav-tab{ appearance:none; -webkit-appearance:none; position:absolute; display:inline-flex; align-items:center; font-family:'Cairo',Helvetica,Arial,sans-serif; font-weight:300; font-size:21px; letter-spacing:-.06em; line-height:1; background:none; border:none; color:var(--ink); padding:0; cursor:pointer; pointer-events:auto; }
-  /* both the label text AND its bar/icon marker are explicitly opacity:0 by default and only
-     revealed together on hover/focus of the button - not relying on inherited/composited opacity
-     alone, so there's no ambiguity about the marker staying visible on its own */
-  .nav-tab, .nav-tab .nt-bar, .nav-tab .nt-icon{ opacity:0; transition:opacity .35s ease; }
-  .nav-tab:hover, .nav-tab:focus-visible,
-  .nav-tab:hover .nt-bar, .nav-tab:focus-visible .nt-bar,
-  .nav-tab:hover .nt-icon, .nav-tab:focus-visible .nt-icon{ opacity:1; }
+  .nav-tab .nt-label{ opacity:0; transition:opacity .35s ease; }
+  .nav-tab:hover .nt-label, .nav-tab:focus-visible .nt-label{ opacity:1; }
   .nav-tab .nt-bar{ position:absolute; background:var(--ink); }
   .nav-tab .nt-icon{ display:inline-block; width:20px; height:20px; background:var(--ink); margin-right:5px; flex:0 0 auto; }
   .nav-tab-matrix{ left:10px; top:15px; }
@@ -162,6 +157,14 @@
   @keyframes tw-blink{ 50%{ opacity:0; } }
   /* text block: pinned bottom, but slides sideways (JS) when a dragged photo-window overlaps it */
   .narrative-body{ flex:0 1 auto; align-self:flex-end; width:100%; margin-top:auto; overflow-y:auto; max-height:78%; transition:transform .3s ease; }
+  /* fixed-width text columns matching the AI file's paragraph bounds exactly - each column is a
+     positioning anchor (left/width set per instance inline), each paragraph inside is individually
+     placed at its own top% so gaps between fragments match the source regardless of render height */
+  .text-col{ position:absolute; top:0; height:100%; }
+  .text-block{ position:absolute; left:0; width:100%; margin:0; }
+  /* loop-2 has no exact SVG measurements, so its two columns use the same fixed left/width bounds
+     as loop-1 but let their content flow normally (no per-paragraph SVG y-coordinates to match) */
+  .text-col-flow{ position:absolute; top:17.15%; max-height:78%; overflow-y:auto; }
   .narrative-section h3{ font-family:'Cairo',Helvetica,Arial,sans-serif; font-weight:600; font-size:18px; letter-spacing:-.01em; margin:22px 0 10px; color:var(--ink); opacity:0; transform:translateY(14px); transition:opacity .5s ease, transform .5s ease; }
   .narrative-section p{ font-family:'Cairo',Helvetica,Arial,sans-serif; font-weight:600; font-size:18px; letter-spacing:-.01em; line-height:1.2; color:var(--ink); margin:0 0 14px; width:100%; opacity:0; transform:translateY(14px); transition:opacity .5s ease, transform .5s ease; }
   .narrative-section.in-view h3,
@@ -186,9 +189,8 @@
 
   /* ---- visualize control: hidden in place, like the nav, until its own hitbox is hovered ---- */
   .visualize-btn{ appearance:none; -webkit-appearance:none; position:absolute; z-index:5; display:inline-flex; align-items:center; font-family:'Cairo',Helvetica,Arial,sans-serif; font-weight:300; font-size:21px; letter-spacing:-.06em; text-transform:none; color:var(--ink); background:none; border:none; padding:0; margin:0; cursor:pointer; }
-  .visualize-btn, .visualize-btn .nt-bar{ opacity:0; transition:opacity .35s ease; }
-  .visualize-btn:hover, .visualize-btn:focus-visible,
-  .visualize-btn:hover .nt-bar, .visualize-btn:focus-visible .nt-bar{ opacity:1; }
+  .visualize-btn .nt-label{ opacity:0; transition:opacity .35s ease; }
+  .visualize-btn:hover .nt-label, .visualize-btn:focus-visible .nt-label{ opacity:1; }
   .visualize-btn .nt-bar{ position:absolute; left:-15px; top:0; width:10px; height:20px; background:var(--ink); }
   .photo-window.pw-2{ transition-delay:.02s; }
   .photo-window.pw-3{ transition-delay:.04s; }
@@ -248,9 +250,9 @@
 <div id="shell">
 <nav id="site-nav">
   <div class="nav-tabs">
-    <button class="nav-tab nav-tab-matrix active" data-tab="tab-matrix">Matrix<span class="nt-bar"></span></button>
-    <button class="nav-tab nav-tab-prosthesis" data-tab="tab-prosthesis"><span class="nt-bar"></span>Prosthesis for Memoir</button>
-    <button class="nav-tab nav-tab-sources" data-tab="tab-sources"><span class="nt-icon"></span>Sources</button>
+    <button class="nav-tab nav-tab-matrix active" data-tab="tab-matrix"><span class="nt-label">Matrix</span><span class="nt-bar"></span></button>
+    <button class="nav-tab nav-tab-prosthesis" data-tab="tab-prosthesis"><span class="nt-bar"></span><span class="nt-label">Prosthesis for Memoir</span></button>
+    <button class="nav-tab nav-tab-sources" data-tab="tab-sources"><span class="nt-icon"></span><span class="nt-label">Sources</span></button>
   </div>
 </nav>
 
@@ -411,12 +413,14 @@
     </div>
     <h2 class="section-watermark">PROSTHESIS<br>FOR MEMOIR</h2>
     <div class="narrative-inner">
-      <div class="narrative-body">
-      <p>Post-conflict environments carry a lineage of trauma; the transformation of destruction into a system of environmental and spatial regeneration is a testimony to what occurred and will occur. Conventional preservation seeks to restore damaged architecture to its original form, stabilizing history and minimizing visible traces of conflict. Such approaches risk neutralizing the political and spatial consequences of warfare by returning buildings to a state of apparent normalcy. Challenging preservation by proposing that war-damaged architecture should remain legible as a site of trauma while simultaneously evolving through new technological, ecological, and political systems defies a strain of erasure that is bound to marginalize history. The question that emerges is not simply how to rebuild such structures, but how spatial environments might acknowledge forces embedded within their remains.</p>
-      <p>Should trauma be reconstructed to a state of solitude, as if nothing occurred?<br>Preserved as a static ruin,<br>or transformed into a space that engages the memory of destruction while addressing contemporary challenges?<br>Who decides what to conceal and foreground?<br>Can design register history without repairing it?<br>Can a ruin testify under the law of functionality?</p>
-      <p>A design question wrapped around an environmental one wrapped around a sociopolitical one: reconstruction paradigms that restore buildings to an undamaged appearance risk quietly erasing the trace of violence. The project questions whether that erasure is itself a form of political forgetting, and proposes a networked sensing/actuation system as an alternative, reporting on destruction and regrowth.</p>
-      <p>Computation, testimony, design and preservation: what obligations does that create for the designer who builds it? This connects to live debates around sensor-driven infrastructure, real-time environmental monitoring, and the politics of who gets to author a record of change — a technological regulation question as much as a design one, since a sensing system that reports on conflict or ecological damage is also a system that has to be trusted.</p>
-      <p>Un-inside is the state of the archive.<br>Ruins carry fragments; fragments write memoirs; prosthetics read memoirs.</p>
+      <div class="text-col" style="left:0.69%; width:28.75%;">
+        <p class="text-block avoid-block" style="top:17.15%;">Post-conflict environments carry a lineage of trauma; the transformation of destruction into a system of environmental and spatial regeneration is a testimony to what occurred and will occur. Conventional preservation seeks to restore damaged architecture to its original form, stabilizing history and minimizing visible traces of conflict. Such approaches risk neutralizing the political and spatial consequences of warfare by returning buildings to a state of apparent normalcy. Challenging preservation by proposing that war-damaged architecture should remain legible as a site of trauma while simultaneously evolving through new technological, ecological, and political systems defies a strain of erasure that is bound to marginalize history. The question that emerges is not simply how to rebuild such structures, but how spatial environments might acknowledge forces embedded within their remains.</p>
+        <p class="text-block avoid-block" style="top:55.48%;">Should trauma be reconstructed to a state of solitude, as if nothing occurred?<br>Preserved as a static ruin,<br>or transformed into a space that engages the memory of destruction while addressing contemporary challenges?<br>Who decides what to conceal and foreground?<br>Can design register history without repairing it?<br>Can a ruin testify under the law of functionality?</p>
+        <p class="text-block avoid-block" style="top:82.15%;">A design question wrapped around an environmental one wrapped around a sociopolitical one: reconstruction paradigms that restore buildings to an undamaged appearance risk quietly erasing the trace of violence. The project questions whether that erasure is itself a form of political forgetting, and proposes a networked sensing/actuation system as an alternative, reporting on destruction and regrowth.</p>
+      </div>
+      <div class="text-col" style="left:31.94%; width:25.9%;">
+        <p class="text-block avoid-block" style="top:17.15%;">Computation, testimony, design and preservation: what obligations does that create for the designer who builds it? This connects to live debates around sensor-driven infrastructure, real-time environmental monitoring, and the politics of who gets to author a record of change — a technological regulation question as much as a design one, since a sensing system that reports on conflict or ecological damage is also a system that has to be trusted.</p>
+        <p class="text-block avoid-block" style="top:38.81%;">Un-inside is the state of the archive.<br>Ruins carry fragments; fragments write memoirs; prosthetics read memoirs.</p>
       </div>
     </div>
     <button type="button" class="visualize-btn" style="left:55.56%; top:49.17%;"><span class="nt-bar"></span><span class="nt-label">Visualize</span></button>
@@ -437,11 +441,12 @@
     </div>
     <h2 class="section-watermark" style="font-size:clamp(23px,5.5vw,68px);">RESEARCH AS MATERIAL,<br>MATERIAL AS WITNESS,<br>WITNESS TESTIFIES.</h2>
     <div class="narrative-inner">
-      <div class="narrative-body">
+      <div class="text-col-flow avoid-block" style="left:0.69%; width:28.75%;">
         <p>Trauma tectonically shifts aggregates of what will be fragments; fragments witnessed an orderly state of being beneath a new aggregate, dispersed and bloomed out of an ecological or sometimes anthropic trace, traced upon their disturbed edges a memoir for a prosthetic to read. Memoir in fragment, memoir in scar, prosthesis for memoir.</p>
         <p>Prosthetic preservation, physical computation, fragment as data, craft to computation, forensic creativity as agency, native computation and algorithms, post-conflict reconstruction, computational design, historic preservation architecture, interior, and spatial design.</p>
         <p>A dialectic between timeless and time-bound.<br>Making as form of thinking; form as a form of argument.</p>
-
+      </div>
+      <div class="text-col-flow avoid-block" style="left:31.94%; width:25.9%;">
         <h3>Cybernetics and Systems Thinking</h3>
         <p>Cybernetics and systems thinking (Gregory Bateson's ecology of mind; the wider midcentury tradition of feedback loop and responsive systems thinking) is the ancestor of treating a design object as something that senses and answers back, rather than a fixed, complete artifact.</p>
 
@@ -2752,17 +2757,14 @@ function applyTimelineToModel(date){
     });
   });
 
-  // ---- text-avoidance: if a dragged photo-window overlaps the body-text block
-  // (never the heading), slide the text block sideways to clear it ----
-  function checkTextCollision(section){
-    var body = section.querySelector('.narrative-body');
-    if (!body) return;
-    body.style.transform = '';
-    var bodyRect = body.getBoundingClientRect();
-    var wins = Array.prototype.slice.call(section.querySelectorAll('.photo-window:not(.pw-closed)'));
-    var maxPush = 0;
-    var pushRight = 0; // how far right the text would need to move to clear
-    var pushLeft = 0;  // how far left
+  // ---- text-avoidance: if a dragged photo-window overlaps a text block (never the heading/
+  // watermark), slide that block sideways to clear it. Runs per-block now (.avoid-block covers
+  // both loop-1's individually-positioned paragraphs and loop-2's two flowing columns) since the
+  // old single .narrative-body assumption no longer holds now that text is column-bounded ----
+  function shiftBlockFromWindows(block, wins){
+    block.style.transform = '';
+    var bodyRect = block.getBoundingClientRect();
+    var maxPush = 0, pushRight = 0, pushLeft = 0;
     wins.forEach(function(w){
       var r = w.getBoundingClientRect();
       var overlapX = Math.min(bodyRect.right, r.right) - Math.max(bodyRect.left, r.left);
@@ -2779,11 +2781,17 @@ function applyTimelineToModel(date){
     });
     if (pushRight >= pushLeft && pushRight > 0){
       maxPush = Math.min(pushRight, 220);
-      body.style.transform = 'translateX(' + maxPush + 'px)';
+      block.style.transform = 'translateX(' + maxPush + 'px)';
     } else if (pushLeft > 0){
       maxPush = Math.min(pushLeft, 220);
-      body.style.transform = 'translateX(-' + maxPush + 'px)';
+      block.style.transform = 'translateX(-' + maxPush + 'px)';
     }
+  }
+  function checkTextCollision(section){
+    var blocks = Array.prototype.slice.call(section.querySelectorAll('.avoid-block'));
+    if (!blocks.length) return;
+    var wins = Array.prototype.slice.call(section.querySelectorAll('.photo-window:not(.pw-closed)'));
+    blocks.forEach(function(block){ shiftBlockFromWindows(block, wins); });
   }
 
   // ---- free dragging for photo-window / lineage-photo placeholders ----
