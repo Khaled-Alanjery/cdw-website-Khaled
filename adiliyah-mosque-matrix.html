@@ -199,6 +199,33 @@
   .lineage-photo{ width:100%; }
   @media (max-width:900px){ .lineage-grid{ grid-template-columns:repeat(2,1fr); } }
   @media (max-width:560px){ .lineage-grid{ grid-template-columns:1fr; } }
+
+  /* ===================== DESIGN MODE ===================== */
+  /* a self-contained visual editor: toggle it on, drag/resize/recolor/retype directly on the
+     live page, then export a new HTML file with your changes baked in - no code required. */
+  #design-toggle{ position:fixed; top:14px; right:14px; z-index:9999; font-family:Helvetica,Arial,sans-serif; font-weight:700; font-size:11px; letter-spacing:.05em; text-transform:uppercase; background:var(--ink); color:var(--bg); border:none; padding:9px 16px; cursor:pointer; border-radius:2px; }
+  #design-toggle.is-on{ background:#c0392b; color:#fff; }
+  #design-panel{ position:fixed; top:56px; right:14px; z-index:9999; width:230px; max-height:calc(100vh - 80px); overflow-y:auto; background:#fff; border:1px solid var(--line); border-radius:4px; padding:14px; font-family:Helvetica,Arial,sans-serif; font-size:12px; color:var(--ink); box-shadow:0 8px 24px rgba(0,0,0,.18); display:none; }
+  body.design-mode #design-panel{ display:block; }
+  #design-panel h4{ margin:14px 0 8px; font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); }
+  #design-panel h4:first-child{ margin-top:0; }
+  #design-panel .dp-row{ display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; gap:8px; }
+  #design-panel .dp-row label{ flex:1; }
+  #design-panel input[type=color]{ width:32px; height:24px; border:1px solid var(--line); padding:0; cursor:pointer; background:none; }
+  #design-panel button.dp-action{ width:100%; margin-top:4px; font-weight:700; font-size:11px; text-transform:uppercase; letter-spacing:.04em; padding:9px; border:1.5px solid var(--ink); background:transparent; color:var(--ink); cursor:pointer; }
+  #design-panel button.dp-action:hover{ background:var(--ink); color:#fff; }
+  #design-panel .dp-hint{ font-size:10.5px; color:var(--muted); line-height:1.4; margin:2px 0 12px; }
+
+  body.design-mode [contenteditable="true"]{ outline:1px dashed transparent; cursor:text; }
+  body.design-mode [contenteditable="true"]:hover{ outline-color:rgba(192,57,43,.35); }
+  body.design-mode [contenteditable="true"]:focus{ outline:1px dashed #c0392b; outline-offset:2px; }
+
+  body.design-mode .photo-window{ opacity:1 !important; }
+  body.design-mode .win{ cursor:move; }
+  .win-resize-handle{ display:none; position:absolute; right:-7px; bottom:-7px; width:14px; height:14px; background:#c0392b; border:2px solid #fff; border-radius:50%; cursor:nwse-resize; z-index:60; }
+  body.design-mode .photo-window .win-resize-handle{ display:block; }
+  .win-color-swatch{ display:none; position:absolute; left:6px; top:6px; width:20px; height:20px; padding:0; border:2px solid #fff; border-radius:50%; cursor:pointer; z-index:60; box-shadow:0 1px 4px rgba(0,0,0,.4); }
+  body.design-mode .photo-window .win-color-swatch{ display:block; }
 </style>
 </head>
 <body>
@@ -210,6 +237,22 @@
     <button class="nav-tab nav-tab-sources" data-tab="tab-sources"><span class="nt-icon"></span>Sources</button>
   </div>
 </nav>
+
+<button id="design-toggle" type="button">Design Mode</button>
+<div id="design-panel">
+  <h4>Site Colors</h4>
+  <div class="dp-row"><label for="dp-bg">Background</label><input type="color" id="dp-bg" data-var="--bg"></div>
+  <div class="dp-row"><label for="dp-ink">Text / Ink</label><input type="color" id="dp-ink" data-var="--ink"></div>
+  <div class="dp-row"><label for="dp-muted">Muted text</label><input type="color" id="dp-muted" data-var="--muted"></div>
+  <div class="dp-row"><label for="dp-line">Lines</label><input type="color" id="dp-line" data-var="--line"></div>
+  <h4>Placeholder Photos</h4>
+  <div class="dp-row"><label for="dp-ph1">Tone 1</label><input type="color" id="dp-ph1" data-var="--ph1"></div>
+  <div class="dp-row"><label for="dp-ph2">Tone 2</label><input type="color" id="dp-ph2" data-var="--ph2"></div>
+  <div class="dp-row"><label for="dp-ph3">Tone 3</label><input type="color" id="dp-ph3" data-var="--ph3"></div>
+  <div class="dp-row"><label for="dp-ph4">Tone 4</label><input type="color" id="dp-ph4" data-var="--ph4"></div>
+  <p class="dp-hint">Drag any photo window to move it, drag its red corner dot to resize, click its color dot to recolor it, and click any text to edit it directly.</p>
+  <button type="button" class="dp-action" id="dp-export">Download updated site</button>
+</div>
 
 <section id="tab-sources" class="tab-panel">
   <div class="page-inner">
@@ -2765,6 +2808,134 @@ function applyTimelineToModel(date){
 
   window.addEventListener('resize', function(){
     narrativeSections.forEach(function(sec){ if (sec.classList.contains('in-view')) checkTextCollision(sec); });
+  });
+})();
+</script>
+
+<script>
+// ===================== DESIGN MODE =====================
+// A self-contained, no-code visual editor for this page: toggle it on, then drag windows to
+// move them, drag their red corner dot to resize, click their color dot to recolor them, click
+// any text to retype it, and use the color panel for site-wide colors. "Download updated site"
+// exports everything you changed as a new, ready-to-use HTML file - nothing here is written back
+// to disk automatically.
+(function(){
+  var toggleBtn = document.getElementById('design-toggle');
+  var panel = document.getElementById('design-panel');
+  if (!toggleBtn || !panel) return;
+
+  var built = false;
+  var editableEls = [];
+
+  function hex(v){
+    v = (v || '').trim();
+    if (!v) return '#000000';
+    if (v[0] === '#') return v;
+    // fallback for non-hex computed colors (rgb/rgba) - draw to canvas to normalize
+    var probe = document.createElement('canvas').getContext('2d');
+    probe.fillStyle = v;
+    return probe.fillStyle;
+  }
+
+  function initColorInputs(){
+    var root = getComputedStyle(document.documentElement);
+    Array.prototype.slice.call(panel.querySelectorAll('input[type=color][data-var]')).forEach(function(input){
+      input.value = hex(root.getPropertyValue(input.dataset.var));
+      input.addEventListener('input', function(){
+        document.documentElement.style.setProperty(input.dataset.var, input.value);
+      });
+    });
+  }
+
+  function buildEditControls(){
+    if (built) return;
+    built = true;
+
+    // any heading/paragraph/list text on the page becomes click-to-edit (excluding the design panel itself)
+    editableEls = Array.prototype.slice.call(document.querySelectorAll('h1,h2,h3,h4,p,li')).filter(function(el){
+      return !el.closest('#design-panel') && !el.closest('#design-toggle');
+    });
+    editableEls.forEach(function(el){ el.setAttribute('contenteditable', 'true'); });
+
+    // resize handle + color swatch on every photo-window
+    Array.prototype.slice.call(document.querySelectorAll('.photo-window')).forEach(function(win){
+      if (win.querySelector('.win-resize-handle')) return; // already built
+      var body = win.querySelector('.win-body');
+
+      var swatch = document.createElement('input');
+      swatch.type = 'color';
+      swatch.className = 'win-color-swatch';
+      swatch.value = hex(body ? getComputedStyle(body).backgroundColor : '#c9cbca');
+      swatch.addEventListener('pointerdown', function(e){ e.stopPropagation(); });
+      swatch.addEventListener('click', function(e){ e.stopPropagation(); });
+      swatch.addEventListener('input', function(){ if (body) body.style.background = swatch.value; });
+      win.appendChild(swatch);
+
+      var handle = document.createElement('div');
+      handle.className = 'win-resize-handle';
+      var rDragging = false, rStartX = 0, rStartY = 0, rStartW = 0, rStartH = 0;
+      handle.addEventListener('pointerdown', function(e){
+        e.stopPropagation(); e.preventDefault();
+        rDragging = true;
+        rStartX = e.clientX; rStartY = e.clientY;
+        rStartW = win.getBoundingClientRect().width;
+        rStartH = body ? body.getBoundingClientRect().height : 0;
+        handle.setPointerCapture(e.pointerId);
+      });
+      handle.addEventListener('pointermove', function(e){
+        if (!rDragging) return;
+        e.stopPropagation();
+        var w = Math.max(80, rStartW + (e.clientX - rStartX));
+        var h = Math.max(60, rStartH + (e.clientY - rStartY));
+        win.style.width = w + 'px';
+        if (body) body.style.height = h + 'px';
+        var section = win.closest('.narrative-section');
+        if (section && typeof checkTextCollision === 'function') checkTextCollision(section);
+      });
+      function endResize(e){ rDragging = false; }
+      handle.addEventListener('pointerup', endResize);
+      handle.addEventListener('pointercancel', endResize);
+      win.appendChild(handle);
+    });
+  }
+
+  function setMode(on){
+    document.body.classList.toggle('design-mode', on);
+    toggleBtn.classList.toggle('is-on', on);
+    toggleBtn.textContent = on ? 'Exit Design Mode' : 'Design Mode';
+    if (on) buildEditControls();
+    if (!on && editableEls.length){
+      // leave contenteditable text as-is when exiting so edits are never lost, just stop showing edit affordances
+    }
+  }
+
+  toggleBtn.addEventListener('click', function(){
+    setMode(!document.body.classList.contains('design-mode'));
+  });
+
+  initColorInputs();
+
+  // ---- export: serialize the live, edited page into a standalone downloadable HTML file ----
+  document.getElementById('dp-export').addEventListener('click', function(){
+    var wasOn = document.body.classList.contains('design-mode');
+    setMode(false); // strip edit affordances from the export, but keep all actual content/style edits
+    var clone = document.documentElement.cloneNode(true);
+    var cBody = clone.querySelector('body');
+    cBody.classList.remove('design-mode');
+    var toRemove = clone.querySelectorAll('#design-toggle, #design-panel, .win-resize-handle, .win-color-swatch');
+    toRemove.forEach(function(n){ n.remove(); });
+    clone.querySelectorAll('[contenteditable]').forEach(function(n){ n.removeAttribute('contenteditable'); });
+    var html = '<!DOCTYPE html>\n' + clone.outerHTML;
+    var blob = new Blob([html], { type: 'text/html' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'adiliyah-mosque-matrix-edited.html';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    if (wasOn) setMode(true);
   });
 })();
 </script>
