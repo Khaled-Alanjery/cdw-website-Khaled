@@ -164,8 +164,8 @@
   .win:active{ cursor:grabbing; }
   .win-body{ width:100%; height:100%; display:block; pointer-events:none; }
 
-  /* photo-window: plain opacity pop (matches reference - no scale bounce), fast staggered cascade across 12 windows */
-  .photo-window{ position:absolute; opacity:0; transition:opacity .09s linear; }
+  /* photo-window: instant snap-in pop (no fade) - each window appears at full opacity immediately, staggered across 12 windows */
+  .photo-window{ position:absolute; opacity:0; transition:opacity 0s; }
   .narrative-section.in-view .photo-window{ opacity:1; }
   .photo-window.pw-2{ transition-delay:.02s; }
   .photo-window.pw-3{ transition-delay:.04s; }
