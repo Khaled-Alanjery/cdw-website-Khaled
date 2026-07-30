@@ -157,27 +157,32 @@
   .metalogue-title{ font-family:"IBM Plex Mono",monospace; font-weight:500; text-transform:uppercase; letter-spacing:.05em; font-size:10.5px; color:var(--muted); margin-bottom:14px; }
 
   /* ---- window chrome shared by scattered photo-windows and the lineage grid ---- */
-  .win-titlebar{ display:flex; align-items:center; gap:5px; padding:6px 8px; background:#e6e6e6; border-bottom:1px solid #cfcfcf; }
-  .win-dot{ width:7px; height:7px; border-radius:50%; display:inline-block; }
-  .win-dot.d1{ background:#ff5f57; } .win-dot.d2{ background:#febc2e; } .win-dot.d3{ background:#28c840; }
-  .win-label{ font-family:Helvetica,Arial,sans-serif; font-size:9px; color:#777; margin-left:5px; letter-spacing:.03em; }
-  .win-body{ width:100%; }
+  /* ref. aauanastas.com/project/stone-matters: index number outside the window,
+     black titlebar with filename + close X, image body kept at its own aspect ratio */
+  .win{ position:relative; background:#fff; box-shadow:0 18px 40px rgba(0,0,0,.32); }
+  .win-index{ position:absolute; left:-18px; top:2px; font-family:Helvetica,Arial,sans-serif; font-size:11px; font-weight:700; color:var(--ink); }
+  .win-titlebar{ display:flex; align-items:center; gap:8px; padding:5px 9px; background:#111; cursor:pointer; }
+  .win-filename{ flex:1; font-family:Helvetica,Arial,sans-serif; font-size:10px; color:#eee; letter-spacing:.02em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .win-close{ font-family:Helvetica,Arial,sans-serif; font-size:12px; line-height:1; color:#eee; padding:0 2px; }
+  .win-close:hover{ color:#fff; }
+  .win-body{ width:100%; display:block; }
 
-  /* photo-window: pops open like a desktop window, ref. aauanastas.com/project/stone-matters */
-  .photo-window{ position:absolute; background:#fff; box-shadow:0 20px 46px rgba(0,0,0,.32); opacity:0; transform:scale(.35); transform-origin:center center; transition:opacity .5s cubic-bezier(.34,1.56,.64,1), transform .5s cubic-bezier(.34,1.56,.64,1); z-index:1; }
+  /* photo-window: pops open and cascades like a stack of desktop windows */
+  .photo-window{ position:absolute; opacity:0; transform:scale(.4); transform-origin:center center; transition:opacity .45s cubic-bezier(.34,1.56,.64,1), transform .45s cubic-bezier(.34,1.56,.64,1); }
   .narrative-section.in-view .photo-window{ opacity:1; transform:scale(1); }
-  .photo-window.pw-2{ transition-delay:.18s; }
-  .photo-window.pw-3{ transition-delay:.36s; }
+  .photo-window.pw-2{ transition-delay:.16s; }
+  .photo-window.pw-3{ transition-delay:.32s; }
+  .photo-window.pw-4{ transition-delay:.48s; }
+  .win.pw-closed{ display:none; }
 
-  /* lineage grid: text synced directly above its photo-window placeholder */
+  /* lineage grid: text synced directly above its own numbered photo-window */
   .lineage-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:24px; width:100%; margin-top:12px; }
   .lineage-item{ display:flex; flex-direction:column; gap:14px; opacity:0; transform:scale(.9); transition:opacity .5s cubic-bezier(.34,1.56,.64,1), transform .5s cubic-bezier(.34,1.56,.64,1); }
   .narrative-section.in-view .lineage-item{ opacity:1; transform:scale(1); }
   .lineage-item:nth-child(2){ transition-delay:.12s; }
   .lineage-item:nth-child(3){ transition-delay:.24s; }
   .lineage-item:nth-child(4){ transition-delay:.36s; }
-  .lineage-photo{ width:100%; background:#fff; box-shadow:0 12px 28px rgba(0,0,0,.28); }
-  .lineage-photo .win-body{ height:150px; }
+  .lineage-photo{ width:100%; }
   @media (max-width:900px){ .lineage-grid{ grid-template-columns:repeat(2,1fr); } }
   @media (max-width:560px){ .lineage-grid{ grid-template-columns:1fr; } }
 </style>
@@ -319,13 +324,25 @@
 <section id="tab-prosthesis" class="tab-panel">
 
   <div class="narrative-section" id="loop-1">
-    <div class="photo-window pw-1" style="top:12%; left:64%; width:210px;">
-      <div class="win-titlebar"><span class="win-dot d1"></span><span class="win-dot d2"></span><span class="win-dot d3"></span><span class="win-label">IMG_01</span></div>
-      <div class="win-body" style="height:170px; background:var(--ph2);"></div>
+    <div class="photo-window win pw-1" style="top:8%; left:calc(46% + 0px); width:250px; z-index:1;">
+      <div class="win-index">01</div>
+      <div class="win-titlebar"><span class="win-filename">01_PLACEHOLDER.png</span><span class="win-close">×</span></div>
+      <div class="win-body" style="height:160px; background:var(--ph2);"></div>
     </div>
-    <div class="photo-window pw-2" style="top:58%; left:76%; width:160px;">
-      <div class="win-titlebar"><span class="win-dot d1"></span><span class="win-dot d2"></span><span class="win-dot d3"></span><span class="win-label">IMG_02</span></div>
-      <div class="win-body" style="height:130px; background:var(--ph4);"></div>
+    <div class="photo-window win pw-2" style="top:19%; left:calc(46% + 60px); width:190px; z-index:2;">
+      <div class="win-index">02</div>
+      <div class="win-titlebar"><span class="win-filename">02_PLACEHOLDER.png</span><span class="win-close">×</span></div>
+      <div class="win-body" style="height:250px; background:var(--ph4);"></div>
+    </div>
+    <div class="photo-window win pw-3" style="top:38%; left:calc(46% + 115px); width:225px; z-index:3;">
+      <div class="win-index">03</div>
+      <div class="win-titlebar"><span class="win-filename">03_PLACEHOLDER.png</span><span class="win-close">×</span></div>
+      <div class="win-body" style="height:145px; background:var(--ph3);"></div>
+    </div>
+    <div class="photo-window win pw-4" style="top:52%; left:calc(46% + 40px); width:205px; z-index:4;">
+      <div class="win-index">04</div>
+      <div class="win-titlebar"><span class="win-filename">04_PLACEHOLDER.png</span><span class="win-close">×</span></div>
+      <div class="win-body" style="height:205px; background:var(--ph1);"></div>
     </div>
     <div class="narrative-inner">
       <h2 class="narr-heading">Prosthesis for Memoir</h2>
@@ -340,13 +357,25 @@
   </div>
 
   <div class="narrative-section" id="loop-2">
-    <div class="photo-window pw-1" style="top:10%; left:6%; width:180px;">
-      <div class="win-titlebar"><span class="win-dot d1"></span><span class="win-dot d2"></span><span class="win-dot d3"></span><span class="win-label">IMG_03</span></div>
-      <div class="win-body" style="height:150px; background:var(--ph3);"></div>
+    <div class="photo-window win pw-1" style="top:8%; left:calc(4% + 0px); width:210px; z-index:1;">
+      <div class="win-index">05</div>
+      <div class="win-titlebar"><span class="win-filename">05_PLACEHOLDER.png</span><span class="win-close">×</span></div>
+      <div class="win-body" style="height:260px; background:var(--ph3);"></div>
     </div>
-    <div class="photo-window pw-2" style="top:56%; left:80%; width:190px;">
-      <div class="win-titlebar"><span class="win-dot d1"></span><span class="win-dot d2"></span><span class="win-dot d3"></span><span class="win-label">IMG_04</span></div>
-      <div class="win-body" style="height:120px; background:var(--ph1);"></div>
+    <div class="photo-window win pw-2" style="top:24%; left:calc(4% + 65px); width:250px; z-index:2;">
+      <div class="win-index">06</div>
+      <div class="win-titlebar"><span class="win-filename">06_PLACEHOLDER.png</span><span class="win-close">×</span></div>
+      <div class="win-body" style="height:150px; background:var(--ph1);"></div>
+    </div>
+    <div class="photo-window win pw-3" style="top:44%; left:calc(4% + 20px); width:175px; z-index:3;">
+      <div class="win-index">07</div>
+      <div class="win-titlebar"><span class="win-filename">07_PLACEHOLDER.png</span><span class="win-close">×</span></div>
+      <div class="win-body" style="height:230px; background:var(--ph4);"></div>
+    </div>
+    <div class="photo-window win pw-4" style="top:62%; left:calc(4% + 95px); width:230px; z-index:4;">
+      <div class="win-index">08</div>
+      <div class="win-titlebar"><span class="win-filename">08_PLACEHOLDER.png</span><span class="win-close">×</span></div>
+      <div class="win-body" style="height:150px; background:var(--ph2);"></div>
     </div>
     <div class="narrative-inner">
       <h2 class="narr-heading">Research as Material, Material as Witness, Witness Testifies.</h2>
@@ -373,30 +402,34 @@
       <div class="lineage-grid">
         <div class="lineage-item">
           <p>Lebbeus Woods, <em>War and Architecture</em> / <em>Radical Reconstruction</em> — the direct source of the project's scab/scar/prosthesis vocabulary and its refusal to "repair" damaged buildings.</p>
-          <div class="lineage-photo">
-            <div class="win-titlebar"><span class="win-dot d1"></span><span class="win-dot d2"></span><span class="win-dot d3"></span><span class="win-label">IMG_05</span></div>
-            <div class="win-body" style="background:var(--ph1);"></div>
+          <div class="lineage-photo win">
+            <div class="win-index">09</div>
+            <div class="win-titlebar"><span class="win-filename">09_PLACEHOLDER.png</span><span class="win-close">×</span></div>
+            <div class="win-body" style="height:160px; background:var(--ph1);"></div>
           </div>
         </div>
         <div class="lineage-item">
           <p>Poststructuralist theory — Deleuze &amp; Guattari's rhizome, intellectual lineage for a research method that resists hierarchy, closure, and a single authored narrative.</p>
-          <div class="lineage-photo">
-            <div class="win-titlebar"><span class="win-dot d1"></span><span class="win-dot d2"></span><span class="win-dot d3"></span><span class="win-label">IMG_06</span></div>
-            <div class="win-body" style="background:var(--ph2);"></div>
+          <div class="lineage-photo win">
+            <div class="win-index">10</div>
+            <div class="win-titlebar"><span class="win-filename">10_PLACEHOLDER.png</span><span class="win-close">×</span></div>
+            <div class="win-body" style="height:200px; background:var(--ph2);"></div>
           </div>
         </div>
         <div class="lineage-item">
           <p>Derrida's parergon (via the <em>Historic Preservation Theory</em> anthology) — framing/supplement logic used to think through how the automaton attaches to, without fully belonging to, the building envelope.</p>
-          <div class="lineage-photo">
-            <div class="win-titlebar"><span class="win-dot d1"></span><span class="win-dot d2"></span><span class="win-dot d3"></span><span class="win-label">IMG_07</span></div>
-            <div class="win-body" style="background:var(--ph3);"></div>
+          <div class="lineage-photo win">
+            <div class="win-index">11</div>
+            <div class="win-titlebar"><span class="win-filename">11_PLACEHOLDER.png</span><span class="win-close">×</span></div>
+            <div class="win-body" style="height:140px; background:var(--ph3);"></div>
           </div>
         </div>
         <div class="lineage-item">
           <p>Postwar/post-disaster preservation theory generally: the long-running debate between restoring a damaged monument to apparent normalcy versus letting the ruin remain legible as artifact.</p>
-          <div class="lineage-photo">
-            <div class="win-titlebar"><span class="win-dot d1"></span><span class="win-dot d2"></span><span class="win-dot d3"></span><span class="win-label">IMG_08</span></div>
-            <div class="win-body" style="background:var(--ph4);"></div>
+          <div class="lineage-photo win">
+            <div class="win-index">12</div>
+            <div class="win-titlebar"><span class="win-filename">12_PLACEHOLDER.png</span><span class="win-close">×</span></div>
+            <div class="win-body" style="height:180px; background:var(--ph4);"></div>
           </div>
         </div>
       </div>
@@ -2654,6 +2687,26 @@ function applyTimelineToModel(date){
   } else {
     narrativeSections.forEach(function(sec){ sec.classList.add('in-view'); });
   }
+
+  // ---- desktop-window behavior for photo-window / lineage-photo: click titlebar
+  // to bring a window to front, click the close X to dismiss it ----
+  var winZ = 10;
+  Array.prototype.slice.call(document.querySelectorAll('.win')).forEach(function(win){
+    var bar = win.querySelector('.win-titlebar');
+    var closeBtn = win.querySelector('.win-close');
+    if (bar){
+      bar.addEventListener('click', function(){
+        winZ += 1;
+        win.style.zIndex = winZ;
+      });
+    }
+    if (closeBtn){
+      closeBtn.addEventListener('click', function(e){
+        e.stopPropagation();
+        win.classList.add('pw-closed');
+      });
+    }
+  });
 })();
 </script>
 </body>
