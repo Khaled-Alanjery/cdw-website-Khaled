@@ -260,9 +260,10 @@
   .visualize-btn .nt-bar{ position:absolute; left:0; top:0; width:20px; height:20px; background:var(--ink); }
   .visualize-btn .nt-label{ position:absolute; left:28px; top:50%; transform:translateY(-50%); white-space:nowrap; font-family:'Cairo',Helvetica,Arial,sans-serif; font-weight:300; font-size:21px; letter-spacing:-.06em; color:var(--ink); opacity:0; transition:opacity .35s ease; }
   .visualize-btn:hover .nt-label, .visualize-btn:focus-visible .nt-label{ opacity:1; }
-  .photo-window.pw-2{ transition-delay:.02s; }
-  .photo-window.pw-3{ transition-delay:.04s; }
-  .photo-window.pw-4{ transition-delay:.06s; }
+  /* delays big enough to actually read as sequential (20-60ms was imperceptible - looked simultaneous) */
+  .photo-window.pw-2{ transition-delay:.12s; }
+  .photo-window.pw-3{ transition-delay:.24s; }
+  .photo-window.pw-4{ transition-delay:.36s; }
   .win.pw-closed{ display:none; }
 
   /* ================================================================
@@ -289,9 +290,9 @@
   /* photos stay hidden until Visualize is clicked, same instant-snap stagger as the photo-window stacks */
   .lineage-photo{ width:100%; opacity:0; transition:opacity 0s; }
   .narrative-section.photos-visible .lineage-photo{ opacity:1; }
-  .lineage-item:nth-child(2) .lineage-photo{ transition-delay:.02s; }
-  .lineage-item:nth-child(3) .lineage-photo{ transition-delay:.04s; }
-  .lineage-item:nth-child(4) .lineage-photo{ transition-delay:.06s; }
+  .lineage-item:nth-child(2) .lineage-photo{ transition-delay:.12s; }
+  .lineage-item:nth-child(3) .lineage-photo{ transition-delay:.24s; }
+  .lineage-item:nth-child(4) .lineage-photo{ transition-delay:.36s; }
   @media (max-width:900px){ .lineage-grid{ grid-template-columns:repeat(2,1fr); } }
   @media (max-width:560px){ .lineage-grid{ grid-template-columns:1fr; } }
 </style>
