@@ -22,27 +22,29 @@
   *{box-sizing:border-box;}
   html,body{ margin:0; height:100%; background:var(--bg); color:var(--ink); font-family:'Cairo',Helvetica,Arial,sans-serif; }
   #app{ display:flex; flex-direction:column; height:100%; }
-  /* extra top padding so the timeline controls sit clear of the invisible nav hover-boxes above them */
-  header{ padding: 100px var(--gutter) 12px; border-bottom:1px solid var(--line); background:var(--panel); display:flex; align-items:center; gap:18px; flex-wrap:wrap; }
+  /* no padding anywhere on the site now - everything below uses margin instead. header's top offset
+     stays distinct from the other 3 sides because it's functional nav-clearance, not decorative edge
+     spacing; left/right/bottom are unified to the same --gutter value */
+  header{ margin: 100px var(--gutter) var(--gutter) var(--gutter); border-bottom:1px solid var(--line); background:var(--panel); display:flex; align-items:center; gap:18px; flex-wrap:wrap; }
   header h1{ font-family:"fayte-pixel-soft",Georgia,serif; font-size:16px; font-weight:500; margin:0; color:var(--ink); }
   header .eyebrow{ font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); }
   #timeline-wrap{ flex:1; min-width:380px; display:flex; align-items:flex-start; gap:10px; }
-  #timeline-track-wrap{ position:relative; flex:1; padding-bottom:26px; padding-top:2px; }
+  #timeline-track-wrap{ position:relative; flex:1; margin-bottom:26px; margin-top:2px; }
   #timeline-track-wrap input[type=range]{ width:100%; accent-color:var(--w1); position:relative; z-index:2; margin:0; display:block; }
   #timeline-ticks{ position:absolute; left:0; right:0; top:16px; height:16px; }
-  #timeline-ticks .tick{ position:absolute; top:0; transform:translateX(-50%); font-size:9px; color:var(--muted); white-space:nowrap; cursor:pointer; padding-top:6px; }
+  #timeline-ticks .tick{ position:absolute; top:0; transform:translateX(-50%); font-size:9px; color:var(--muted); white-space:nowrap; cursor:pointer; margin-top:6px; }
   #timeline-ticks .tick::before{ content:""; position:absolute; left:50%; top:0; width:1px; height:5px; background:var(--w3); }
   #timeline-ticks .tick:hover{ color:var(--ink); }
-  #timeline-date{ font-size:12px; font-variant-numeric:tabular-nums; color:var(--ink); min-width:150px; text-align:right; padding-top:4px; }
-  #reset-btn{ font-size:11px; border:1px solid var(--line); background:var(--w5); color:var(--w0); padding:5px 10px; border-radius:5px; cursor:pointer; margin-top:4px; }
+  #timeline-date{ font-size:12px; font-variant-numeric:tabular-nums; color:var(--ink); min-width:150px; text-align:right; margin-top:4px; }
+  #reset-btn{ font-size:11px; border:1px solid var(--line); background:var(--w5); color:var(--w0); margin:4px 10px 5px; border-radius:5px; cursor:pointer; }
   #reset-btn:hover{ background:var(--w4); }
-  #timeline-hint{ padding:4px 18px 8px; font-size:10px; color:var(--muted); background:var(--panel); border-bottom:1px solid var(--line); line-height:1.5; }
+  #timeline-hint{ margin:4px 18px 8px; font-size:10px; color:var(--muted); background:var(--panel); border-bottom:1px solid var(--line); line-height:1.5; }
 
   #main{ flex:1; display:flex; gap:1px; background:var(--line); overflow:hidden; }
   #pane-3d{ flex:1.5; background:var(--panel); position:relative; overflow:hidden; display:flex; flex-direction:column; }
   #right-col{ flex:1; min-width:320px; display:flex; flex-direction:column; gap:1px; overflow:hidden; }
   .pane{ background:var(--panel); position:relative; overflow:hidden; display:flex; flex-direction:column; }
-  .pane-head{ padding:8px 14px; border-bottom:1px solid var(--line); font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); display:flex; justify-content:space-between; align-items:center; }
+  .pane-head{ margin:8px 14px; border-bottom:1px solid var(--line); font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); display:flex; justify-content:space-between; align-items:center; }
   .pane-body{ flex:1; position:relative; overflow:auto; }
 
   #pane-graph{ flex:1.05; min-height:0; }
@@ -50,62 +52,62 @@
   #pane-dash{ flex:1.15; min-height:0; }
 
   #pane-3d canvas{ display:block; }
-  #model-hint{ position:absolute; left:14px; bottom:12px; font-size:10.5px; color:var(--w1); background:rgba(255,255,255,0.85); padding:6px 9px; border-radius:6px; max-width:320px; line-height:1.5; }
-  #model-legend{ position:absolute; right:14px; top:44px; font-size:10px; color:var(--w1); background:rgba(255,255,255,0.9); padding:8px 10px; border-radius:6px; line-height:1.6; max-width:215px; }
+  #model-hint{ position:absolute; left:14px; bottom:12px; font-size:10.5px; color:var(--w1); background:rgba(255,255,255,0.85); margin:6px 9px; border-radius:6px; max-width:320px; line-height:1.5; }
+  #model-legend{ position:absolute; right:14px; top:44px; font-size:10px; color:var(--w1); background:rgba(255,255,255,0.9); margin:8px 10px; border-radius:6px; line-height:1.6; max-width:215px; }
   #model-legend .sw{ display:inline-block; width:9px; height:9px; margin-right:6px; border:1px solid #333; }
-  #model-legend .lg-title{ font-size:9.5px; text-transform:uppercase; letter-spacing:.06em; color:#888; margin:7px 0 3px; border-top:1px dotted #ccc; padding-top:6px; }
-  #model-legend .lg-title:first-child{ border-top:none; padding-top:0; margin-top:0; }
+  #model-legend .lg-title{ font-size:9.5px; text-transform:uppercase; letter-spacing:.06em; color:#888; margin:13px 0 3px; border-top:1px dotted #ccc; }
+  #model-legend .lg-title:first-child{ border-top:none; margin-top:0; }
   #map-libre{ position:absolute; inset:0; z-index:0; background:var(--w5); }
   #map-libre .maplibregl-ctrl-attrib{ font-size:9px; }
   #map-libre .maplibregl-ctrl-bottom-right{ transform:scale(0.85); transform-origin:bottom right; }
   #map-controls{ position:absolute; left:14px; top:44px; z-index:2; display:flex; flex-direction:column; gap:5px; }
-  #map-controls button{ font-size:10.5px; border:1px solid var(--line); background:rgba(255,255,255,0.92); color:var(--w0); padding:5px 9px; border-radius:5px; cursor:pointer; text-align:left; }
+  #map-controls button{ font-size:10.5px; border:1px solid var(--line); background:rgba(255,255,255,0.92); color:var(--w0); margin:5px 9px; border-radius:5px; cursor:pointer; text-align:left; }
   #map-controls button:hover{ background:var(--w4); }
-  #map-legend{ position:absolute; right:14px; bottom:12px; z-index:2; font-size:9.5px; color:var(--w1); background:rgba(255,255,255,0.92); padding:7px 9px; border-radius:6px; line-height:1.6; max-width:210px; }
+  #map-legend{ position:absolute; right:14px; bottom:12px; z-index:2; font-size:9.5px; color:var(--w1); background:rgba(255,255,255,0.92); margin:7px 9px; border-radius:6px; line-height:1.6; max-width:210px; }
   #map-legend .ramp{ display:flex; height:8px; margin:4px 0 2px; border-radius:2px; overflow:hidden; }
   #map-legend .ramp div{ flex:1; }
-  #map-tooltip{ position:absolute; z-index:3; pointer-events:none; background:rgba(20,20,20,0.92); color:#fff; font-size:10.5px; padding:5px 8px; border-radius:4px; display:none; line-height:1.5; max-width:210px; }
+  #map-tooltip{ position:absolute; z-index:3; pointer-events:none; background:rgba(20,20,20,0.92); color:#fff; font-size:10.5px; margin:5px 8px; border-radius:4px; display:none; line-height:1.5; max-width:210px; }
 
   #pane-graph .pane-body{ overflow:hidden; position:relative; }
   #pane-graph svg{ width:100%; height:100%; display:block; }
   #view-toggle-btn{ margin-right:8px; }
   #cloud-svg{ position:absolute; inset:0; }
-  #cloud-legend{ position:absolute; left:10px; bottom:8px; font-size:9.5px; color:var(--w1); background:rgba(255,255,255,0.92); padding:7px 9px; border-radius:6px; line-height:1.6; max-width:280px; }
+  #cloud-legend{ position:absolute; left:10px; bottom:8px; font-size:9.5px; color:var(--w1); background:rgba(255,255,255,0.92); margin:7px 9px; border-radius:6px; line-height:1.6; max-width:280px; }
   #cloud-legend .sw{ display:inline-block; width:8px; height:8px; margin-right:5px; border-radius:50%; }
   #cloud-legend .g{ background:#4a7a4a; } #cloud-legend .p{ background:#7a4a8a; } #cloud-legend .y{ background:#c9a227; }
 
-  #pane-info .pane-body{ padding:9px 14px 12px; font-size:12px; }
+  #pane-info .pane-body{ margin:9px 14px 12px; font-size:12px; }
   #info-empty{ color:var(--muted); font-style:italic; font-size:11.5px; }
   #info-title{ font-size:13px; font-weight:600; margin-bottom:2px; line-height:1.35; }
   #info-meta{ font-size:10.5px; color:var(--muted); margin-bottom:7px; text-transform:uppercase; letter-spacing:.04em; }
   #info-body .dash-row{ font-size:11.5px; }
   #info-hist{ font-size:11.5px; color:var(--ink); line-height:1.5; margin:4px 0; }
-  #info-hist ul{ margin:3px 0 0; padding-left:16px; }
+  #info-hist ul{ margin:3px 0 0 16px; }
   #info-hist li{ margin-bottom:3px; }
-  #info-source{ font-size:10.5px; color:var(--muted); margin-top:7px; line-height:1.5; border-top:1px dotted var(--line); padding-top:6px; }
+  #info-source{ font-size:10.5px; color:var(--muted); margin-top:13px; line-height:1.5; border-top:1px dotted var(--line); }
 
-  #pane-dash .pane-body{ padding:10px 14px 16px; display:flex; flex-direction:column; gap:14px; }
-  .dash-col-title{ font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--ink); margin: 4px 0 6px; border-bottom:1px solid var(--line); padding-bottom:4px; }
-  .dash-row{ display:flex; justify-content:space-between; font-size:12px; padding:4px 0; border-bottom: 1px dotted var(--line); gap:10px; }
+  #pane-dash .pane-body{ margin:10px 14px 16px; display:flex; flex-direction:column; gap:14px; }
+  .dash-col-title{ font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--ink); margin: 4px 0 10px; border-bottom:1px solid var(--line); }
+  .dash-row{ display:flex; justify-content:space-between; font-size:12px; margin:4px 0; border-bottom: 1px dotted var(--line); gap:10px; }
   .dash-row .k{ color:var(--muted); }
   .dash-row .v{ color:var(--ink); text-align:right; font-variant-numeric:tabular-nums; }
-  .dash-empty{ font-size:11.5px; color:var(--muted); font-style:italic; padding:6px 0; }
+  .dash-empty{ font-size:11.5px; color:var(--muted); font-style:italic; margin:6px 0; }
   .dash-note{ font-size:10.5px; color:var(--muted); line-height:1.5; margin-top:6px; }
-  .zone-btn{ display:inline-block; font-size:11px; padding:4px 9px; margin: 2px 4px 2px 0; border:1px solid var(--line); border-radius: 12px; cursor:pointer; background: var(--w5); color:var(--w0); }
+  .zone-btn{ display:inline-block; font-size:11px; margin: 6px 13px 6px 9px; border:1px solid var(--line); border-radius: 12px; cursor:pointer; background: var(--w5); color:var(--w0); }
   .zone-btn.active{ background: var(--w1); color:#fff; border-color:var(--w1); }
-  .flag{ display:inline-block; font-size:9.5px; padding:1px 6px; border-radius:4px; background:var(--w4); color:var(--w0); margin-left:6px; }
-  .conflict-row{ font-size:11px; padding:5px 0; border-bottom:1px dotted var(--line); cursor:pointer; }
+  .flag{ display:inline-block; font-size:9.5px; border-radius:4px; background:var(--w4); color:var(--w0); margin:1px 6px 1px 12px; }
+  .conflict-row{ font-size:11px; margin:5px 0; border-bottom:1px dotted var(--line); cursor:pointer; }
   .conflict-row:hover{ background:rgba(244,244,244,0.08); }
   .conflict-row .cf-date{ color:var(--muted); font-variant-numeric:tabular-nums; margin-right:6px; }
   .conflict-row .cf-name{ color:var(--ink); }
-  .conflict-row.current{ background:rgba(122,220,122,0.14); border-left:2px solid #6fae6f; padding-left:4px; }
+  .conflict-row.current{ background:rgba(122,220,122,0.14); border-left:2px solid #6fae6f; margin-left:4px; }
   .wiki-link{ color:var(--ink); text-decoration:underline; font-size:10.5px; }
   .cf-stats{ display:flex; gap:10px; margin:4px 0 8px; flex-wrap:wrap; }
-  .cf-stat{ font-size:10px; color:var(--w1); background:var(--w5); border-radius:5px; padding:4px 7px; }
+  .cf-stat{ font-size:10px; color:var(--w1); background:var(--w5); border-radius:5px; margin:4px 7px; }
   .cf-stat b{ color:var(--w0); font-size:12px; display:block; }
-  .xref{ font-size:10px; color:#4a4a4a; background:#f2f2f2; border-radius:4px; padding:2px 6px; margin-top:3px; display:inline-block; }
+  .xref{ font-size:10px; color:#4a4a4a; background:#f2f2f2; border-radius:4px; margin:5px 6px 2px; display:inline-block; }
 
-  footer{ padding:8px 18px; font-size:10.5px; color:var(--muted); border-top:1px solid var(--line); background:var(--panel); }
+  footer{ margin:8px 18px; font-size:10.5px; color:var(--muted); border-top:1px solid var(--line); background:var(--panel); }
 
   /* ---- shell / top nav / tabs ---- */
   /* the small bar/icon markers are STATIC and always visible - they're the permanent visual anchor.
@@ -113,7 +115,7 @@
   #shell{ display:flex; flex-direction:column; height:100vh; }
   #site-nav{ position:fixed; top:0; left:0; width:100%; height:80px; z-index:200; pointer-events:none; }
   #site-nav .nav-tabs{ position:relative; width:100%; height:100%; }
-  .nav-tab{ appearance:none; -webkit-appearance:none; position:absolute; display:inline-flex; align-items:center; font-family:'Cairo',Helvetica,Arial,sans-serif; font-weight:300; font-size:21px; letter-spacing:-.06em; line-height:1; background:none; border:none; color:var(--ink); padding:0; cursor:pointer; pointer-events:auto; }
+  .nav-tab{ appearance:none; -webkit-appearance:none; position:absolute; display:inline-flex; align-items:center; font-family:'Cairo',Helvetica,Arial,sans-serif; font-weight:300; font-size:21px; letter-spacing:-.06em; line-height:1; background:none; border:none; color:var(--ink); margin:0; cursor:pointer; pointer-events:auto; }
   .nav-tab .nt-label{ opacity:0; transition:opacity .35s ease; }
   .nav-tab:hover .nt-label, .nav-tab:focus-visible .nt-label{ opacity:1; }
   .nav-tab .nt-bar{ position:absolute; background:var(--ink); }
@@ -129,33 +131,36 @@
   .tab-panel{ display:none; flex:1; min-height:0; }
   .tab-panel.active{ display:flex; flex-direction:column; }
   #tab-matrix.active{ overflow:hidden; }
-  #tab-sources.active{ overflow-y:auto; padding:100px var(--gutter) 90px; }
+  #tab-sources.active{ overflow-y:auto; margin:100px var(--gutter) var(--gutter) var(--gutter); }
   #tab-prosthesis.active{ overflow-y:auto; scroll-snap-type:y mandatory; }
   #tab-sources .page-inner{ width:100%; }
 
   .page-title{ font-size:28px; font-weight:700; margin:0 0 28px; color:var(--ink); }
 
   /* ---- sources page ---- */
-  .sub-nav{ display:flex; gap:8px; margin-bottom:28px; border-bottom:1px solid var(--line); padding-bottom:14px; }
-  .sub-tab{ font-family:'Cairo',Helvetica,Arial,sans-serif; font-size:11px; letter-spacing:.05em; text-transform:uppercase; background:var(--w5); border:1px solid var(--line); color:var(--w0); padding:7px 16px; border-radius:14px; cursor:pointer; }
+  .sub-nav{ display:flex; gap:8px; margin-bottom:42px; border-bottom:1px solid var(--line); }
+  .sub-tab{ font-family:'Cairo',Helvetica,Arial,sans-serif; font-size:11px; letter-spacing:.05em; text-transform:uppercase; background:var(--w5); border:1px solid var(--line); color:var(--w0); margin:7px 16px; border-radius:14px; cursor:pointer; }
   .sub-tab.active{ background:var(--w1); color:#fff; border-color:var(--w1); }
   .sub-panel{ display:none; }
   .sub-panel.active{ display:block; }
   .sub-panel h2{ font-size:18px; margin:0 0 16px; }
 
   /* one shared callout format used by both Data and Bibliography */
-  .callout{ background:var(--bg); border-left:3px solid var(--ink); padding:20px 22px; margin-bottom:20px; }
+  .callout{ background:var(--bg); border-left:3px solid var(--ink); margin:20px 22px 40px; }
   #footer-note.sources-data-note{ display:block; font-size:12.5px; line-height:1.7; color:var(--ink); }
 
   .biblio-group{ margin-bottom:22px; }
   .biblio-group:last-child{ margin-bottom:0; }
   .biblio-group h3{ font-size:13px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); margin:0 0 10px; }
-  .biblio-list{ margin:0; padding-left:22px; font-size:12.5px; line-height:1.7; color:var(--ink); }
+  .biblio-list{ margin:0 0 0 22px; font-size:12.5px; line-height:1.7; color:var(--ink); }
   .biblio-list li{ margin-bottom:10px; }
   .biblio-footnote{ font-size:11px; color:var(--muted); font-style:italic; margin-top:8px; }
 
   /* ---- prosthesis for memoir : scrollytelling narrative ---- */
-  .narrative-section{ position:relative; height:100%; min-height:100%; flex:0 0 auto; scroll-snap-align:start; scroll-snap-stop:always; box-sizing:border-box; padding:var(--gutter); display:flex; flex-direction:column; overflow:hidden; }
+  /* margin instead of padding here - since margin sits OUTSIDE the box (unlike padding, which border-box
+     would have absorbed) the height is reduced by 2x the gutter so each section still occupies exactly
+     one scroll-snap slot instead of overflowing past it */
+  .narrative-section{ position:relative; height:calc(100% - (var(--gutter) * 2)); min-height:calc(100% - (var(--gutter) * 2)); flex:0 0 auto; scroll-snap-align:start; scroll-snap-stop:always; box-sizing:border-box; margin:var(--gutter); display:flex; flex-direction:column; overflow:hidden; }
   .narrative-inner{ width:100%; height:100%; display:flex; flex-direction:column; justify-content:space-between; position:relative; z-index:2; }
   .narr-heading{ font-family:"fayte-pixel-soft",Georgia,serif; font-size:clamp(40px,7vw,84px); line-height:1.02; font-weight:500; margin:0; color:var(--ink); min-height:1.1em; flex:0 0 auto; align-self:flex-start; }
   .tw-cursor{ display:inline-block; width:0.5ch; background:var(--ink); animation:tw-blink 0.9s steps(1) infinite; margin-left:2px; }
@@ -168,15 +173,18 @@
   .text-col-flow{ position:absolute; top:17.15%; max-height:78%; overflow-y:auto; }
   /* these specific closing lines are bold and type themselves out, same as the section headings */
   .tw-line{ font-weight:700; }
+  /* extra breathing room above the "Ruins carry fragments..." closing line specifically - double
+     the standard paragraph gap so it reads as a distinct, separated pull-line after the metalogue */
+  .tw-line-spaced{ margin-top:calc(var(--gutter) * 2); }
   .narrative-section h3{ font-family:'Cairo',Helvetica,Arial,sans-serif; font-weight:600; font-size:18px; letter-spacing:-.01em; margin:var(--gutter) 0 10px; color:var(--ink); opacity:0; transform:translateY(14px); transition:opacity .5s ease, transform .5s ease; }
   .narrative-section p{ font-family:'Cairo',Helvetica,Arial,sans-serif; font-weight:600; font-size:18px; letter-spacing:-.01em; line-height:1.2; color:var(--ink); margin:0 0 var(--gutter); width:100%; opacity:0; transform:translateY(14px); transition:opacity .5s ease, transform .5s ease; }
   .narrative-section.in-view h3,
   .narrative-section.in-view p{ opacity:1; transform:translateY(0); }
 
-  .citation-block{ border-left:2px solid var(--line); padding-left:14px; margin-bottom:0; }
+  .citation-block{ border-left:2px solid var(--line); margin:0 0 0 14px; }
   .citation-block p{ font-size:13px; color:var(--muted); max-width:none; margin:0; }
 
-  .metalogue{ border-left:3px solid var(--ink); padding:18px 20px; margin-top:10px; max-height:34vh; overflow-y:auto; }
+  .metalogue{ border-left:3px solid var(--ink); margin:28px 20px 18px; max-height:34vh; overflow-y:auto; }
   .metalogue p{ font-family:"IBM Plex Mono",monospace; font-size:11.5px; line-height:1.8; color:var(--ink); margin:0 0 10px; max-width:none; }
   .metalogue-title{ font-family:"IBM Plex Mono",monospace; font-weight:500; text-transform:uppercase; letter-spacing:.05em; font-size:10.5px; color:var(--muted); margin-bottom:14px; opacity:1; transform:none; }
 
@@ -194,7 +202,7 @@
   /* square marker is static (always visible, like the nav icons) and positioned by JS at a random
      spot that's checked against the section's actual content so it never sits on top of anything;
      the label stays hidden until you hover the square, same as the nav labels */
-  .visualize-btn{ appearance:none; -webkit-appearance:none; position:absolute; z-index:5; width:20px; height:20px; padding:0; margin:0; border:none; background:none; cursor:pointer; }
+  .visualize-btn{ appearance:none; -webkit-appearance:none; position:absolute; z-index:25; width:20px; height:20px; margin:0; border:none; background:none; cursor:pointer; }
   .visualize-btn .nt-bar{ position:absolute; left:0; top:0; width:20px; height:20px; background:var(--ink); }
   .visualize-btn .nt-label{ position:absolute; left:28px; top:50%; transform:translateY(-50%); white-space:nowrap; font-family:'Cairo',Helvetica,Arial,sans-serif; font-weight:300; font-size:21px; letter-spacing:-.06em; color:var(--ink); opacity:0; transition:opacity .35s ease; }
   .visualize-btn:hover .nt-label, .visualize-btn:focus-visible .nt-label{ opacity:1; }
@@ -362,16 +370,16 @@
 <section id="tab-prosthesis" class="tab-panel">
 
   <div class="narrative-section" id="loop-1">
-    <div class="photo-window win pw-1" style="top:43.89%; left:31.94%; width:15.28%; z-index:1;">
+    <div class="photo-window win pw-1" style="top:43.89%; left:31.94%; width:15.28%; z-index:11;">
       <div class="win-body" style="height:31.67%; background:var(--ph2);"></div>
     </div>
-    <div class="photo-window win pw-2" style="top:46.11%; left:33.68%; width:15.28%; z-index:2;">
+    <div class="photo-window win pw-2" style="top:46.11%; left:33.68%; width:15.28%; z-index:12;">
       <div class="win-body" style="height:31.67%; background:var(--ph4);"></div>
     </div>
-    <div class="photo-window win pw-3" style="top:50.56%; left:35.42%; width:15.28%; z-index:3;">
+    <div class="photo-window win pw-3" style="top:50.56%; left:35.42%; width:15.28%; z-index:13;">
       <div class="win-body" style="height:31.67%; background:var(--ph3);"></div>
     </div>
-    <div class="photo-window win pw-4" style="top:55%; left:38.19%; width:15.28%; z-index:4;">
+    <div class="photo-window win pw-4" style="top:55%; left:38.19%; width:15.28%; z-index:14;">
       <div class="win-body" style="height:31.67%; background:var(--ph1);"></div>
     </div>
     <h2 class="section-watermark">PROSTHESIS<br>FOR MEMOIR</h2>
@@ -390,19 +398,19 @@
   </div>
 
   <div class="narrative-section" id="loop-2">
-    <div class="photo-window win pw-1" style="top:43.89%; left:31.94%; width:15.28%; z-index:1;">
+    <div class="photo-window win pw-1" style="top:43.89%; left:31.94%; width:15.28%; z-index:11;">
       <div class="win-body" style="height:31.67%; background:var(--ph3);"></div>
     </div>
-    <div class="photo-window win pw-2" style="top:46.11%; left:33.68%; width:15.28%; z-index:2;">
+    <div class="photo-window win pw-2" style="top:46.11%; left:33.68%; width:15.28%; z-index:12;">
       <div class="win-body" style="height:31.67%; background:var(--ph1);"></div>
     </div>
-    <div class="photo-window win pw-3" style="top:50.56%; left:35.42%; width:15.28%; z-index:3;">
+    <div class="photo-window win pw-3" style="top:50.56%; left:35.42%; width:15.28%; z-index:13;">
       <div class="win-body" style="height:31.67%; background:var(--ph4);"></div>
     </div>
-    <div class="photo-window win pw-4" style="top:55%; left:38.19%; width:15.28%; z-index:4;">
+    <div class="photo-window win pw-4" style="top:55%; left:38.19%; width:15.28%; z-index:14;">
       <div class="win-body" style="height:31.67%; background:var(--ph2);"></div>
     </div>
-    <h2 class="section-watermark" style="font-size:clamp(23px,5.5vw,68px);">RESEARCH AS MATERIAL,<br>MATERIAL AS WITNESS,<br>WITNESS TESTIFIES.</h2>
+    <h2 class="section-watermark">RESEARCH AS MATERIAL,<br>MATERIAL AS WITNESS,<br>WITNESS TESTIFIES.</h2>
     <div class="narrative-inner">
       <div class="text-col-flow avoid-block" style="left:var(--gutter); width:28.75%;">
         <p>Trauma tectonically shifts aggregates of what will be fragments; fragments witnessed an orderly state of being beneath a new aggregate, dispersed and bloomed out of an ecological or sometimes anthropic trace, traced upon their disturbed edges a memoir for a prosthetic to read. Memoir in fragment, memoir in scar, prosthesis for memoir.</p>
@@ -417,7 +425,7 @@
           <p class="metalogue-title">Metalogue — Gregory Bateson, "Why Do Things Get in a Muddle?"</p>
           <p>Daughter: Daddy, why do things get in a muddle?<br>Father: What do you mean? Things? Muddle?<br>D: Well, people spend a lot of time tidying things, but they never seem to spend time muddling them. Things just seem to get in a muddle by themselves. And then people have to tidy them up again.<br>F: But do your things get in a muddle if you don't touch them?<br>D: No—not if nobody touches them. But if you touch them—or if anybody touches them—they get in a muddle and it's a worse muddle if it isn't me.<br>F: Yes—that's why I try to keep you from touching the things on my desk. Because my things get in a worse muddle if they are touched by somebody who isn't me.<br>D: But do people always muddle other people's things? Why do they, Daddy?<br>F: Now, wait a minute. It's not so simple. First of all, what do you mean by a muddle?<br>D: I mean—so I can't find things, and so it looks all muddled up. The way it is when nothing is straight.<br>F: Well, but are you sure you mean the same thing by muddle that anybody else would mean?<br>D: But, Daddy, I'm sure I do—because I'm not a very tidy person and if I say things are in a muddle, then I'm sure everybody else would agree with me.<br>F: All right—but do you think you mean the same thing by "tidy" that other people would? If your mummy makes your things tidy, do you know where to find them?<br>D: Hmm . . . sometimes—because, you see, I know where she puts things when she tidies up.<br>F: Yes, I try to keep her away from tidying my desk, too. I'm sure that she and I don't mean the same thing by "tidy."<br>D: Daddy, do you and I mean the same thing by "tidy?"<br>F: I doubt it, my dear—I doubt it.<br>D: But, Daddy, isn't that a funny thing—that everybody means the same when they say "muddled" but everybody means something different by "tidy." But "tidy" is the opposite of "muddled," isn't it?<br>F: Now we begin to get into more difficult questions. Let's start again from the beginning. You said "Why do things always get in a muddle?" Now we have made a step or two—and let's change the question to "Why do things get in a state which Cathy calls 'not tidy?' " Do you see why I want to make that change?<br>D: ... Yes, I think so—because if I have a special meaning for "tidy" then some of other people's "tidies" will look like muddles to me—even if we do agree about most of what we call muddles.<br>F: That's right. Now—let's look at what you call tidy. When your paint box is put in a tidy place, where is it?<br>D: Here on the end of this shelf.<br>F: Okay—now if it were anywhere else?<br>D: No, that would not be tidy.<br>F: What about the other end of the shelf, here? Like this?<br>D: No, that's not where it belongs, and anyhow it would have to be straight, not all crooked the way you put it.<br>F: Oh—in the right place and straight.<br>D: Yes.<br>F: Well, that means that there are only very few places which are "tidy" for your paint box.<br>D: Only one place—<br>F: No—very few places, because if I move it a little bit, like this, it is still tidy.<br>D: All right—but very, very few places.<br>F: All right, very, very few places. Now what about the teddy bear and your doll, and the Wizard of Oz and your sweater, and your shoes? It's the same for all the things, isn't it, that each thing has only a very, very few places which are "tidy" for that thing?<br>D: Yes, Daddy—but the Wizard of Oz could be anywhere on that shelf. And Daddy—do you know what? I hate, hate it when my books get all mixed up with your books and Mummy's books.<br>F: Yes, I know. (Pause)<br>D: Daddy, you didn't finish. Why do my things get the way I say isn't tidy?<br>F: But I have finished—it's just because there are more ways which you call "untidy" than there are ways which you call "tidy."<br>D: But that isn't a reason why.<br>F: But, yes, it is. And it is the real and only and very important reason.<br>D: Oh, Daddy! Stop it.<br>F: No, I'm not fooling. That is the reason, and all of science is hooked up with that reason. Let's take another example. If I put some sand in the bottom of this cup and put some sugar on the top of it, and now stir it with a teaspoon, the sand and the sugar will get mixed up, won't they?<br>D: Yes, but, Daddy, is it fair to shift over to talking about "mixed up" when we started with "muddled up?"<br>F: Hmm . . . I wonder . . . but I think so—Yes—because let's say we can find somebody who thinks it is more tidy to have all the sand underneath all the sugar. And if you like I'll say I want it that way.<br>D: Hmm. . .<br>F: All right—take another example. Sometimes in the movies you will see a lot of letters of the alphabet all scattered over the screen, all higgledy-piggledy and some even upside down. And then something shakes the table so that the letters start to move, and then as the shaking goes on, the letters all come together to spell the title of the film.<br>D: Yes, I've seen that—they spelled DONALD.<br>F: It doesn't matter what they spelled. The point is that you saw something being shaken and stirred up and instead of getting more mixed up than before, the letters came together into an order, all right way up, and spelled a word—they made up something which a lot of people would agree is sense.<br>D: Yes, Daddy, but you know . . .<br>F: No, I don't know; what I am trying to say is that in the real world things never happen that way. It's only in the movies.<br>D: But, Daddy . . .<br>F: I tell you it's only in the movies that you can shake things and they seem to take on more order and sense than they had before …<br>D: But, Daddy . . .<br>F: Wait till I've finished this time . . . And they make it look like that in the movies by doing the whole thing backwards. They put the letters all in order to spell DONALD and then they start the camera and then they start shaking the table.<br>D: Oh, Daddy—I knew that and I did so want to tell you that—and then when they run the film, they run it backwards so that it looks as though things had happened forwards. But really the shaking happened backwards. And they have to photograph it upside down ... Why do they, Daddy?<br>F: Oh God.<br>D: Why do they have to fix the camera upside down, Daddy?<br>F: No, I won't answer that question now because we're in the middle of the question about muddles.<br>D: Oh—all right, but don't forget, Daddy, you've got to answer that question about the camera another day. Don't forget! You won't forget, will you, Daddy? Because I may not remember. Please, Daddy.<br>F: Okay—but another day. Now, where were we? Yes, about things never happening backwards. And I was trying to tell you why it is a reason for things to happen in a certain way if we can show that that way has more ways of happening than some other way.<br>D: Daddy—don't begin talking nonsense.<br>F: I'm not talking nonsense. Let's start again. There's only one way of spelling DONALD. Agreed?<br>D: Yes.<br>F: All right. And there are millions and millions and millions of ways of scattering six letters on the table. Agreed?<br>D: Yes. I suppose so. Can some of these be upside down?<br>F: Yes—just in the sort of higgledy-piggledy muddle they were in in the film. But there could be millions and millions and millions of muddles like that, couldn't there? And only one DONALD?<br>D: All right—yes. But, Daddy, the same letters might spell OLD DAN.<br>F: Never mind. The movie people don't want them to spell OLD DAN. They only want DONALD.<br>D: Why do they?<br>F: Damn the movie people.<br>D: But you mentioned them first, Daddy.<br>F: Yes—but that was to try to tell you why things happen that way in which there are most ways of their happening. And now it's your bedtime.<br>D: But, Daddy, you never did finish telling me why things happen that way—the way that has most ways.<br>F: All right. But don't start any more hares running—one is quite enough. Anyhow, I am tired of DONALD, let's take another example. Let's take tossing pennies.<br>D: Daddy? Are you still talking about the same question we started with? "Why do things get in a muddle?"<br>F: Yes.<br>D: Then, Daddy, is what you are trying to say true about pennies, and about DONALD, and about sugar and sand, and about my paint box, and about pennies?<br>F: Yes—that's right.<br>D: Oh—I was just wondering, that's all.<br>F: Now, let's see if I can get it said this time. Let's go back to the sand and the sugar, and let's suppose that somebody says that having the sand at the bottom is "tidy" or "orderly."<br>D: Daddy, does somebody have to say something like that before you can go on to talk about how things are going to get mixed up when you stir them?<br>F: Yes—that's just the point. They say what they hope will happen and then I tell them it won't happen because there are so many other things that might happen. And I know that it is more likely that one of the many things will happen and not one of the few.<br>D: Daddy, you're just an old bookmaker, backing all the other horses against the one horse that I want to bet on.<br>F: That's right, my dear. I get them to bet on what they call the "tidy" way—I know that there are infinitely many muddled ways—so things will always go toward muddle and mixedness.<br>D: But why didn't you say that at the beginning, Daddy? I could have understood that all right.<br>F: Yes, I suppose so. Anyhow, it's now bedtime.<br>D: Daddy, why do grownups have wars, instead of just fighting the way children do?<br>F: No—bedtime. Be off with you. We'll talk about wars another time.</p>
         </div>
-        <p class="tw-line">Ruins carry fragments; fragments write memoirs; prosthetics read memoirs.</p>
+        <p class="tw-line tw-line-spaced">Ruins carry fragments; fragments write memoirs; prosthetics read memoirs.</p>
       </div>
     </div>
     <button type="button" class="visualize-btn" style="opacity:0;"><span class="nt-bar"></span><span class="nt-label">Visualize</span></button>
@@ -467,7 +475,7 @@
 window.onerror = function(msg, src, line, col, err){
   var el = document.getElementById('model-body');
   var banner = document.createElement('div');
-  banner.style.cssText = 'padding:12px 14px;font-size:11.5px;color:#a33;font-family:monospace;white-space:pre-wrap;background:#fdeeee;border-bottom:1px solid #d99;';
+  banner.style.cssText = 'margin:12px 14px;font-size:11.5px;color:#a33;font-family:monospace;white-space:pre-wrap;background:#fdeeee;border-bottom:1px solid #d99;';
   banner.textContent = 'JS error: ' + msg + ' (line ' + line + ')';
   if (el) el.prepend(banner);
   console.error(err || msg);
@@ -1583,7 +1591,7 @@ Promise.all([
     "This page makes no live API calls at runtime - it is a static local file, and NOAA/NASA/Open-Elevation do not expose browser CORS for arbitrary local origins. Every number shown was fetched once during research and is stored here as-is.";
 
   if (!geometry){
-    document.getElementById("model-body").innerHTML = "<div style='padding:20px;font-size:12px;color:#888;'>geometry.json not found - open this file via a local server (as the assignment's Running-a-Local-Server step describes) so it can load the CAD-derived geometry.</div>";
+    document.getElementById("model-body").innerHTML = "<div style='margin:20px;font-size:12px;color:#888;'>geometry.json not found - open this file via a local server (as the assignment's Running-a-Local-Server step describes) so it can load the CAD-derived geometry.</div>";
   } else {
     initThree(geometry);
   }
@@ -2358,7 +2366,7 @@ function updateDashboard(){
   const earliestT = temperature.length ? temperature[0].date : null;
   const gapStart = new Date(2012,10,14), gapEnd = new Date(2019,10,20);
   let envHtml = "";
-  envHtml += `<div class="dash-col-title" style="border:none;margin:0 0 2px;padding:0;font-size:10px;">Time-varying (changes with the timeline)</div>`;
+  envHtml += `<div class="dash-col-title" style="border:none;margin:0 0 2px;font-size:10px;">Time-varying (changes with the timeline)</div>`;
   if (tRead){
     envHtml += row("Nearest real temp. reading", d3.timeFormat("%d %b %Y")(tRead.date));
     envHtml += row("TMAX / TAVG / TMIN", `${tRead.tmax??"-"}° / ${tRead.tavg??"-"}° / ${tRead.tmin??"-"}°C`);
@@ -2369,7 +2377,7 @@ function updateDashboard(){
   } else {
     envHtml += `<div class="dash-empty">No real NOAA reading on file at or before this date.</div>`;
   }
-  envHtml += `<div class="dash-col-title" style="border:none;margin:10px 0 2px;padding:0;font-size:10px;">Static real measurements (single point-in-time, do not change with the timeline)</div>`;
+  envHtml += `<div class="dash-col-title" style="border:none;margin:10px 0 2px;font-size:10px;">Static real measurements (single point-in-time, do not change with the timeline)</div>`;
   if (df){
     envHtml += row("Daylight, calc. for " + df.date, df.day_length);
     envHtml += row("Sunrise / Sunset", df.sunrise + " / " + df.sunset);
@@ -2684,6 +2692,19 @@ function applyTimelineToModel(date){
   }
 
   var narrativeSections = Array.prototype.slice.call(document.querySelectorAll('.narrative-section'));
+
+  // belt-and-suspenders for the same race described above positionVisualizeSquare's definition:
+  // explicitly re-run positioning for every section right after the Prosthesis nav tab is clicked
+  // (the exact moment its tab-panel flips from display:none to flex), instead of relying solely on
+  // the IntersectionObserver to catch it.
+  var prosthesisNavBtn = document.querySelector('.nav-tab-prosthesis');
+  if (prosthesisNavBtn){
+    prosthesisNavBtn.addEventListener('click', function(){
+      requestAnimationFrame(function(){
+        narrativeSections.forEach(function(sec){ positionVisualizeSquare(sec); });
+      });
+    });
+  }
   if ('IntersectionObserver' in window){
     var seen = {};
     var obs = new IntersectionObserver(function(entries){
@@ -2713,11 +2734,22 @@ function applyTimelineToModel(date){
   // ---- visualize square: random, content-aware placement - sampled against the section's actual
   // text columns / photo-window cluster / watermark so the square never lands on top of anything.
   // Re-run whenever a section first becomes visible (guarantees it's actually laid out) and on resize.
-  function positionVisualizeSquare(section){
+  // Bug fix: previously this bailed out silently and permanently if the section's tab was still
+  // display:none at the exact moment the IntersectionObserver first fired (rect width/height 0),
+  // which left the button stuck invisible with nothing to ever re-trigger it - that's what made
+  // Visualize (and its photo pop-up) seem to stop working. Now it retries across a few animation
+  // frames instead of giving up on the first zero-size read.
+  function positionVisualizeSquare(section, attemptsLeft){
+    if (attemptsLeft === undefined) attemptsLeft = 20;
     var btn = section.querySelector('.visualize-btn');
     if (!btn) return;
     var secRect = section.getBoundingClientRect();
-    if (!secRect.width || !secRect.height) return; // section not laid out yet (e.g. hidden tab)
+    if (!secRect.width || !secRect.height){
+      if (attemptsLeft > 0){
+        requestAnimationFrame(function(){ positionVisualizeSquare(section, attemptsLeft - 1); });
+      }
+      return; // section not laid out yet (e.g. hidden tab) - will retry above
+    }
     var pad = 24, size = 20;
     var maxLeft = secRect.width - size - pad;
     var maxTop = secRect.height - size - pad;
@@ -2813,7 +2845,7 @@ function applyTimelineToModel(date){
   }
 
   // ---- free dragging for photo-window / lineage-photo placeholders ----
-  var winZ = 10;
+  var winZ = 20; // above the static 11-14 baseline so a freshly-dragged window always comes to front
   Array.prototype.slice.call(document.querySelectorAll('.win')).forEach(function(win){
     var section = win.closest('.narrative-section');
     var dragging = false, startX = 0, startY = 0, startLeft = 0, startTop = 0;
