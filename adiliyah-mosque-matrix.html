@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Jami' al-'Adiliyya - Matrix / Ontology / Dashboard</title>
+<title>Enter</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/5.7.3/maplibre-gl.js"></script>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/5.7.3/maplibre-gl.min.css" rel="stylesheet" />
@@ -11,6 +11,13 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
+  /* ================================================================
+     BUNCH: COLORS & THEME
+     The whole site's color palette lives here in one place - dark
+     gray background, off-white text, and the grayscale ramp used for
+     the 3D model and photo placeholders. Change a color here and it
+     updates everywhere that references it.
+     ================================================================ */
   :root{
     --bg: #333333; --panel: #333333; --ink: #f4f4f4; --muted: #a8a8a8; --line: #4d4d4d;
     --w0:#0a0a0a; --w1:#3a3a3a; --w2:#6a6a6a; --w3:#9a9a9a; --w4:#cfcfcf; --w5:#f2f2f2;
@@ -22,9 +29,16 @@
   *{box-sizing:border-box;}
   html,body{ margin:0; height:100%; background:var(--bg); color:var(--ink); font-family:'Cairo',Helvetica,Arial,sans-serif; }
   #app{ display:flex; flex-direction:column; height:100%; }
-  /* no padding anywhere on the site now - everything below uses margin instead. header's top offset
-     stays distinct from the other 3 sides because it's functional nav-clearance, not decorative edge
-     spacing; left/right/bottom are unified to the same --gutter value */
+  /* ================================================================
+     BUNCH: MATRIX DASHBOARD - TOP BAR (the timeline scrubber)
+     Styles for the header strip across the top of the Matrix tab:
+     the date slider, its tick marks, the date readout, and the
+     reset button. No padding anywhere on the site now - everything
+     below uses margin instead. Header's top offset stays distinct
+     from the other 3 sides because it's functional nav-clearance,
+     not decorative edge spacing; left/right/bottom are unified to
+     the same --gutter value.
+     ================================================================ */
   header{ margin: 100px var(--gutter) var(--gutter) var(--gutter); border-bottom:1px solid var(--line); background:var(--panel); display:flex; align-items:center; gap:18px; flex-wrap:wrap; }
   header h1{ font-family:"fayte-pixel-soft",Georgia,serif; font-size:16px; font-weight:500; margin:0; color:var(--ink); }
   header .eyebrow{ font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); }
@@ -40,15 +54,27 @@
   #reset-btn:hover{ background:var(--w4); }
   #timeline-hint{ margin:4px 18px 8px; font-size:10px; color:var(--muted); background:var(--panel); border-bottom:1px solid var(--line); line-height:1.5; }
 
+  /* ================================================================
+     BUNCH: MATRIX DASHBOARD - OVERALL 3-PANEL LAYOUT
+     #main splits the dashboard into: the 3D model pane on the left,
+     and a right column stacking the graph, the info panel, and the
+     summary dashboard on top of each other.
+     ================================================================ */
   #main{ flex:1; display:flex; gap:1px; background:var(--line); overflow:hidden; }
+
+  /* ---- BUNCH: 3D MODEL PANE (left panel) - the map + the mosque model on top of it ---- */
   #pane-3d{ flex:1.5; background:var(--panel); position:relative; overflow:hidden; display:flex; flex-direction:column; }
   #right-col{ flex:1; min-width:320px; display:flex; flex-direction:column; gap:1px; overflow:hidden; }
   .pane{ background:var(--panel); position:relative; overflow:hidden; display:flex; flex-direction:column; }
   .pane-head{ margin:8px 14px; border-bottom:1px solid var(--line); font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); display:flex; justify-content:space-between; align-items:center; }
   .pane-body{ flex:1; position:relative; overflow:auto; }
 
+  /* ---- BUNCH: NETWORK GRAPH / INTENSITY SPHERE PANE (top-right) - the web of connected dots,
+     with a toggle to swap it for a cloud-of-dots alternate view ---- */
   #pane-graph{ flex:1.05; min-height:0; }
+  /* ---- BUNCH: SELECTED-NODE INFO PANE (middle-right) - details for whatever you just clicked ---- */
   #pane-info{ flex:0.62; min-height:120px; }
+  /* ---- BUNCH: DASHBOARD SUMMARY PANE (bottom-right) - environmental, damage & conflict numbers ---- */
   #pane-dash{ flex:1.15; min-height:0; }
 
   #pane-3d canvas{ display:block; }
@@ -107,11 +133,18 @@
   .cf-stat b{ color:var(--w0); font-size:12px; display:block; }
   .xref{ font-size:10px; color:#4a4a4a; background:#f2f2f2; border-radius:4px; margin:5px 6px 2px; display:inline-block; }
 
+  /* ---- BUNCH: FOOTER - the small credits/sources line at the very bottom of the Matrix tab ---- */
   footer{ margin:8px 18px; font-size:10.5px; color:var(--muted); border-top:1px solid var(--line); background:var(--panel); }
 
-  /* ---- shell / top nav / tabs ---- */
-  /* the small bar/icon markers are STATIC and always visible - they're the permanent visual anchor.
-     only the text label next to each one is hidden by default, fading in when you hover that marker. */
+  /* ================================================================
+     BUNCH: SITE-WIDE STRUCTURE + TOP NAVIGATION MENU
+     #shell wraps the whole page. #site-nav is the hidden-until-hover
+     menu fixed to the top ("Matrix" / "Prosthesis for Memoir" /
+     "Sources") - present on all three tabs. The small bar/icon
+     markers are STATIC and always visible - they're the permanent
+     visual anchor. Only the text label next to each one is hidden
+     by default, fading in when you hover that marker.
+     ================================================================ */
   #shell{ display:flex; flex-direction:column; height:100vh; }
   #site-nav{ position:fixed; top:0; left:0; width:100%; height:80px; z-index:200; pointer-events:none; }
   #site-nav .nav-tabs{ position:relative; width:100%; height:100%; }
@@ -128,6 +161,7 @@
   .nav-tab-prosthesis .nt-bar{ left:-5px; top:-20px; width:170px; height:10px; }
   .nav-tab-sources{ left:calc(var(--gutter) + 240px); top:8px; }
 
+  /* ---- BUNCH: TAB SWITCHING - only one of Sources/Matrix/Prosthesis for Memoir is shown at a time ---- */
   .tab-panel{ display:none; flex:1; min-height:0; }
   .tab-panel.active{ display:flex; flex-direction:column; }
   #tab-matrix.active{ overflow:hidden; }
@@ -137,7 +171,9 @@
 
   .page-title{ font-size:28px; font-weight:700; margin:0 0 28px; color:var(--ink); }
 
-  /* ---- sources page ---- */
+  /* ================================================================
+     BUNCH: SOURCES PAGE (the Data / Bibliography tab)
+     ================================================================ */
   .sub-nav{ display:flex; gap:8px; margin-bottom:42px; border-bottom:1px solid var(--line); }
   .sub-tab{ font-family:'Cairo',Helvetica,Arial,sans-serif; font-size:11px; letter-spacing:.05em; text-transform:uppercase; background:var(--w5); border:1px solid var(--line); color:var(--w0); margin:7px 16px; border-radius:14px; cursor:pointer; }
   .sub-tab.active{ background:var(--w1); color:#fff; border-color:var(--w1); }
@@ -156,7 +192,13 @@
   .biblio-list li{ margin-bottom:10px; }
   .biblio-footnote{ font-size:11px; color:var(--muted); font-style:italic; margin-top:8px; }
 
-  /* ---- prosthesis for memoir : scrollytelling narrative ---- */
+  /* ================================================================
+     BUNCH: PROSTHESIS FOR MEMOIR - THE SCROLLING STORY SECTIONS
+     Each "loop" (loop-1, loop-2, loop-3/Lineage) is one full-screen
+     section you scroll to, one at a time (like PowerPoint slides
+     but scroll-snapped). This is the text layout, spacing and
+     fade/typewriter-in behavior shared by all of them.
+     ================================================================ */
   /* margin instead of padding here - since margin sits OUTSIDE the box (unlike padding, which border-box
      would have absorbed) the height is reduced by 2x the gutter so each section still occupies exactly
      one scroll-snap slot instead of overflowing past it */
@@ -188,7 +230,12 @@
   .metalogue p{ font-family:"IBM Plex Mono",monospace; font-size:11.5px; line-height:1.8; color:var(--ink); margin:0 0 10px; max-width:none; }
   .metalogue-title{ font-family:"IBM Plex Mono",monospace; font-weight:500; text-transform:uppercase; letter-spacing:.05em; font-size:10.5px; color:var(--muted); margin-bottom:14px; opacity:1; transform:none; }
 
-  /* ---- draggable photo-window placeholders (no chrome - plain, freely movable panels, no shadow) ---- */
+  /* ================================================================
+     BUNCH: DRAGGABLE PHOTO WINDOWS
+     The gray rectangles that pop in when you click Visualize - plain
+     panels with no border/shadow, and you can grab and drag them
+     anywhere once they're showing.
+     ================================================================ */
   .win{ position:relative; background:#fff; cursor:grab; user-select:none; -webkit-user-select:none; touch-action:none; }
   .win:active{ cursor:grabbing; }
   .win-body{ width:100%; height:100%; display:block; pointer-events:none; }
@@ -198,6 +245,13 @@
   .photo-window{ position:absolute; opacity:0; transition:opacity 0s; }
   .narrative-section.photos-visible .photo-window{ opacity:1; }
 
+  /* ================================================================
+     BUNCH: THE VISUALIZE BUTTON
+     A small hidden square, randomly placed in an empty spot of each
+     section by JavaScript so it never sits on top of text or
+     photos. Hover it to see the "Visualize"/"Clear" label; click it
+     to pop the photos in or out.
+     ================================================================ */
   /* ---- visualize control: hidden in place, like the nav, until its own hitbox is hovered ---- */
   /* square marker is static (always visible, like the nav icons) and positioned by JS at a random
      spot that's checked against the section's actual content so it never sits on top of anything;
@@ -211,9 +265,18 @@
   .photo-window.pw-4{ transition-delay:.06s; }
   .win.pw-closed{ display:none; }
 
+  /* ================================================================
+     BUNCH: GIANT BACKGROUND WATERMARK HEADINGS
+     The huge title text in the bottom-right corner of each section
+     (e.g. "PROSTHESIS FOR MEMOIR", "LINEAGE") - it types itself out
+     letter by letter when you scroll to that section.
+     ================================================================ */
   /* ---- giant watermark title: replaces the typewriter heading, bottom-right of each section ---- */
   .section-watermark{ position:absolute; right:20px; bottom:10px; z-index:1; margin:0; text-align:right; font-family:"fayte-pixel-soft",Georgia,serif; font-weight:500; font-size:clamp(40px,10vw,125px); color:var(--ink); line-height:.87; pointer-events:none; }
 
+  /* ================================================================
+     BUNCH: LINEAGE SECTION - the 4-column reference grid at the end
+     ================================================================ */
   /* lineage grid: text synced directly above its own photo-window placeholder */
   .lineage-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:24px; width:100%; margin-top:12px; }
   .lineage-item{ display:flex; flex-direction:column; gap:14px; }
@@ -235,6 +298,13 @@
 </head>
 <body>
 <div id="shell">
+<!-- ============================================================
+     BUNCH: TOP NAVIGATION MENU
+     The hidden-until-hover "Matrix / Prosthesis for Memoir / Sources"
+     menu. Shown on every tab. Clicking a button switches which
+     <section> below is visible (see the tab-switching script near
+     the bottom of the file).
+     ============================================================ -->
 <nav id="site-nav">
   <div class="nav-tabs">
     <button class="nav-tab nav-tab-matrix active" data-tab="tab-matrix"><span class="nt-label">Matrix</span><span class="nt-bar"></span></button>
@@ -2230,6 +2300,11 @@ function toggleGraphView(){
 }
 
 // ============================ NODE INFO PANEL ============================
+// ================================================================
+// BUNCH: SELECTED-NODE INFO PANEL
+// Fills the "Selected Node - Full Record" pane with everything
+// known about whatever you just clicked.
+// ================================================================
 function showNodeInfo(id){
   const wrap = document.querySelector("#pane-info .pane-body");
   if (!id){
@@ -2332,6 +2407,12 @@ function showNodeInfo(id){
 }
 
 // ============================ DASHBOARD ============================
+// ================================================================
+// BUNCH: DASHBOARD SUMMARY PANEL
+// Fills in the bottom-right "Dashboard" pane: environmental info,
+// damage/zone buttons and numbers, and the conflict-timeline stats -
+// all recalculated for whatever date the timeline is currently on.
+// ================================================================
 let currentDate = new Date(2020,0,1);
 
 function nearestReading(arr, field, date){
@@ -2481,6 +2562,13 @@ function updateConflictPanel(){
 // fall inside the 2010-2023 station record, that period naturally dominates the physical
 // width of the track - exactly the "real estate" weighting asked for - while centuries
 // with nothing dated in them collapse to the handful of stops that actually exist in them.
+// ================================================================
+// BUNCH: TIMELINE SCRUBBER
+// Builds the tick marks on the date slider at the very top of the
+// page, and drives everything that happens when you drag it or
+// click a tick: moving the date forward/back updates the model,
+// graph, and dashboard all at once.
+// ================================================================
 let timelineStops = [];
 
 function buildTimelineStops(){
@@ -2619,6 +2707,13 @@ function applyTimelineToModel(date){
 }
 </script>
 
+<!-- ============================================================
+     BUNCH: TAB SWITCHING
+     Handles clicking the top nav menu (Matrix / Prosthesis for
+     Memoir / Sources) and, separately, the Data/Bibliography
+     sub-tabs inside Sources. Just shows/hides the matching section
+     and marks the clicked button as active.
+     ============================================================ -->
 <script>
 (function(){
   var navTabs = Array.prototype.slice.call(document.querySelectorAll('.nav-tab'));
@@ -2645,7 +2740,13 @@ function applyTimelineToModel(date){
     });
   });
 
-  // ---- Prosthesis for Memoir: scroll-triggered reveal + typewriter for all text ----
+  // ================================================================
+  // Everything from here to the end of the file is Prosthesis for
+  // Memoir-specific logic: the typewriter effect, scroll-triggered
+  // reveals, the Visualize button, and the draggable photo windows.
+  // ================================================================
+
+  // ---- BUNCH: TYPEWRITER EFFECT ----
   // Reveals a single element's text a chunk at a time, preserving any <br>/<em> markup
   // it already contains, and normalizing duration so long and short passages both
   // finish in roughly the same wall-clock time.
@@ -2691,6 +2792,11 @@ function applyTimelineToModel(date){
     typeChildren(original, el, function(){ cursor.remove(); if (onDone) onDone(); });
   }
 
+  // ---- BUNCH: SCROLL-TRIGGERED REVEAL ----
+  // Watches each of the 3 Prosthesis for Memoir sections; the moment
+  // one scrolls into view for the first time, its heading and bold
+  // closing line start typewriting, and its Visualize button gets
+  // positioned (see the next bunch).
   var narrativeSections = Array.prototype.slice.call(document.querySelectorAll('.narrative-section'));
 
   // belt-and-suspenders for the same race described above positionVisualizeSquare's definition:
@@ -2731,6 +2837,7 @@ function applyTimelineToModel(date){
     narrativeSections.forEach(function(sec){ sec.classList.add('in-view'); positionVisualizeSquare(sec); });
   }
 
+  // ---- BUNCH: THE VISUALIZE BUTTON'S POSITION ----
   // ---- visualize square: random, content-aware placement - sampled against the section's actual
   // text columns / photo-window cluster / watermark so the square never lands on top of anything.
   // Re-run whenever a section first becomes visible (guarantees it's actually laid out) and on resize.
@@ -2791,6 +2898,7 @@ function applyTimelineToModel(date){
     narrativeSections.forEach(function(sec){ if (sec.classList.contains('in-view')) positionVisualizeSquare(sec); });
   });
 
+  // ---- BUNCH: VISUALIZE / CLEAR CLICK - pops the photos in and out ----
   // ---- visualize / clear toggle: photos stay hidden until clicked, then pop in in a staggered
   // diagonal order; clicking again ("Clear") reverses them out in that same order, from wherever
   // each window currently sits (including if the user has dragged it) - the CSS transition-delay
@@ -2807,6 +2915,7 @@ function applyTimelineToModel(date){
     });
   });
 
+  // ---- BUNCH: KEEPING TEXT OUT OF THE WAY OF PHOTOS ----
   // ---- text-avoidance: if a dragged photo-window overlaps a text block (never the heading/
   // watermark), slide that block sideways to clear it. Runs per-block now (.avoid-block covers
   // both loop-1's individually-positioned paragraphs and loop-2's two flowing columns) since the
@@ -2844,6 +2953,7 @@ function applyTimelineToModel(date){
     blocks.forEach(function(block){ shiftBlockFromWindows(block, wins); });
   }
 
+  // ---- BUNCH: DRAGGING THE PHOTOS AROUND ----
   // ---- free dragging for photo-window / lineage-photo placeholders ----
   var winZ = 20; // above the static 11-14 baseline so a freshly-dragged window always comes to front
   Array.prototype.slice.call(document.querySelectorAll('.win')).forEach(function(win){
