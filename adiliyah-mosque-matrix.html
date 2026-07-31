@@ -2861,7 +2861,16 @@ function applyTimelineToModel(date){
     var pad = 24, size = 20;
     var maxLeft = secRect.width - size - pad;
     var maxTop = secRect.height - size - pad;
-    if (maxLeft <= pad || maxTop <= pad) return;
+    if (maxLeft <= pad || maxTop <= pad){
+      // section is too small/narrow (e.g. a narrow preview panel) for the randomized placement
+      // math to have any room to work with - previously this just silently gave up and left the
+      // button stuck invisible with no way to ever click it. Now it falls back to a fixed, always-
+      // reachable spot in the top-right corner instead of disappearing entirely.
+      btn.style.left = Math.max(pad, secRect.width - size - 8) + 'px';
+      btn.style.top = pad + 'px';
+      btn.style.opacity = '';
+      return;
+    }
 
     var occupied = Array.prototype.slice.call(
       section.querySelectorAll('.avoid-block, .photo-window, .section-watermark, .lineage-grid')
