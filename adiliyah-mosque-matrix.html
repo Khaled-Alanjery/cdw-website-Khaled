@@ -238,11 +238,19 @@
      ================================================================ */
   .win{ position:relative; background:#fff; cursor:grab; user-select:none; -webkit-user-select:none; touch-action:none; }
   .win:active{ cursor:grabbing; }
-  .win-body{ width:100%; height:100%; display:block; pointer-events:none; }
+  .win-body{ width:100%; height:100%; display:block; pointer-events:none; background-size:cover; background-position:center; }
+  /* matte color behind each photo, cycling through the page's 4-color grayscale ramp - a fallback
+     tint (visible only if an image is slow to load) that keeps the earlier design's color rhythm now
+     that windows share one pool of 13 images instead of each being pre-tinted individually */
+  .photo-window:nth-child(4n+1) .win-body{ background-color:var(--ph1); }
+  .photo-window:nth-child(4n+2) .win-body{ background-color:var(--ph2); }
+  .photo-window:nth-child(4n+3) .win-body{ background-color:var(--ph3); }
+  .photo-window:nth-child(4n+4) .win-body{ background-color:var(--ph4); }
 
-  /* photo-window: instant snap-in pop (no fade) - each window appears at full opacity immediately, staggered across 12 windows */
+  /* photo-window: instant snap-in pop (no fade) - each window appears at full opacity immediately,
+     staggered across all 13 windows via a JS-computed per-index transition-delay (positionPhotoCascade) */
   /* triggered by the Visualize button (not by scroll) via the .photos-visible class */
-  .photo-window{ position:absolute; opacity:0; transition:opacity 0s; }
+  .photo-window{ position:absolute; opacity:0; transition:opacity 0s; top:0; left:0; width:15.28%; height:31.67%; }
   .narrative-section.photos-visible .photo-window{ opacity:1; }
 
   /* ================================================================
@@ -260,10 +268,9 @@
   .visualize-btn .nt-bar{ position:absolute; left:0; top:0; width:20px; height:20px; background:var(--ink); }
   .visualize-btn .nt-label{ position:absolute; left:28px; top:50%; transform:translateY(-50%); white-space:nowrap; font-family:'Cairo',Helvetica,Arial,sans-serif; font-weight:300; font-size:21px; letter-spacing:-.06em; color:var(--ink); opacity:0; transition:opacity .35s ease; }
   .visualize-btn:hover .nt-label, .visualize-btn:focus-visible .nt-label{ opacity:1; }
-  /* delays big enough to actually read as sequential (20-60ms was imperceptible - looked simultaneous) */
-  .photo-window.pw-2{ transition-delay:.12s; }
-  .photo-window.pw-3{ transition-delay:.24s; }
-  .photo-window.pw-4{ transition-delay:.36s; }
+  /* per-window transition-delay (120ms/step, same cadence as before - big enough to read as
+     sequential, not simultaneous) is now set inline by positionPhotoCascade() in JS, since the
+     count of windows per section is no longer fixed at 4 */
   .win.pw-closed{ display:none; }
 
   /* ================================================================
@@ -278,7 +285,8 @@
   /* ================================================================
      BUNCH: LINEAGE SECTION - the 4-column reference grid at the end
      ================================================================ */
-  /* lineage grid: text synced directly above its own photo-window placeholder */
+  /* lineage grid: now just the 4 citation captions - imagery moved into the shared 13-photo-window
+     cascade (same mechanic as loop-1/loop-2) instead of one photo pinned per caption */
   .lineage-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:24px; width:100%; margin-top:12px; }
   .lineage-item{ display:flex; flex-direction:column; gap:14px; }
   /* text reveals on scroll, same springy pop as before - now scoped to just the text */
@@ -287,12 +295,6 @@
   .lineage-item:nth-child(2) p{ transition-delay:.05s; }
   .lineage-item:nth-child(3) p{ transition-delay:.1s; }
   .lineage-item:nth-child(4) p{ transition-delay:.15s; }
-  /* photos stay hidden until Visualize is clicked, same instant-snap stagger as the photo-window stacks */
-  .lineage-photo{ width:100%; opacity:0; transition:opacity 0s; }
-  .narrative-section.photos-visible .lineage-photo{ opacity:1; }
-  .lineage-item:nth-child(2) .lineage-photo{ transition-delay:.12s; }
-  .lineage-item:nth-child(3) .lineage-photo{ transition-delay:.24s; }
-  .lineage-item:nth-child(4) .lineage-photo{ transition-delay:.36s; }
   @media (max-width:900px){ .lineage-grid{ grid-template-columns:repeat(2,1fr); } }
   @media (max-width:560px){ .lineage-grid{ grid-template-columns:1fr; } }
 </style>
@@ -441,17 +443,44 @@
 <section id="tab-prosthesis" class="tab-panel">
 
   <div class="narrative-section" id="loop-1">
-    <div class="photo-window win pw-1" style="top:43.89%; left:31.94%; width:15.28%; height:31.67%; z-index:11;">
-      <div class="win-body" style="background:var(--ph2) url('images/pfm/mosque-aerial.jpg') center/cover;"></div>
+    <div class="photo-window win">
+      <div class="win-body" style="background-image:url('images/pfm/mosque-aerial.jpg');"></div>
     </div>
-    <div class="photo-window win pw-2" style="top:46.11%; left:33.68%; width:15.28%; height:31.67%; z-index:12;">
-      <div class="win-body" style="background:var(--ph4) url('images/pfm/mosque-01.jpg') center/cover;"></div>
+    <div class="photo-window win">
+      <div class="win-body" style="background-image:url('images/pfm/mosque-01.jpg');"></div>
     </div>
-    <div class="photo-window win pw-3" style="top:50.56%; left:35.42%; width:15.28%; height:31.67%; z-index:13;">
-      <div class="win-body" style="background:var(--ph3) url('images/pfm/mosque-08.jpg') center/cover;"></div>
+    <div class="photo-window win">
+      <div class="win-body" style="background-image:url('images/pfm/mosque-02.jpg');"></div>
     </div>
-    <div class="photo-window win pw-4" style="top:55%; left:38.19%; width:15.28%; height:31.67%; z-index:14;">
-      <div class="win-body" style="background:var(--ph1) url('images/pfm/mosque-03.jpg') center/cover;"></div>
+    <div class="photo-window win">
+      <div class="win-body" style="background-image:url('images/pfm/mosque-03.jpg');"></div>
+    </div>
+    <div class="photo-window win">
+      <div class="win-body" style="background-image:url('images/pfm/mosque-04.jpg');"></div>
+    </div>
+    <div class="photo-window win">
+      <div class="win-body" style="background-image:url('images/pfm/mosque-05.jpg');"></div>
+    </div>
+    <div class="photo-window win">
+      <div class="win-body" style="background-image:url('images/pfm/mosque-06.jpg');"></div>
+    </div>
+    <div class="photo-window win">
+      <div class="win-body" style="background-image:url('images/pfm/mosque-07.jpg');"></div>
+    </div>
+    <div class="photo-window win">
+      <div class="win-body" style="background-image:url('images/pfm/mosque-08.jpg');"></div>
+    </div>
+    <div class="photo-window win">
+      <div class="win-body" style="background-image:url('images/pfm/lwoods-centricity-47.jpg');"></div>
+    </div>
+    <div class="photo-window win">
+      <div class="win-body" style="background-image:url('images/pfm/lwoods-centricity-52.jpg');"></div>
+    </div>
+    <div class="photo-window win">
+      <div class="win-body" style="background-image:url('images/pfm/lwoods-centricity-53.jpg');"></div>
+    </div>
+    <div class="photo-window win">
+      <div class="win-body" style="background-image:url('images/pfm/lwoods-centricity-54.jpg');"></div>
     </div>
     <h2 class="section-watermark">PROSTHESIS<br>FOR MEMOIR</h2>
     <div class="narrative-inner">
@@ -469,17 +498,44 @@
   </div>
 
   <div class="narrative-section" id="loop-2">
-    <div class="photo-window win pw-1" style="top:43.89%; left:31.94%; width:15.28%; height:31.67%; z-index:11;">
-      <div class="win-body" style="background:var(--ph3) url('images/pfm/mosque-02.jpg') center/cover;"></div>
+    <div class="photo-window win">
+      <div class="win-body" style="background-image:url('images/pfm/mosque-aerial.jpg');"></div>
     </div>
-    <div class="photo-window win pw-2" style="top:46.11%; left:33.68%; width:15.28%; height:31.67%; z-index:12;">
-      <div class="win-body" style="background:var(--ph1) url('images/pfm/mosque-04.jpg') center/cover;"></div>
+    <div class="photo-window win">
+      <div class="win-body" style="background-image:url('images/pfm/mosque-01.jpg');"></div>
     </div>
-    <div class="photo-window win pw-3" style="top:50.56%; left:35.42%; width:15.28%; height:31.67%; z-index:13;">
-      <div class="win-body" style="background:var(--ph4) url('images/pfm/mosque-05.jpg') center/cover;"></div>
+    <div class="photo-window win">
+      <div class="win-body" style="background-image:url('images/pfm/mosque-02.jpg');"></div>
     </div>
-    <div class="photo-window win pw-4" style="top:55%; left:38.19%; width:15.28%; height:31.67%; z-index:14;">
-      <div class="win-body" style="background:var(--ph2) url('images/pfm/mosque-06.jpg') center/cover;"></div>
+    <div class="photo-window win">
+      <div class="win-body" style="background-image:url('images/pfm/mosque-03.jpg');"></div>
+    </div>
+    <div class="photo-window win">
+      <div class="win-body" style="background-image:url('images/pfm/mosque-04.jpg');"></div>
+    </div>
+    <div class="photo-window win">
+      <div class="win-body" style="background-image:url('images/pfm/mosque-05.jpg');"></div>
+    </div>
+    <div class="photo-window win">
+      <div class="win-body" style="background-image:url('images/pfm/mosque-06.jpg');"></div>
+    </div>
+    <div class="photo-window win">
+      <div class="win-body" style="background-image:url('images/pfm/mosque-07.jpg');"></div>
+    </div>
+    <div class="photo-window win">
+      <div class="win-body" style="background-image:url('images/pfm/mosque-08.jpg');"></div>
+    </div>
+    <div class="photo-window win">
+      <div class="win-body" style="background-image:url('images/pfm/lwoods-centricity-47.jpg');"></div>
+    </div>
+    <div class="photo-window win">
+      <div class="win-body" style="background-image:url('images/pfm/lwoods-centricity-52.jpg');"></div>
+    </div>
+    <div class="photo-window win">
+      <div class="win-body" style="background-image:url('images/pfm/lwoods-centricity-53.jpg');"></div>
+    </div>
+    <div class="photo-window win">
+      <div class="win-body" style="background-image:url('images/pfm/lwoods-centricity-54.jpg');"></div>
     </div>
     <h2 class="section-watermark">RESEARCH AS MATERIAL,<br>MATERIAL AS WITNESS,<br>WITNESS TESTIFIES.</h2>
     <div class="narrative-inner">
@@ -503,33 +559,60 @@
   </div>
 
   <div class="narrative-section" id="loop-3">
+    <div class="photo-window win">
+      <div class="win-body" style="background-image:url('images/pfm/mosque-aerial.jpg');"></div>
+    </div>
+    <div class="photo-window win">
+      <div class="win-body" style="background-image:url('images/pfm/mosque-01.jpg');"></div>
+    </div>
+    <div class="photo-window win">
+      <div class="win-body" style="background-image:url('images/pfm/mosque-02.jpg');"></div>
+    </div>
+    <div class="photo-window win">
+      <div class="win-body" style="background-image:url('images/pfm/mosque-03.jpg');"></div>
+    </div>
+    <div class="photo-window win">
+      <div class="win-body" style="background-image:url('images/pfm/mosque-04.jpg');"></div>
+    </div>
+    <div class="photo-window win">
+      <div class="win-body" style="background-image:url('images/pfm/mosque-05.jpg');"></div>
+    </div>
+    <div class="photo-window win">
+      <div class="win-body" style="background-image:url('images/pfm/mosque-06.jpg');"></div>
+    </div>
+    <div class="photo-window win">
+      <div class="win-body" style="background-image:url('images/pfm/mosque-07.jpg');"></div>
+    </div>
+    <div class="photo-window win">
+      <div class="win-body" style="background-image:url('images/pfm/mosque-08.jpg');"></div>
+    </div>
+    <div class="photo-window win">
+      <div class="win-body" style="background-image:url('images/pfm/lwoods-centricity-47.jpg');"></div>
+    </div>
+    <div class="photo-window win">
+      <div class="win-body" style="background-image:url('images/pfm/lwoods-centricity-52.jpg');"></div>
+    </div>
+    <div class="photo-window win">
+      <div class="win-body" style="background-image:url('images/pfm/lwoods-centricity-53.jpg');"></div>
+    </div>
+    <div class="photo-window win">
+      <div class="win-body" style="background-image:url('images/pfm/lwoods-centricity-54.jpg');"></div>
+    </div>
     <h2 class="section-watermark">LINEAGE</h2>
     <div class="narrative-inner">
       <div class="narrative-body">
       <div class="lineage-grid">
         <div class="lineage-item">
           <p>Lebbeus Woods, <em>War and Architecture</em> / <em>Radical Reconstruction</em> — the direct source of the project's scab/scar/prosthesis vocabulary and its refusal to "repair" damaged buildings.</p>
-          <div class="lineage-photo win">
-            <div class="win-body" style="height:190px; background:var(--ph1) url('images/pfm/lwoods-centricity-47.jpg') center/cover;"></div>
-          </div>
         </div>
         <div class="lineage-item">
           <p>Poststructuralist theory — Deleuze &amp; Guattari's rhizome, intellectual lineage for a research method that resists hierarchy, closure, and a single authored narrative.</p>
-          <div class="lineage-photo win">
-            <div class="win-body" style="height:230px; background:var(--ph2) url('images/pfm/lwoods-centricity-52.jpg') center/cover;"></div>
-          </div>
         </div>
         <div class="lineage-item">
           <p>Derrida's parergon (via the <em>Historic Preservation Theory</em> anthology) — framing/supplement logic used to think through how the automaton attaches to, without fully belonging to, the building envelope.</p>
-          <div class="lineage-photo win">
-            <div class="win-body" style="height:160px; background:var(--ph3) url('images/pfm/lwoods-centricity-53.jpg') center/cover;"></div>
-          </div>
         </div>
         <div class="lineage-item">
           <p>Postwar/post-disaster preservation theory generally: the long-running debate between restoring a damaged monument to apparent normalcy versus letting the ruin remain legible as artifact.</p>
-          <div class="lineage-photo win">
-            <div class="win-body" style="height:210px; background:var(--ph4) url('images/pfm/lwoods-centricity-54.jpg') center/cover;"></div>
-          </div>
         </div>
       </div>
       </div>
@@ -2869,11 +2952,15 @@ function applyTimelineToModel(date){
       btn.style.left = Math.max(pad, secRect.width - size - 8) + 'px';
       btn.style.top = pad + 'px';
       btn.style.opacity = '';
+      positionPhotoCascade(section);
       return;
     }
 
+    // note: .photo-window is deliberately NOT in this avoidance list - photo positions are now
+    // derived FROM the button's position (positionPhotoCascade, below), so having the button also
+    // avoid the photos would be circular and would fight with itself
     var occupied = Array.prototype.slice.call(
-      section.querySelectorAll('.avoid-block, .photo-window, .section-watermark, .lineage-grid')
+      section.querySelectorAll('.avoid-block, .section-watermark, .lineage-grid')
     ).map(function(el){
       var r = el.getBoundingClientRect();
       return { left: r.left - secRect.left, top: r.top - secRect.top, right: r.right - secRect.left, bottom: r.bottom - secRect.top };
@@ -2903,10 +2990,96 @@ function applyTimelineToModel(date){
       btn.style.top = best.y + 'px';
       btn.style.opacity = '';
     }
+    positionPhotoCascade(section);
   }
   window.addEventListener('resize', function(){
     narrativeSections.forEach(function(sec){ if (sec.classList.contains('in-view')) positionVisualizeSquare(sec); });
   });
+
+  // ---- BUNCH: DIAGONAL PHOTO CASCADE ----
+  // All 13 photo-windows in a section fan out diagonally, in a fixed diagonal step, always
+  // starting from wherever the Visualize button itself just got positioned (not from fixed,
+  // button-independent coordinates) - so the cascade's origin point moves with the button.
+  // The diagonal walk "bounces" off the section's edges like a ball off a wall, instead of
+  // clamping flat against them, so a run of 13 windows keeps fanning out diagonally instead of
+  // collapsing into a stack once it reaches an edge (which is what a straight, unbounced diagonal
+  // would do for more than 4-5 windows in a normal-sized section).
+  // Given an obstacle's [start, end] span on one axis of the section, returns the [min, max]
+  // pixel range - on whichever side of the obstacle has more open room - that a window's TOP-LEFT
+  // corner may occupy on that axis without the window overlapping the obstacle. Falls back to the
+  // full axis if there's no obstacle at all.
+  function clampAxis(secLen, obstacleStart, obstacleEnd, winLen, margin){
+    if (obstacleEnd <= obstacleStart){
+      return { min: 0, max: Math.max(secLen - winLen, 1) };
+    }
+    var roomBefore = obstacleStart;
+    var roomAfter = secLen - obstacleEnd;
+    if (roomAfter >= roomBefore){
+      var min = obstacleEnd + margin;
+      return { min: min, max: Math.max(secLen - winLen, min + 1) };
+    }
+    return { min: 0, max: Math.max(obstacleStart - margin - winLen, 1) };
+  }
+
+  function positionPhotoCascade(section){
+    var wins = Array.prototype.slice.call(section.querySelectorAll('.photo-window'));
+    if (!wins.length) return;
+    var btn = section.querySelector('.visualize-btn');
+    if (!btn) return;
+    var secRect = section.getBoundingClientRect();
+    if (!secRect.width || !secRect.height) return;
+
+    var anchorX = parseFloat(btn.style.left) || 0;
+    var anchorY = parseFloat(btn.style.top) || 0;
+    var winW = secRect.width * 0.1528;   // matches the .photo-window CSS width (15.28%)
+    var winH = secRect.height * 0.3167;  // matches the .photo-window CSS height (31.67%)
+
+    // Keep the cascade clear of this section's actual content instead of bouncing across the
+    // section's full box - a 13-window diagonal run is much wider than the old fixed 4-window
+    // cluster, and without this it sweeps back over text it should stay clear of. loop-1/loop-2's
+    // text columns (.avoid-block) are the X-axis obstacle here; Lineage's caption row
+    // (.lineage-grid) is the Y-axis obstacle. clampAxis figures out per-section, from actual
+    // layout, whether the open room is before or after the obstacle (loop-1/2: to the right of the
+    // text; Lineage: above the caption row, since it sits low in the section) rather than assuming
+    // a fixed side.
+    var obstX0 = Infinity, obstX1 = 0, obstY0 = Infinity, obstY1 = 0;
+    Array.prototype.slice.call(section.querySelectorAll('.avoid-block')).forEach(function(block){
+      var r = block.getBoundingClientRect();
+      obstX0 = Math.min(obstX0, r.left - secRect.left);
+      obstX1 = Math.max(obstX1, r.right - secRect.left);
+    });
+    Array.prototype.slice.call(section.querySelectorAll('.lineage-grid')).forEach(function(grid){
+      var r = grid.getBoundingClientRect();
+      obstY0 = Math.min(obstY0, r.top - secRect.top);
+      obstY1 = Math.max(obstY1, r.bottom - secRect.top);
+    });
+    if (obstX1 <= obstX0){ obstX0 = 0; obstX1 = 0; }
+    if (obstY1 <= obstY0){ obstY0 = 0; obstY1 = 0; }
+
+    var xr = clampAxis(secRect.width, obstX0, obstX1, winW, 24);
+    var yr = clampAxis(secRect.height, obstY0, obstY1, winH, 24);
+    var stepX = secRect.width * 0.022;
+    var stepY = secRect.height * 0.022;
+    var rangeX = Math.max(xr.max - xr.min, 1);
+    var rangeY = Math.max(yr.max - yr.min, 1);
+
+    function bounce(pos, range){
+      var period = range * 2;
+      var m = pos % period;
+      if (m < 0) m += period;
+      return m <= range ? m : period - m;
+    }
+
+    wins.forEach(function(win, i){
+      win.style.left = (xr.min + bounce(Math.max(anchorX - xr.min, 0) + stepX * i, rangeX)) + 'px';
+      win.style.top = (yr.min + bounce(Math.max(anchorY - yr.min, 0) + stepY * i, rangeY)) + 'px';
+      win.style.zIndex = 11 + i;
+      // same 120ms-per-step cadence established earlier as the human-perceptible minimum for
+      // reading as sequential rather than simultaneous, just computed per-index now instead of
+      // fixed CSS classes (there were only ever 4 of those; there are 13 windows now)
+      win.style.transitionDelay = (i * 0.12) + 's';
+    });
+  }
 
   // ---- BUNCH: VISUALIZE / CLEAR CLICK - pops the photos in and out ----
   // ---- visualize / clear toggle: photos stay hidden until clicked, then pop in in a staggered
@@ -2965,7 +3138,7 @@ function applyTimelineToModel(date){
 
   // ---- BUNCH: DRAGGING THE PHOTOS AROUND ----
   // ---- free dragging for photo-window / lineage-photo placeholders ----
-  var winZ = 20; // above the static 11-14 baseline so a freshly-dragged window always comes to front
+  var winZ = 30; // above the cascade's 11-23 baseline (13 windows) so a freshly-dragged window always comes to front
   Array.prototype.slice.call(document.querySelectorAll('.win')).forEach(function(win){
     var section = win.closest('.narrative-section');
     var dragging = false, startX = 0, startY = 0, startLeft = 0, startTop = 0;
