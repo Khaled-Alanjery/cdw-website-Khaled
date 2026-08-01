@@ -60,6 +60,12 @@
   #timeline-date{ font-size:12px; font-variant-numeric:tabular-nums; color:var(--ink); min-width:150px; text-align:right; margin-top:4px; }
   #reset-btn{ font-size:11px; border:1px solid var(--line); background:var(--w5); color:var(--w0); margin:4px 10px 5px; border-radius:5px; cursor:pointer; }
   #reset-btn:hover{ background:var(--w4); }
+  #conflict-toggle{ display:flex; margin:4px 0 5px; border:1px solid var(--line); border-radius:5px; overflow:hidden; }
+  #conflict-toggle button{ font-size:11px; border:none; background:var(--panel); color:var(--muted); padding:0 10px; height:100%; cursor:pointer; }
+  #conflict-toggle button:first-child{ border-right:1px solid var(--line); }
+  #conflict-toggle button:hover{ color:var(--ink); }
+  #conflict-toggle button.active{ background:var(--w5); color:var(--w0); }
+  #conflict-toggle-scale{ font-size:10px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); margin:8px 10px 5px 0; }
   #timeline-hint{ margin:4px 18px 8px; font-size:10px; color:var(--muted); background:var(--panel); border-bottom:1px solid var(--line); line-height:1.5; }
 
   /* ================================================================
@@ -390,6 +396,11 @@
         <div id="timeline-ticks"></div>
       </div>
       <span id="timeline-date">-</span>
+      <div id="conflict-toggle" role="group" aria-label="Pre/post-conflict toggle">
+        <button id="pre-conflict-btn" data-state="pre">Pre-Conflict</button>
+        <button id="post-conflict-btn" data-state="post">Post-Conflict</button>
+      </div>
+      <span id="conflict-toggle-scale">-</span>
       <button id="reset-btn">Reset selection</button>
     </div>
   </header>
@@ -1762,6 +1773,7 @@ Promise.all([
   initGraph();
   initDashboard();
   initTimeline();
+  initConflictToggle();
 });
 
 // Real geometry from the user's own Rhino model, exported via the Triceratops Grasshopper plugin
@@ -1821,12 +1833,12 @@ function initMap(){
   map = new mapboxgl.Map({
     container,
     // Real Mapbox basemap (previously a blank #f2f2f2 background under MapLibre with no token) -
-    // Standard style's monochrome theme keeps the grayscale hierarchy the rest of this page uses,
-    // and show3dObjects:false turns off Mapbox's own extruded buildings so they don't visually
-    // compete with (or duplicate) the neigh-mass fill-extrusion layer and the real mosque model
-    // added further below. Swap the theme/style here if you'd rather have a full-color basemap.
+    // Standard style's monochrome theme keeps the grayscale hierarchy the rest of this page uses.
+    // show3dObjects:true uses Mapbox's own real building massing instead of the old hand-rolled
+    // "neigh-mass" generic-height extrusion layer (removed below, per request - it was a fixed 8m
+    // interpretive height with no real per-building data behind it; Mapbox's own buildings are real).
     style: "mapbox://styles/mapbox/standard",
-    config: { basemap: { theme: "monochrome", show3dObjects: false } },
+    config: { basemap: { theme: "monochrome", show3dObjects: true } },
     center: SITE_ZOOM_CENTER,
     zoom: 12,
     pitch: 50,
@@ -1843,21 +1855,9 @@ function initMap(){
   map.on("load", ()=>{
     map.addSource("neighborhoods", { type:"geojson", data:neighborhoodsFallback });
 
-    // Building massing (upward): the real UNOSAT neighborhood footprints, extruded to a fixed,
-    // disclosed interpretive height representing generic urban block massing/context - not a
-    // measured building height (no real per-building height dataset exists for this district).
-    // Kept light gray and low so the mosque model - the darkest, tallest, most detailed mass -
-    // remains the visual focus.
-    const MASS_HEIGHT_M = 8; // interpretive default, disclosed in footer
-    map.addLayer({
-      id:"neigh-mass", type:"fill-extrusion", source:"neighborhoods",
-      paint:{
-        "fill-extrusion-color": "#d6d6d6",
-        "fill-extrusion-height": MASS_HEIGHT_M,
-        "fill-extrusion-base": 0,
-        "fill-extrusion-opacity": 0.55
-      }
-    });
+    // The old hand-rolled "neigh-mass" extrusion layer (generic 8m-tall UNOSAT-footprint blocks,
+    // since no real per-building height dataset exists for this district) is removed - Mapbox's own
+    // real 3D building massing (show3dObjects:true above) replaces it, per request.
 
     // Damage (downward): real UNOSAT percent_damaged now cuts a void BELOW the ground plane
     // instead of a bar above it - loss represented as absence/depth rather than presence/height.
@@ -1877,41 +1877,11 @@ function initMap(){
       paint:{ "line-color":"#8a8a8a", "line-width":0.6 }
     });
 
-    // Topography (upward): real ASTER 30m elevation readings (OpenTopoData API), a sparse 9x7
-    // sample grid across the district bounding box - each point rendered as its own small
-    // extruded marker at its true relative elevation (reading minus the sample minimum, no
-    // exaggeration), not interpolated into a continuous surface.
-    const topoElevs = topoGridFallback.map(d=>d.elevation_m);
-    const topoMin = Math.min(...topoElevs);
-    function squareAround(lat, lng, halfSideM){
-      const dLat = halfSideM / 111320;
-      const dLng = halfSideM / (111320 * Math.cos(lat * Math.PI/180));
-      return [[
-        [lng-dLng, lat-dLat], [lng+dLng, lat-dLat], [lng+dLng, lat+dLat], [lng-dLng, lat+dLat], [lng-dLng, lat-dLat]
-      ]];
-    }
-    map.addSource("topo-grid", {
-      type:"geojson",
-      data:{ type:"FeatureCollection", features: topoGridFallback.map(d=>({
-        type:"Feature",
-        properties:{ elevation_m:d.elevation_m, relative_m: +(d.elevation_m - topoMin).toFixed(1), dataset:"ASTER 30m", source:"OpenTopoData API" },
-        geometry:{ type:"Polygon", coordinates: squareAround(d.lat, d.lng, 400) }
-      })) }
-    });
-    // Real relief across this district is only ~0-220m - genuinely sub-pixel next to a 30km-wide
-    // view. TOPO_EXAGGERATION is a disclosed vertical exaggeration (a standard, labeled cartographic
-    // convention) applied ONLY for visibility; the underlying elevation_m/relative_m values stored
-    // on each feature remain the real, unscaled readings (see tooltip and footer).
-    const TOPO_EXAGGERATION = 12;
-    map.addLayer({
-      id:"topo-fill", type:"fill-extrusion", source:"topo-grid",
-      paint:{
-        "fill-extrusion-color": "#efefef",
-        "fill-extrusion-height": ["*", ["get","relative_m"], TOPO_EXAGGERATION],
-        "fill-extrusion-base": 0,
-        "fill-extrusion-opacity": 0.85
-      }
-    });
+    // Topography grid ("pale blocks = real topography (ASTER 30m)" in the old legend) removed per
+    // request - this was a sparse 9x7 grid of small extruded squares across the district. The
+    // underlying elevation readings (elevationPoints, from elevation.csv/Open-Elevation/OpenTopoData
+    // - both SRTM 90m and ASTER 30m sourced) are untouched and still drive the Site Info panel's
+    // elevation stats - only this map visualization of them is gone.
 
     map.addSource("landmarks", {
       type:"geojson",
@@ -1924,17 +1894,15 @@ function initMap(){
       paint:{ "circle-radius":6, "circle-color":"#111111", "circle-stroke-width":2, "circle-stroke-color":"#ffffff" }
     });
 
-    ["neigh-fill","neigh-mass","landmark-circles","topo-fill"].forEach(layerId=>{
+    ["neigh-fill","landmark-circles"].forEach(layerId=>{
       map.on("mousemove", layerId, (e)=>{
         const f = e.features[0];
         const tip = document.getElementById("map-tooltip");
         let html = "";
-        if (layerId === "neigh-fill" || layerId === "neigh-mass"){
+        if (layerId === "neigh-fill"){
           html = `<strong>${f.properties.neighborhood}</strong><br>${f.properties.percent_damaged}% buildings damaged (UNOSAT)<br>Zone: ${f.properties.zone||"-"}`;
-        } else if (layerId === "landmark-circles"){
-          html = `<strong>${f.properties.name}</strong><br>${f.properties.source}`;
         } else {
-          html = `Elevation: ${f.properties.elevation_m} m (${f.properties.dataset})<br>+${f.properties.relative_m} m relative to district sample minimum`;
+          html = `<strong>${f.properties.name}</strong><br>${f.properties.source}`;
         }
         tip.innerHTML = html;
         tip.style.display = "block";
@@ -1952,13 +1920,12 @@ function initMap(){
       <div><strong>% buildings damaged</strong> (UNOSAT, real, 115 neighborhoods) - now a downward void</div>
       <div class="ramp"><div style="background:#f5f5f5"></div><div style="background:#c9c9c9"></div><div style="background:#9a9a9a"></div><div style="background:#5a5a5a"></div></div>
       <div style="display:flex;justify-content:space-between;">0%<span>70%+</span></div>
-      <div style="margin-top:5px;">● black = named landmark &nbsp; ● light gray blocks = generic building massing &nbsp; ● pale blocks = real topography (ASTER 30m) &nbsp; ● darkest mass = the mosque model</div>
+      <div style="margin-top:5px;">● black = named landmark &nbsp; ● building massing = Mapbox's own real 3D buildings &nbsp; ● darkest mass = the mosque model</div>
     `;
 
-    // Default view is the SITE, not the district: at true district-wide scale a 41m building and
-    // a few hundred meters of relief are genuinely sub-pixel, so opening on the district view made
-    // the mosque model and topography effectively invisible. The "Zoom to Aleppo district" button
-    // still gives the wide damage/topography view on demand.
+    // Default view is the SITE, not the district: at true district-wide scale a 41m building is
+    // genuinely sub-pixel, so opening on the district view made the mosque model effectively
+    // invisible. The "Zoom to Aleppo district" button still gives the wide damage view on demand.
     map.jumpTo({ center: SITE_ZOOM_CENTER, zoom: 17.6, pitch: 62, bearing: -20 });
     map.setPitch(62);
     map.setBearing(-20);
@@ -2008,6 +1975,14 @@ let rhinoMosqueObj = null; // the Threebox-wrapped THREE.Object3D once loaded, o
 // line; nothing else needs to change).
 const RHINO_ZUP_TO_YUP_ROTATION_X = -Math.PI / 2;
 
+// mo7.json's raw vertex coordinates span roughly 4300 x 1140 x 3380 units. Read as meters that's a
+// 4.3km-wide mosque (the oversized dark blob seen on screen); read as centimeters it's a plausible
+// 43m x 11.4m x 33.8m. Rhino/Grasshopper commonly works in millimeters or centimeters even when the
+// three.js/Threebox side expects meters - Triceratops does not auto-convert. This scales the
+// geometry itself by 0.01 (cm -> m) before Threebox ever sees it, so units:"meters" below is
+// actually true. If a future export comes out of Rhino already in meters, set this back to 1.
+const MODEL_UNIT_SCALE = 0.01;
+
 function loadRhinoModel(){
   fetch(MOSQUE_MODEL_URL)
     .then(res=>{
@@ -2025,6 +2000,7 @@ function loadRhinoModel(){
         "- distinct child names:", [...new Set(parsed.children.map(c=>c.name))]);
 
       parsed.rotation.x = RHINO_ZUP_TO_YUP_ROTATION_X;
+      parsed.scale.setScalar(MODEL_UNIT_SCALE);
 
       // Recolor to the site's dark grayscale hierarchy - mo.json's real exported material is flat
       // white (0xffffff), which would otherwise clash with every other "darkest mass = the mosque"
@@ -2141,6 +2117,7 @@ function selectZone(zoneKey){
   updateGraphSelection();
   updateZoneButtons();
   showNodeInfo(selectedNodeId);
+  refreshConflictToggleButtons(); // selecting/deselecting a zone changes local vs built-environment scale
 }
 
 function clearModelHighlight(){
@@ -2181,6 +2158,7 @@ function onNodeSelected(id){
   updateGraphSelection();
   updateZoneButtons();
   showNodeInfo(id);
+  refreshConflictToggleButtons();
 }
 
 // ============================ FORCE-DIRECTED GRAPH ============================
@@ -2828,6 +2806,7 @@ function applyTimelineStop(idx){
   updateGraphTimeline(currentDate);
   updateConflictPanel();
   updateIntensitySphere();
+  refreshConflictToggleButtons();
 }
 
 function initTimeline(){
@@ -2847,20 +2826,102 @@ function initTimeline(){
       selectedZone = null; selectedNodeId = null;
       updateDashboard(); updateGraphSelection(); showNodeInfo(null);
       document.getElementById("model-selected").textContent = "none selected";
+      refreshConflictToggleButtons();
     }
   });
   applyTimelineStop(+input.value);
 }
 
+// Shared source of truth for both the day-by-day timeline scrubber (applyTimelineToModel) and the
+// Pre/Post-Conflict toggle (below) - hoisted out of applyTimelineToModel so the two can never
+// disagree about when each zone was documented as destroyed. Only 3 zones have a documented
+// threshold so far (fountain/courtyard do not yet); add more here once dated.
+const ZONE_DESTRUCTION_THRESHOLDS = { minaret: new Date(2014,5,1), dome: new Date(2015,0,1), portico: new Date(2016,11,1) };
+
 function applyTimelineToModel(date){
   if (!zoneMeshes.minaret) return;
-  const thresholds = { minaret: new Date(2014,5,1), dome: new Date(2015,0,1), portico: new Date(2016,11,1) };
-  Object.entries(thresholds).forEach(([zone, thDate])=>{
+  Object.entries(ZONE_DESTRUCTION_THRESHOLDS).forEach(([zone, thDate])=>{
     damagedZones[zone] = date >= thDate;
   });
   // Documented collapse: hide the dome mesh entirely once its threshold date has passed.
   domeCollapsed = !!damagedZones.dome;
   rebuildDeckLayers();
+}
+
+// ---- BUNCH: PRE/POST-CONFLICT TOGGLE ----
+// Two-state control that jumps the day-by-day timeline scrubber to a representative date instead of
+// requiring the user to drag to it by hand, operating at whichever scale the dashboard is currently
+// showing:
+//   LOCAL scale = a specific destruction point is selected (selectedZone is minaret/dome/portico -
+//     the only zones with a documented threshold so far; fountain/courtyard have none yet, so they
+//     fall back to built-environment scale). Post-Conflict jumps to THAT zone's own threshold date.
+//   BUILT-ENVIRONMENT scale = no zone selected, or a zone with no documented threshold - viewing the
+//     whole mosque. Post-Conflict jumps to the LATEST documented threshold (the date by which every
+//     currently-known destruction event has already happened).
+//   Pre-Conflict is always the SAME site-wide date regardless of scale: one day before the EARLIEST
+//     documented threshold, i.e. before any part of the mosque had been hit yet. A "pre" state
+//     showing one part destroyed and another intact isn't a coherent single date, so this
+//     deliberately does not vary by selected zone the way Post-Conflict does.
+//   Regional (Aleppo-wide) scale is not wired up yet - no regional destruction dataset exists in
+//   this file yet; this toggle only ever operates at local/built-environment scale until that's added.
+function conflictToggleTargetDate(mode){
+  const thresholdDates = Object.values(ZONE_DESTRUCTION_THRESHOLDS);
+  const earliest = new Date(Math.min(...thresholdDates));
+  const latest = new Date(Math.max(...thresholdDates));
+  if (mode === "pre") return new Date(earliest.getTime() - 24*60*60*1000);
+  const localZone = (selectedZone && ZONE_DESTRUCTION_THRESHOLDS[selectedZone]) ? selectedZone : null;
+  return localZone ? ZONE_DESTRUCTION_THRESHOLDS[localZone] : latest;
+}
+
+function conflictToggleScaleLabel(){
+  const localZone = (selectedZone && ZONE_DESTRUCTION_THRESHOLDS[selectedZone]) ? selectedZone : null;
+  return localZone ? ("local – " + localZone) : "built environment – whole mosque";
+}
+
+// Reflects current state into the toggle UI: which button (if either) matches currentDate exactly,
+// and the scale label showing whether the toggle is currently reading local or built-environment.
+// Called after every event that could change either the date or the selected zone (toggle click,
+// manual scrub, zone selection, reset).
+function refreshConflictToggleButtons(){
+  const preBtn = document.getElementById("pre-conflict-btn");
+  const postBtn = document.getElementById("post-conflict-btn");
+  const scaleEl = document.getElementById("conflict-toggle-scale");
+  if (!preBtn || !postBtn || !scaleEl) return;
+  const cur = currentDate.getTime();
+  preBtn.classList.toggle("active", cur === conflictToggleTargetDate("pre").getTime());
+  postBtn.classList.toggle("active", cur === conflictToggleTargetDate("post").getTime());
+  scaleEl.textContent = conflictToggleScaleLabel();
+}
+
+// Jumps the timeline to an exact computed date (not necessarily a documented stop, unlike
+// jumpToDate/nearestStopIndex above which snaps forward to the nearest real event) and re-runs the
+// same downstream updates applyTimelineStop does, so every other panel (dashboard, conflict list,
+// ontology graph, intensity readout) stays in sync with the toggle the same way it stays in sync
+// with manual scrubbing. The slider handle itself still snaps to the nearest real stop for display,
+// since the <input type=range> is indexed by stop, not by raw date.
+function jumpTimelineToExactDate(date, label){
+  currentDate = date;
+  const input = document.getElementById("timeline");
+  input.value = nearestStopIndex(date);
+  document.getElementById("timeline-date").textContent = d3.timeFormat("%d %b %Y")(currentDate) + (label ? " - " + label : "");
+  updateDashboard();
+  applyTimelineToModel(currentDate);
+  updateGraphTimeline(currentDate);
+  updateConflictPanel();
+  updateIntensitySphere();
+}
+
+function setConflictToggleState(mode){
+  const date = conflictToggleTargetDate(mode);
+  const label = mode === "pre" ? "Pre-Conflict" : ("Post-Conflict – " + conflictToggleScaleLabel());
+  jumpTimelineToExactDate(date, label);
+  refreshConflictToggleButtons();
+}
+
+function initConflictToggle(){
+  document.getElementById("pre-conflict-btn").addEventListener("click", ()=> setConflictToggleState("pre"));
+  document.getElementById("post-conflict-btn").addEventListener("click", ()=> setConflictToggleState("post"));
+  refreshConflictToggleButtons();
 }
 </script>
 
