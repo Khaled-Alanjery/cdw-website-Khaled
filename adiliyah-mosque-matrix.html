@@ -1980,11 +1980,11 @@ const MOSQUE_MODEL_URL = "mo7.json"; // 77.2MB, ~320,000 verts - still heavy, ma
 const EAP = { lng: 37.157673, lat: 36.197524, alt: 0 }; // Earth Anchor Point the Rhino model was built relative to
 let rhinoMosqueObj = null; // the Threebox-wrapped THREE.Object3D once loaded, or null until then
 
-// Axis correction: Rhino/Grasshopper exports Z-up, three.js/Threebox expects Y-up. -90deg about X
-// is the standard Z-up -> Y-up conversion, but the SIGN is not verified against this specific
-// export yet - if the model renders sideways or upside-down, try +Math.PI/2 instead (flip this one
-// line; nothing else needs to change).
-const RHINO_ZUP_TO_YUP_ROTATION_X = -Math.PI / 2;
+// Axis correction: Rhino/Grasshopper exports Z-up, three.js/Threebox expects Y-up. This is a 90deg
+// rotation about X, but the SIGN depends on which way the export's Z axis points. -Math.PI/2 was
+// the first guess and was confirmed wrong (user-reported: model rendering upside-down at the real
+// site). Flipped to +Math.PI/2, which is the other valid Z-up -> Y-up convention.
+const RHINO_ZUP_TO_YUP_ROTATION_X = Math.PI / 2;
 
 // mo7.json's raw vertex coordinates span roughly 4300 x 1140 x 3380 units. Read as meters that's a
 // 4.3km-wide mosque (the oversized dark blob seen on screen); read as centimeters it's a plausible
