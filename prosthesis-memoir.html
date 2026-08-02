@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Prosthesis as Memoir</title>
+
+<link rel="stylesheet" href="shared-style.css">
+<link rel="stylesheet" href="https://use.typekit.net/yoz2aka.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+
+<style>
+  /* ================================================================
+     TEST-RUN BUILD - pulled live from "Khaled's MAP - PFM Board" via
+     the Figma Dev Mode MCP (2026-08-02). Real content, real positions,
+     real per-element ordering ((Num N - anim) layer names), for all 6
+     pages currently in the file. Known open items, NOT decided
+     arbitrarily - flagged inline at each spot instead:
+       1. fayte-pixel-hard and futura-pt Light aren't in the loaded
+          Typekit kit yet (you said you'd add them) - referenced by
+          name below so they activate automatically once added; falls
+          back to fayte-pixel-soft / futura-pt regular until then.
+       2. Page 3's ~40 "Union" diagram shapes are only reachable as
+          images on Figma's local dev server (localhost:3845), which
+          this live page can never reach - I don't have their real
+          vector geometry. What's built below is a placeholder network
+          using the 5 real Line elements' exact positions + node dots
+          at the 8 label positions, blooming from center per your
+          answer. Swap for the real diagram once you can export it as
+          a standalone SVG.
+     ================================================================ */
+  :root{
+    --ink2: #d9d9d9;
+    --font-futura-light: "futura-pt", Helvetica, Arial, sans-serif; /* weight 300 - see note 1 */
+    --font-futura-book: "futura-pt", Helvetica, Arial, sans-serif;  /* weight 400 - already in kit */
+    --font-fayte-hard: "fayte-pixel-hard", "fayte-pixel-soft", Georgia, serif; /* see note 1 */
+  }
+
+  #memoir{ scroll-snap-type: y proximity; overflow-y: auto; height:100vh; background:#333; }
+  .memoir-page{ scroll-snap-align:start; height:100vh; position:relative; overflow:hidden; }
+
+  /* Every page is laid out on a fixed 1440x1024 canvas (that's the literal coordinate space
+     everything was positioned in inside Figma) and uniformly scaled via JS (see
+     fitPageCanvases below) to fill the viewport while preserving exact relative position -
+     the only way to stay pixel-precise to a fixed-canvas design across arbitrary window
+     sizes, rather than guessing at a responsive reflow Figma was never designed for. */
+  .page-canvas{
+    position:absolute; top:50%; left:50%; width:1440px; height:1024px;
+    transform-origin:center center; background:#333;
+  }
+  .page-canvas .el{ position:absolute; color:var(--ink2); }
+
+  .el-title{ font-family:"fayte-pixel-soft", Georgia, serif; font-weight:500; color:#f4f4f4; white-space:pre-wrap; }
+  .el-quote{ font-family:var(--font-fayte-hard); font-weight:500; font-size:128px; line-height:0.9; color:rgba(244,244,244,0.16); white-space:pre-wrap; }
+  .el-book{ font-family:var(--font-futura-book); font-weight:400; font-size:24px; line-height:1.1; }
+  .el-light{ font-family:var(--font-futura-light); font-weight:300; font-size:24px; line-height:1.15; }
+  .el-label{ font-family:var(--font-futura-book); font-weight:400; font-size:24px; line-height:1; }
+
+  /* Visualize button: random, content-avoiding placement per page (see positionVisualizeBtn),
+     staggers across a few randomized spots for ~1s then fixates on its final position (see
+     staggerVisualizeBtn) - matches the matrix page's existing .visualize-btn hover-label
+     pattern exactly (same .nt-label opacity treatment) rather than inventing a new one. */
+  .visualize-btn{ position:absolute; width:20px; height:40px; background:var(--ink2); cursor:pointer; border:none; padding:0; }
+  .visualize-btn .nt-label{
+    position:absolute; left:28px; top:50%; transform:translateY(-50%); white-space:nowrap;
+    font-family:'Cairo',Helvetica,Arial,sans-serif; font-weight:300; font-size:18px; letter-spacing:-.04em;
+    color:#f4f4f4; opacity:0; transition:opacity .35s ease; pointer-events:none;
+  }
+  .visualize-btn:hover .nt-label{ opacity:1; }
+
+  .network-diagram{ transform-origin:center center; }
+  .network-diagram line{ stroke:var(--ink2); stroke-width:1.5; opacity:0.6; }
+  .network-diagram circle{ fill:var(--ink2); opacity:0.5; }
+
+  /* [data-step] elements start hidden - the step-engine below (buildPageTimeline) drives them
+     to visible per their [data-anim] type, either by scroll-scrub or Space/Tab stepping. */
+  [data-anim="fade"]{ opacity:0; transform:translateY(16px); }
+  [data-anim="tw"]{ opacity:1; } /* typewrite starts as empty text content, not opacity:0 - see typewriteEl */
+  [data-anim="draw"] line{ opacity:1; }
+
+  #step-hint{
+    position:fixed; left:0; right:0; bottom:18px; text-align:center; z-index:1000;
+    font-family:'IBM Plex Mono',monospace; font-size:10px; text-transform:uppercase; letter-spacing:.1em;
+    color:var(--muted); pointer-events:none;
+  }
+
+  html:not(.gsap-ready) [data-anim]{ opacity:1 !important; transform:none !important; }
+</style>
+</head>
+<body>
+
+<nav class="site-nav">
+  <a href="adiliyah-mosque-matrix.html">Matrix</a>
+  <a href="prosthesis-memoir.html" class="current">Memoir</a>
+</nav>
+
+<main id="memoir">
+
+  <!-- ============================== PAGE 1 ============================== -->
+  <section class="memoir-page" data-page="0" id="page-01-prosthesis-as-memoir">
+    <div class="page-canvas">
+      <p class="el el-light" data-step="1" data-anim="tw" style="left:40px;top:40px;width:420px;">Post-conflict environments carry a lineage of trauma; the transformation of destruction into a system of environmental and spatial regeneration is a testimony to what occurred and will occur. Conventional preservation seeks to restore damaged architecture to its original form, stabilizing history and minimizing visible traces of conflict. Such approaches risk neutralizing the political and spatial tensions of trauma by returning buildings to a state of apparent normalcy.</p>
+
+      <div class="el el-title" data-step="2" data-anim="fade" style="left:807px;top:652px;width:593px;font-size:110px;line-height:1;color:var(--ink2);text-align:right;">Prosthesis<br>for Memoir</div>
+
+      <svg class="el" data-step="3" data-anim="draw" style="left:600px;top:40px;width:2px;height:300px;overflow:visible;">
+        <line x1="1" y1="0" x2="1" y2="300"></line>
+      </svg>
+
+      <p class="el el-book" data-step="4" data-anim="tw" style="left:845px;top:40px;width:555px;">The question that emerges is not simply how to rebuild such structures, but how spatial environments might acknowledge forces embedded within their remains.</p>
+      <p class="el el-book" data-step="5" data-anim="tw" style="left:845px;top:160px;width:417px;">Should trauma be reconstructed to a state of solitude, as if nothing occurred?</p>
+      <p class="el el-book" data-step="6" data-anim="tw" style="left:846px;top:281px;width:554px;text-align:right;">Preserved as a static ruin … or transformed into a space that engages the memory of destruction while addressing contemporary challenges?</p>
+
+      <button type="button" class="visualize-btn" style="left:200px;top:628px;"><span class="nt-label">Visualize</span></button>
+    </div>
+  </section>
+
+  <!-- ============================== PAGE 2 ============================== -->
+  <section class="memoir-page" data-page="1" id="page-02-prosthetic-preservation">
+    <div class="page-canvas">
+      <p class="el el-quote" data-step="1" data-anim="tw" style="left:40px;top:40px;width:1160px;">Prosthetic Preservation, in this world, is not a technique for fixing buildings; it's the refusal to govern normalcy.</p>
+      <button type="button" class="visualize-btn" style="left:1320px;top:840px;"><span class="nt-label">Visualize</span></button>
+    </div>
+  </section>
+
+  <!-- ============================== PAGE 3 ============================== -->
+  <section class="memoir-page" data-page="2" id="page-03-research-as-material">
+    <div class="page-canvas">
+      <div class="el el-title" data-step="1" data-anim="fade" style="left:40px;top:820px;width:1360px;font-size:110px;line-height:1;white-space:pre-wrap;">Research as       Material</div>
+
+      <!-- Placeholder network diagram - see the note at the top of <style> re: the real
+           ~40 Union shapes being unreachable localhost assets. This is 5 real lines (exact
+           Figma positions) + node dots at the 8 label positions, "blooming" from center. -->
+      <svg class="el network-diagram" data-step="1" data-anim="fade" style="left:0;top:0;width:1440px;height:1024px;overflow:visible;">
+        <line x1="561" y1="319" x2="751" y2="319"></line>
+        <line x1="202" y1="319" x2="391" y2="319"></line>
+        <line x1="481" y1="299" x2="481" y2="488"></line>
+        <line x1="481" y1="339" x2="481" y2="528"></line>
+        <line x1="256" y1="474" x2="391" y2="609"></line>
+        <circle cx="481" cy="319" r="5"></circle>
+        <circle cx="181" cy="163" r="4"></circle>
+        <circle cx="181" cy="295" r="4"></circle>
+        <circle cx="181" cy="433" r="4"></circle>
+        <circle cx="781" cy="163" r="4"></circle>
+        <circle cx="781" cy="298" r="4"></circle>
+        <circle cx="781" cy="453" r="4"></circle>
+        <circle cx="401" cy="64" r="4"></circle>
+        <circle cx="401" cy="584" r="4"></circle>
+      </svg>
+
+      <p class="el el-book" data-step="2" data-anim="tw" style="left:641px;top:140px;width:135px;">Fragment as Data</p>
+      <p class="el el-book" data-step="2" data-anim="tw" style="left:60px;top:295px;width:121px;">Physical Computation</p>
+      <p class="el el-book" data-step="2" data-anim="tw" style="left:621px;top:298px;width:121px;">Craft to Computation</p>
+      <p class="el el-book" data-step="2" data-anim="tw" style="left:301px;top:40px;width:200px;text-align:center;">Forensic Creativity as Agency</p>
+      <p class="el el-book" data-step="2" data-anim="tw" style="left:40px;top:433px;width:141px;">Native Computation and Algorithms</p>
+      <p class="el el-book" data-step="2" data-anim="tw" style="left:621px;top:453px;width:134px;">Post-Conflict Reconstruction</p>
+      <p class="el el-book" data-step="2" data-anim="tw" style="left:43px;top:139px;width:138px;">Computational Design</p>
+      <p class="el el-book" data-step="2" data-anim="tw" style="left:281px;top:547px;width:240px;text-align:center;">Historic Preservation Architecture, Interior, and Spatial Design</p>
+
+      <svg class="el" data-step="3" data-anim="draw" style="left:940px;top:40px;width:2px;height:300px;overflow:visible;">
+        <line x1="1" y1="0" x2="1" y2="300"></line>
+      </svg>
+
+      <p class="el el-light" data-step="4" data-anim="tw" style="left:960px;top:40px;width:440px;text-align:right;">All function as research, the core of the material in this practice. A framework that borrows its structure from Derrida's parergon, the frame Kant treated as mere ornament around the work, which Derrida showed was never simply outside it, but constitutive of what the work could be.</p>
+
+      <button type="button" class="visualize-btn" style="left:960px;top:300px;"><span class="nt-label">Visualize</span></button>
+    </div>
+  </section>
+
+  <!-- ============================== PAGE 4 ============================== -->
+  <section class="memoir-page" data-page="3" id="page-04-material-as-witness">
+    <div class="page-canvas">
+      <p class="el el-quote" data-step="2" data-anim="tw" style="left:40px;top:40px;width:960px;">Who decides what to conceal and foreground?</p>
+
+      <div class="el el-title" data-step="1" data-anim="fade" style="left:807px;top:676px;width:593px;font-size:110px;line-height:1;text-align:right;">Material<br>as Witness</div>
+
+      <p class="el el-light" data-step="3" data-anim="tw" style="left:40px;top:500px;width:220px;">Trauma tectonically shifts aggregates of what will be fragments; fragments witnessed an orderly state of being beneath a new aggregate, dispersed and bloomed out of an ecological or sometimes anthropic trace, traced upon their disturbed edges a memoir for a prosthetic to read.</p>
+      <p class="el el-light" data-step="4" data-anim="tw" style="left:300px;top:610px;width:230px;">A Memoir in fragment.<br>A memoir in scar.<br>A prosthesis for memoir.</p>
+
+      <!-- This shape has no "(Visualize Button)" label and no Num in Figma, unlike every
+           other page's button - treated as the Visualize button anyway since it's the exact
+           same 20x40 rounded-rectangle in the same role. Flag if that's wrong. -->
+      <button type="button" class="visualize-btn" style="left:1380px;top:460px;"><span class="nt-label">Visualize</span></button>
+    </div>
+  </section>
+
+  <!-- ============================== PAGE 5 ============================== -->
+  <section class="memoir-page" data-page="4" id="page-05-witness-testifies">
+    <div class="page-canvas">
+      <div class="el el-title" data-step="1" data-anim="fade" style="left:40px;top:676px;width:593px;font-size:110px;line-height:1;">Witness Testifies</div>
+      <p class="el el-quote" data-step="2" data-anim="tw" style="left:40px;top:40px;width:1360px;">Can design register history without repairing it? Can ruins testify under the law of functionality?</p>
+      <button type="button" class="visualize-btn" style="left:766px;top:747px;"><span class="nt-label">Visualize</span></button>
+      <p class="el el-light" data-step="4" data-anim="tw" style="left:900px;top:740px;width:444px;">A dialectic between timeless and time-bound, Making as form of thinking; Form as a form of argument</p>
+    </div>
+  </section>
+
+  <!-- ============================== PAGE 6 ============================== -->
+  <section class="memoir-page" data-page="5" id="page-06-lineage">
+    <div class="page-canvas">
+      <div class="el el-title" data-step="1" data-anim="fade" style="left:824px;top:676px;width:576px;font-size:110px;line-height:1;text-align:right;">Lineage</div>
+      <button type="button" class="visualize-btn" style="left:40px;top:500px;"><span class="nt-label">Visualize</span></button>
+      <p class="el el-light" data-step="2" data-anim="tw" style="left:40px;top:454px;width:180px;">Ruins carry fragments; fragments write memoirs; prosthetics read memoirs.</p>
+    </div>
+  </section>
+
+</main>
+
+<div id="step-hint">scroll, or press space / tab, to continue</div>
+
+<script>
+/* ==================================================================
+   1. FIT EACH PAGE'S 1440x1024 CANVAS TO THE VIEWPORT
+   ================================================================== */
+function fitPageCanvases(){
+  var scale = Math.min(window.innerWidth / 1440, window.innerHeight / 1024);
+  document.querySelectorAll(".page-canvas").forEach(function(c){
+    c.style.transform = "translate(-50%, -50%) scale(" + scale + ")";
+  });
+}
+window.addEventListener("resize", fitPageCanvases);
+fitPageCanvases();
+
+/* ==================================================================
+   2. TYPEWRITER (tw) - ported from the matrix page's typewriteRich,
+      simplified for plain-text elements (no nested <br>/em to preserve
+      mid-type here beyond the literal <br> tags already in a couple
+      titles, which this version also walks safely).
+   ================================================================== */
+function typewriteEl(el, onDone){
+  var original = Array.prototype.slice.call(el.childNodes).map(function(n){ return n.cloneNode(true); });
+  el.textContent = "";
+  function typeText(text, parent, cb){
+    var i = 0;
+    var ticks = Math.max(20, Math.min(60, Math.round(text.length / 5)));
+    var perTick = Math.max(1, Math.ceil(text.length / ticks));
+    var timer = setInterval(function(){
+      if (i >= text.length){ clearInterval(timer); cb(); return; }
+      parent.appendChild(document.createTextNode(text.slice(i, i + perTick)));
+      i += perTick;
+    }, 16);
+  }
+  function typeNode(node, parent, cb){
+    if (node.nodeType === 3){ typeText(node.textContent, parent, cb); }
+    else if (node.nodeName === "BR"){ parent.appendChild(document.createElement("br")); cb(); }
+    else {
+      var clone = document.createElement(node.nodeName);
+      if (node.className) clone.className = node.className;
+      parent.appendChild(clone);
+      typeChildren(Array.prototype.slice.call(node.childNodes), clone, cb);
+    }
+  }
+  function typeChildren(nodes, parent, cb){
+    if (!nodes.length){ cb(); return; }
+    var n = nodes.shift();
+    typeNode(n, parent, function(){ typeChildren(nodes, parent, cb); });
+  }
+  typeChildren(original, el, function(){ if (onDone) onDone(); });
+}
+
+/* ==================================================================
+   3. DRAW-ON (draw) - stroke-dashoffset reveal for the divider lines.
+   ================================================================== */
+function drawOnLine(svgEl, duration){
+  var line = svgEl.querySelector("line");
+  if (!line) return gsap.timeline();
+  var len = Math.hypot(line.x2.baseVal.value - line.x1.baseVal.value, line.y2.baseVal.value - line.y1.baseVal.value) || 1;
+  gsap.set(line, { strokeDasharray: len, strokeDashoffset: len });
+  return gsap.to(line, { strokeDashoffset: 0, duration: duration || 0.6, ease: "power2.inOut" });
+}
+
+/* ==================================================================
+   4. BUILD ONE STEP-GROUPED TIMELINE PER PAGE, driven by [data-step]/
+      [data-anim]. Elements sharing a step number animate together
+      (e.g. Page 3's 8 concept labels all at step 2, per your answer).
+      Space/Tab and scroll-scrub both drive the SAME timeline, same
+      mechanism as the earlier scaffold.
+   ================================================================== */
+gsap.registerPlugin(ScrollTrigger);
+document.documentElement.classList.add("gsap-ready");
+
+var pages = gsap.utils.toArray(".memoir-page");
+var pageTimelines = [];
+var currentPageIndex = 0;
+
+pages.forEach(function(page, i){
+  var stepEls = Array.prototype.slice.call(page.querySelectorAll("[data-step]"));
+  var steps = {};
+  stepEls.forEach(function(el){
+    var n = el.getAttribute("data-step");
+    (steps[n] = steps[n] || []).push(el);
+  });
+  var stepNumbers = Object.keys(steps).map(Number).sort(function(a, b){ return a - b; });
+
+  var tl = gsap.timeline({ paused: true });
+  stepNumbers.forEach(function(n){
+    tl.addLabel("step-" + n);
+    steps[n].forEach(function(el){
+      var anim = el.getAttribute("data-anim");
+      if (anim === "fade"){
+        tl.to(el, { opacity: 1, y: 0, duration: 0.6, ease: "power2.out" }, "step-" + n);
+      } else if (anim === "tw"){
+        tl.call(function(){ typewriteEl(el); }, null, "step-" + n);
+      } else if (anim === "draw"){
+        tl.add(drawOnLine(el, 0.6), "step-" + n);
+      }
+    });
+  });
+  pageTimelines.push(tl);
+
+  ScrollTrigger.create({
+    trigger: page, start: "top 80%", end: "bottom 20%", scrub: 0.6, animation: tl,
+    onToggle: function(self){ if (self.isActive){ currentPageIndex = i; staggerVisualizeBtn(page); } }
+  });
+});
+
+function nextLabel(tl){
+  var labels = tl.labels ? Object.keys(tl.labels) : [];
+  var current = tl.progress() * tl.duration();
+  for (var i = 0; i < labels.length; i++){
+    if (tl.labels[labels[i]] > current + 0.001) return labels[i];
+  }
+  return null;
+}
+document.addEventListener("keydown", function(e){
+  if (e.code !== "Space" && e.code !== "Tab") return;
+  e.preventDefault();
+  var tl = pageTimelines[currentPageIndex];
+  var label = nextLabel(tl);
+  if (label){ tl.tweenTo(label, { duration: 0.5, ease: "power2.out" }); return; }
+  var next = pages[currentPageIndex + 1];
+  if (next) next.scrollIntoView({ behavior: "smooth" });
+});
+
+/* ==================================================================
+   5. VISUALIZE BUTTON - random, content-avoiding final position (same
+      concept as the matrix page's positionVisualizeSquare, simplified
+      since there's no photo-cascade here), staggering across a few
+      randomized spots for ~1s before fixating, per your instruction.
+      Hover reveals the "Visualize" label (.nt-label, same pattern).
+   ================================================================== */
+function pickVisualizePosition(page){
+  var btn = page.querySelector(".visualize-btn");
+  var canvas = page.querySelector(".page-canvas");
+  if (!btn || !canvas) return null;
+  var pad = 24, w = 20, h = 40;
+  var occupied = Array.prototype.slice.call(canvas.querySelectorAll(".el")).map(function(el){
+    var x = parseFloat(el.style.left) || 0, y = parseFloat(el.style.top) || 0;
+    var ew = el.offsetWidth || parseFloat(el.style.width) || 0, eh = el.offsetHeight || 200;
+    return { left: x, top: y, right: x + ew, bottom: y + eh };
+  });
+  function overlaps(x, y){
+    var buffer = 16;
+    return occupied.some(function(o){ return x < o.right + buffer && x + w > o.left - buffer && y < o.bottom + buffer && y + h > o.top - buffer; });
+  }
+  var best = null, bestScore = -1;
+  for (var i = 0; i < 60; i++){
+    var x = pad + Math.random() * (1440 - w - pad * 2);
+    var y = pad + Math.random() * (1024 - h - pad * 2);
+    if (!overlaps(x, y)) return { x: x, y: y };
+    var score = occupied.reduce(function(acc, o){
+      var dx = Math.max(o.left - (x + w), x - o.right, 0);
+      var dy = Math.max(o.top - (y + h), y - o.bottom, 0);
+      return acc + Math.sqrt(dx * dx + dy * dy);
+    }, 0);
+    if (score > bestScore){ bestScore = score; best = { x: x, y: y }; }
+  }
+  return best;
+}
+
+var staggeredPages = {};
+function staggerVisualizeBtn(page){
+  if (staggeredPages[page.id]) return; // only run once per page, first time it's scrolled into view
+  staggeredPages[page.id] = true;
+  var btn = page.querySelector(".visualize-btn");
+  if (!btn) return;
+  var final = pickVisualizePosition(page);
+  if (!final) return;
+  var jumps = 6, duration = 1.0;
+  var tl = gsap.timeline();
+  for (var i = 0; i < jumps; i++){
+    var pad = 24;
+    var x = i === jumps - 1 ? final.x : pad + Math.random() * (1440 - 20 - pad * 2);
+    var y = i === jumps - 1 ? final.y : pad + Math.random() * (1024 - 40 - pad * 2);
+    tl.set(btn, { left: x, top: y }, i * (duration / jumps));
+  }
+}
+</script>
+
+</body>
+</html>

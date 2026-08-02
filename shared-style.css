@@ -1,0 +1,39 @@
+/* ================================================================
+   SHARED STYLE TOKENS
+   Pulled directly from adiliyah-mosque-matrix.html's :root block so
+   prosthesis-memoir.html (and any future page) stays visually
+   consistent without duplicating the palette by hand. Change a
+   color/font here and both pages pick it up.
+
+   Fonts still need their own <link> tags in each page's <head> (CSS
+   @import is slower) - see the comment block at the top of
+   prosthesis-memoir.html for the exact tags to copy.
+   ================================================================ */
+:root{
+  --bg: #333333; --panel: #333333; --ink: #f4f4f4; --muted: #a8a8a8; --line: #4d4d4d;
+  --w0:#0a0a0a; --w1:#3a3a3a; --w2:#6a6a6a; --w3:#9a9a9a; --w4:#cfcfcf; --w5:#f2f2f2;
+  --gutter: 40px;
+  --font-body: 'Cairo', Helvetica, Arial, sans-serif;
+  --font-heading: "fayte-pixel-soft", Georgia, serif;
+  --font-mono: "IBM Plex Mono", monospace;
+}
+
+*{ box-sizing:border-box; }
+html,body{ margin:0; height:100%; background:var(--bg); color:var(--ink); font-family:var(--font-body); }
+
+/* ================================================================
+   SITE NAV - the small cross-link between pages (matrix <-> memoir).
+   Fixed top-right, unobtrusive, matches the mono/uppercase treatment
+   used for labels elsewhere on the matrix page.
+   ================================================================ */
+.site-nav{
+  position:fixed; top:0; right:0; z-index:1000;
+  margin:18px var(--gutter) 0 0;
+  display:flex; gap:16px;
+}
+.site-nav a{
+  font-family:var(--font-mono); font-size:10.5px; text-transform:uppercase; letter-spacing:.08em;
+  color:var(--muted); text-decoration:none; border-bottom:1px solid transparent;
+  transition:color .2s ease, border-color .2s ease;
+}
+.site-nav a:hover, .site-nav a.current{ color:var(--ink); border-color:var(--ink); }

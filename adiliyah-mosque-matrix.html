@@ -3120,6 +3120,15 @@ function initConflictToggle(){
   var panels = Array.prototype.slice.call(document.querySelectorAll('.tab-panel'));
   navTabs.forEach(function(btn){
     btn.addEventListener('click', function(){
+      // "Prosthesis for Memoir" no longer switches to the in-app #tab-prosthesis panel -
+      // it navigates to the new illustrated page instead. The content that used to live in
+      // #tab-prosthesis (narrative text + photo gallery) is being reworked in Figma into
+      // that page; #tab-prosthesis itself is left in the DOM as reference material for now
+      // (unreachable via nav, still display:none by default, harmless) rather than deleted.
+      if (btn.classList.contains('nav-tab-prosthesis')){
+        window.location.href = 'prosthesis-memoir.html';
+        return;
+      }
       navTabs.forEach(function(b){ b.classList.remove('active'); });
       panels.forEach(function(p){ p.classList.remove('active'); });
       btn.classList.add('active');
