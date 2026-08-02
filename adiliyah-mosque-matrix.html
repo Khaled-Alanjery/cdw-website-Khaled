@@ -418,7 +418,7 @@
         <div id="map-legend"></div>
       </div>
       <div id="model-legend"></div>
-      <div id="model-hint">Drag empty map to orbit/tilt · scroll to zoom · click a zone button or graph node to select it.<br><strong>Repositioning the mosque model:</strong> click directly on the mosque to select it (a box appears around it), then hold <strong>Shift</strong> + drag to move it horizontally, <strong>Ctrl</strong> + drag to change its altitude, or <strong>Alt</strong> + drag to rotate it. The resulting coordinates/rotation are logged live below and in the console - read them off once you're happy with the placement so they can be saved permanently.</div>
+      <div id="model-hint">Drag empty map to orbit/tilt · scroll to zoom · click a zone button or graph node to select it.<br><strong>Repositioning the mosque model:</strong> click directly on the mosque to select it (a green box appears around it), then use <strong>arrow keys</strong> to move it, <strong>Q/E</strong> to rotate it, <strong>Page Up/Down</strong> to change its altitude - hold <strong>Shift</strong> for a bigger step, <strong>Esc</strong> to deselect. The resulting coordinates/rotation are logged live below and in the console - read them off once you're happy with the placement so they can be saved permanently.</div>
       <div id="model-drag-readout" style="display:none;"></div>
     </div>
     <div id="right-col">
@@ -665,10 +665,12 @@ window.onerror = function(msg, src, line, col, err){
 // voids, the massing blocks, and the topography markers around it (a disclosed visual-hierarchy
 // choice, not a data value).
 const GREY = { wall:0x232323, dome:0x141414, column:0x2a2a2a, fountain:0x2e2e2e, minaret:0x0c0c0c,
-               damaged:0x000000, ground:0xeaeaea, edge:0x1a1a1a, selected:0xffffff };
+               base:0x1e1e1e, damaged:0x000000, ground:0xeaeaea, edge:0x1a1a1a, selected:0xffffff };
 // Base (unselected) color per zone key, shared by buildMosqueScene/selectZone/clearModelHighlight/
-// applyTimelineToModel so all four stay in sync instead of hardcoding their own copies.
-const BASE_ZONE_COLOR = { minaret:GREY.minaret, dome:GREY.dome, portico:GREY.wall, structure:GREY.wall, fountain:GREY.fountain };
+// applyTimelineToModel so all four stay in sync instead of hardcoding their own copies. walls/
+// columns/base were added once hh.gltf's real named layer groups (Portico/Central Dome/Minaret/
+// Walls/Struc-Columns/Base) made real per-part selection possible - see loadRhinoModel().
+const BASE_ZONE_COLOR = { minaret:GREY.minaret, dome:GREY.dome, portico:GREY.wall, structure:GREY.wall, fountain:GREY.fountain, walls:GREY.wall, columns:GREY.column, base:GREY.base };
 function hexToRgb(hex){ return [(hex>>16)&255, (hex>>8)&255, hex&255]; }
 // deck.gl layers take [r,g,b] 0-255 arrays, not THREE.Color hex ints - same base palette, different format.
 const BASE_ZONE_COLOR_RGB = Object.fromEntries(Object.entries(BASE_ZONE_COLOR).map(([k,v])=>[k, hexToRgb(v)]));
@@ -676,7 +678,7 @@ const BASE_ZONE_COLOR_RGB = Object.fromEntries(Object.entries(BASE_ZONE_COLOR).m
 let events = [], zones = [], cad = [], temperature = [], factors = null, elevationPoints = [], conflictEvents = [];
 // geometryFallback (the old CAD-plan-derived procedural line/dome/column geometry, and the
 // geometry.json fetch that fed it) has been removed - it was only ever wired into initThree(geo),
-// which stashed it in a variable nothing else read. The real Rhino model (mo7g.gltf, via Threebox)
+// which stashed it in a variable nothing else read. The real Rhino model (hh.gltf, via Threebox)
 // replaced the procedural rendering this fed a long time ago; this was pure dead weight (a large
 // embedded data blob plus one unnecessary network fetch on every page load).
 
@@ -1761,11 +1763,11 @@ Promise.all([
   conflictEvents.sort((a,b)=>a._date-b._date);
 
   document.getElementById("footer-note").innerHTML =
-    "<strong>Data sources</strong> - Mosque &amp; damage: Rapid Damage Assessment (25.06.2019, Museum for Islamic Art Berlin / Syrian Heritage Archive Project, RC3) · earlier CAD survey FLS1615 (DXF, layers WALL/PLAN/DOME/COLUMN/FOUNTAIN, used for prior research) · the 3D model itself is the user's own Rhino model, exported directly to glTF (mo7g.gltf, 382 meshes) - this export has no per-part layer names yet, so it currently loads and displays as one undivided mass rather than separable zones (see below) · Wikipedia: Al-Adiliyah Mosque. " +
+    "<strong>Data sources</strong> - Mosque &amp; damage: Rapid Damage Assessment (25.06.2019, Museum for Islamic Art Berlin / Syrian Heritage Archive Project, RC3) · earlier CAD survey FLS1615 (DXF, layers WALL/PLAN/DOME/COLUMN/FOUNTAIN, used for prior research) · the 3D model itself is the user's own Rhino model, exported directly to glTF with real named layer groups preserved (hh.gltf, 382 meshes across 6 groups: Portico, Central Dome, Minaret, Walls, Struc-Columns, Base) - this is the first export where individual parts can actually be selected/highlighted on the 3D model itself (see below) · Wikipedia: Al-Adiliyah Mosque. " +
     "Environment: NOAA GHCN Daily Summaries, station SYE00147760 (Aleppo) - " + temperature.length + " real daily readings, " + (temperature.length?d3.timeFormat('%Y')(temperature[0].date):'') + "–" + (temperature.length?d3.timeFormat('%Y')(temperature[temperature.length-1].date):'') + ", including the real ~7-year station gap 14 Nov 2012–20 Nov 2019 · Open-Elevation API + OpenTopoData API (SRTM90m/ASTER30m) - 8 readings · sunrisesunset.io API (25 Jun 2019 solar calc.) · NASA Earth Observatory VIIRS Day/Night Band (city-scale, published 16 May 2017). " +
     "Conflict: <a class=\"wiki-link\" href=\"" + CONFLICT_WIKI_URL + "\" target=\"_blank\" rel=\"noopener\">Wikipedia - Battle of Aleppo (2012–2016)</a> and <a class=\"wiki-link\" href=\"" + CONFLICT_2024_WIKI_URL + "\" target=\"_blank\" rel=\"noopener\">Battle of Aleppo (2024)</a>, casualty figures via the Violations Documentation Center in Syria. " +
     "Map: " + neighborhoodsFallback.features.length + " real Aleppo neighborhood polygons with % buildings damaged, from UNOSAT (UNITAR's Operational Satellite Applications Programme) Comprehensive/Shelter Damage Assessment (2016 release), via the Humanitarian Data Exchange, CC BY-SA · landmark coordinates (Al-Adiliyah Mosque, Umayyad Mosque, Aleppo Citadel) cross-referenced against those same UNOSAT neighborhood polygons. Rendered with Mapbox GL JS - a real Mapbox account/token, real basemap tiles and building massing fetched live over the network, unlike the rest of this page's embedded data (see below). The mosque model (the user's own Rhino model, not a procedural approximation) is embedded as a real 3D layer inside this same Mapbox WebGL scene via the Threebox plugin (a Mapbox custom layer sharing one GL context and camera with the map's other extrusions), geo-anchored to the mosque's true coordinate at true scale - not a separately composited image or canvas. " +
-    "<strong>Disclosed interpretive choices</strong> (not sourced measurements): mo7g.gltf's vertex coordinates are already real-world meters and already Y-up (confirmed by decoding the file's own accessor bounding boxes: extent 43.0 x 37.2 x 33.8 m), so unlike the earlier mo7.json export used on this page, no unit-scale or axis-rotation correction is applied - the geometry loads as exported. Threebox anchors the model's base (not its centroid) and horizontal footprint center - not a corner - on the anchor coordinate (36.19758141817091, 37.15769092453652). This export has no per-part names, so individual zones (dome/minaret/portico/fountain) cannot yet be separately selected, colored, or hidden on the 3D model itself - the whole mesh currently displays and behaves as one undivided mass; the dashboard/timeline/ontology graph's per-zone data is unaffected and remains zone-specific. The timeline's stop-index scale, node-appearance dates in the ontology graph, and the Intensity Sphere's point positions (a 2D disc standing in for a sphere) are visualization choices - the underlying figures behind them (event counts, station-reading recency, real % structural loss) are not; neighborhood damage now cuts a void BELOW ground rather than a bar above it, at the same disclosed 6 meters per percentage point scale - only the direction is a visualization choice, the magnitude and the underlying % figure are real; building massing around the mosque uses Mapbox's own real 3D building data rather than a generic interpretive height; the page now opens on the mosque site rather than the district view, since a 41m building is close to sub-pixel at true district scale - use \"Zoom to Aleppo district\" for the wide view; the mosque model's materials (6 real distinct colors in this export, likely inherited from Rhino layer colors but not yet confirmed) are recolored to the darkest values in the grayscale ramp, with the selected zone temporarily switched to a glowing white instead (a no-op for now until the export has per-part names to act on) - both are deliberate visual-hierarchy choices, not data values; the model's compass bearing/yaw is not corrected to true north (no true-north alignment was documented for the Rhino model or the earlier CAD survey); selecting a zone also tightens the map's zoom/pitch since all real zones share one small site footprint with no independent coordinate of their own. " +
+    "<strong>Disclosed interpretive choices</strong> (not sourced measurements): hh.gltf's vertex coordinates are already real-world meters and already Y-up (confirmed by decoding the file's own accessor bounding boxes: extent 43.0 x 37.2 x 33.8 m), so no unit-scale or axis-rotation correction is applied - the geometry loads as exported. Threebox anchors the model's base (not its centroid) and horizontal footprint center - not a corner - on the anchor coordinate (36.19758141817091, 37.15769092453652), and the exact position/rotation can be adjusted by hand on the live model (select it, then Shift/Ctrl/Alt+drag) - a disclosed manual placement, not a measured survey value. This export's 6 named layer groups (Portico/Central Dome/Minaret/Walls/Struc-Columns/Base) are real Rhino layers, confirmed by walking the glTF file's own node hierarchy - clicking a zone button or the model itself now recolors/selects the real corresponding geometry; only Minaret/Central dome/Portico have report-sourced CC/UC/loss-% figures behind them, Walls/Struc-Columns/Base are real geometry with no report data. The timeline's stop-index scale, node-appearance dates in the ontology graph, and the Intensity Sphere's point positions (a 2D disc standing in for a sphere) are visualization choices - the underlying figures behind them (event counts, station-reading recency, real % structural loss) are not; neighborhood damage now cuts a void BELOW ground rather than a bar above it, at the same disclosed 6 meters per percentage point scale - only the direction is a visualization choice, the magnitude and the underlying % figure are real; building massing around the mosque uses Mapbox's own real 3D building data rather than a generic interpretive height; the page now opens on the mosque site rather than the district view, since a 41m building is close to sub-pixel at true district scale - use \"Zoom to Aleppo district\" for the wide view; the mosque model's materials (6 real distinct colors in this export, likely inherited from Rhino layer colors but not yet confirmed) are recolored per-zone to the grayscale ramp, with the selected zone temporarily switched to a glowing white instead - both are deliberate visual-hierarchy choices, not data values; the model's compass bearing/yaw is not corrected to true north (no true-north alignment was documented for the Rhino model or the earlier CAD survey) unless manually rotated by hand as described above; selecting a zone also tightens the map's zoom/pitch since all real zones share one small site footprint with no independent coordinate of their own. " +
     "The neighborhood damage, landmark, weather, elevation, and conflict data are all fetched once during research and embedded statically in this page - they make no live API calls at runtime, and most of their source endpoints don't expose browser CORS for arbitrary local origins anyway. The map basemap and building massing are the one exception: Mapbox GL JS fetches real tiles and style data over the network each time this page loads.";
 
   initMap();
@@ -1965,24 +1967,31 @@ function initMapControls(){
 
 // ============================ THREEBOX MOSQUE MODEL ============================
 // Loads the user's real Rhino model, geo-anchored at the mosque's real Earth Anchor Point
-// coordinate, via Threebox's native tb.loadObj({type:'gltf', ...}) pipeline. This replaces the
-// earlier hand-rolled fetch + THREE.ObjectLoader().parse() path used for mo7.json (a Triceratops
-// Three.js Object Scene JSON export) - Threebox's own glTF loader fetches, parses and geo-anchors
-// in one call, and this export (mo7g.gltf) needs none of mo7.json's manual axis/unit correction:
-// confirmed by decoding its own accessor bounding boxes directly - its vertex positions are already
-// real meters (extent 43.0 x 37.2 x 33.8m, matching the true mosque) and already Y-up (Y range 1.96m
-// to 39.2m, all positive), unlike mo7.json which needed a x0.01 cm->m scale and a 90deg Z-up->Y-up
-// rotation.
+// coordinate, via Threebox's native tb.loadObj({type:'gltf', ...}) pipeline - fetches, parses and
+// geo-anchors in one call. hh.gltf's vertex positions need no manual axis/unit correction: confirmed
+// by decoding its own accessor bounding boxes directly, they're already real meters (extent 43.0 x
+// 37.2 x 33.8m, matching the true mosque) and already Y-up (Y range 1.96m to 39.2m, all positive) -
+// identical geometry to the earlier mo7g.gltf export, just re-exported with real layer names added.
 //
-// mo7g.gltf still has no per-part names (0 of 382 nodes/meshes named - same limitation as mo7.json).
-// Rhino layer names (Minaret/Central Dome/Portico/etc.) were not preserved on this export either.
-// Until a re-export tags each part, there is no way to color/select/collapse individual zones - the
-// whole model loads and displays as a single mass, and selectZone/rebuildDeckLayers degrade to the
-// same graceful no-mesh-found behavior already used for the meshless "Courtyard wall" zone. This
-// export does carry 6 distinct real material colors (likely inherited from Rhino layer colors) -
-// currently overridden to the site's grayscale below; ask the user before treating those colors as
-// a zone proxy, since what each color represents hasn't been confirmed.
-const MOSQUE_MODEL_URL = "mo7g.gltf"; // 73MB glTF, 382 meshes, already real meters + already Y-up
+// hh.gltf DOES carry real per-part structure (unlike every export before it): a root node with 6
+// named child groups - Portico (336 mesh leaves), Central Dome (4), Minaret (12), Walls (15),
+// Struc-Columns (14), Base (1) - 382 total, matching the mesh count exactly, confirmed by walking
+// the glTF JSON directly. ZONE_GROUP_NAME_TO_KEY below maps those names to this page's zone keys;
+// zoneGroupObjects holds the actual loaded THREE.Object3D for each group once found, letting
+// selectZone/rebuildDeckLayers recolor and hide real geometry instead of the previous no-op
+// fallback. "Minaret"/"Central Dome"/"Portico" line up with the zones that have real CC/UC/loss-%
+// report data (damage_zones.csv); "Walls"/"Struc-Columns"/"Base" are real structural groups from the
+// model itself with no report data behind them (see updateDashboard's fallback for those).
+const ZONE_GROUP_NAME_TO_KEY = {
+  "Portico": "portico",
+  "Central Dome": "dome",
+  "Minaret": "minaret",
+  "Walls": "walls",
+  "Struc-Columns": "columns",
+  "Base": "base"
+};
+const zoneGroupObjects = {}; // zone key -> the real THREE.Object3D group for that part, once loaded
+const MOSQUE_MODEL_URL = "hh.gltf"; // 73MB glTF, 382 meshes across 6 named layer groups, real meters + Y-up
 // Earth Anchor Point: geo coordinate where the mosque model is pinned on the map (lng, lat, alt m).
 const EAP = { lng: 37.15769092453652, lat: 36.19758141817091, alt: 0 };
 
@@ -1992,77 +2001,76 @@ function loadRhinoModel(){
   const options = {
     obj: MOSQUE_MODEL_URL,
     type: "gltf",
-    units: "meters", // mo7g.gltf's vertices are already real-world meters - no scale correction needed
+    units: "meters", // hh.gltf's vertices are already real-world meters - no scale correction needed
     // anchor: Threebox's default is "bottom-left" (confirmed against the official jscastro76/threebox
     // docs, Object3D/loadObj option table), which anchors the object's horizontal MIN corner - not
-    // its center - to the EAP lng/lat. "bottom" keeps the vertical (Y) anchoring at the model's base
-    // while centering X/Z on the EAP instead - the same fix already applied to the old mo7.json
-    // loader, still needed here since mo7g.gltf's own local origin isn't centered on its footprint
-    // either (checked directly: its Z extent runs roughly -72m to -38m, nowhere near 0).
-    anchor: "bottom"
+    // its center - to the EAP lng/lat. "bottom" anchors the vertical (Y) at the model's base while
+    // centering X/Z on the EAP instead - hh.gltf's own local origin isn't centered on its footprint
+    // either (checked directly: its Z extent runs roughly -72m to -38m, nowhere near 0). The user can
+    // still fine-tune from here by hand via Shift/Ctrl/Alt+drag once selected (see initMosqueLayer).
+    anchor: "bottom",
+    // bbox/raycasted: docs say these default from tb.enableSelectingObjects/always-true respectively,
+    // but the selection box wasn't appearing in practice - setting them explicitly here in case that
+    // default isn't propagating correctly for objects loaded via tb.loadObj({type:'gltf'}) specifically.
+    bbox: true,
+    raycasted: true
   };
 
   Promise.resolve(window.tb.loadObj(options, model=>{
     console.log("[rhino model] loaded", MOSQUE_MODEL_URL, "- child count:", model.children.length);
 
-    // Recolor to the site's dark grayscale hierarchy - mo7g.gltf's real exported materials have 6
-    // distinct colors (see comment above), which would otherwise clash with every other "darkest
-    // mass = the mosque" choice made elsewhere on this page (see GREY.wall/BASE_ZONE_COLOR near the
-    // top of this script). This overrides color/opacity on the loaded materials in place; it does
-    // not touch the source file or the real geometry.
+    // Recolor per-zone (not one flat color) - hh.gltf's real exported materials have 6 distinct
+    // colors that don't correspond to anything confirmed, and every part should read as this site's
+    // dark grayscale hierarchy (see GREY/BASE_ZONE_COLOR near the top of this script) rather than
+    // its raw export colors. Walking each named zone group separately (instead of one flat traverse
+    // over the whole model) both recolors per-zone AND captures a reference to each group's real
+    // THREE.Object3D in zoneGroupObjects, which is what makes real selection/highlighting possible.
     model.traverse(node=>{
-      if (node.isMesh && node.material){
-        const mats = Array.isArray(node.material) ? node.material : [node.material];
-        mats.forEach(mat=>{
-          if (mat.color) mat.color.setHex(GREY.wall);
-          mat.transparent = false;
-          mat.opacity = 1.0;
-        });
-      }
+      const zoneKey = ZONE_GROUP_NAME_TO_KEY[node.name];
+      if (!zoneKey) return;
+      zoneGroupObjects[zoneKey] = node;
+      zoneMeshes[zoneKey] = true;
+      const baseColor = (BASE_ZONE_COLOR[zoneKey] != null) ? BASE_ZONE_COLOR[zoneKey] : GREY.wall;
+      node.traverse(child=>{
+        if (child.isMesh && child.material){
+          const mats = Array.isArray(child.material) ? child.material : [child.material];
+          mats.forEach(mat=>{
+            if (mat.color) mat.color.setHex(baseColor);
+            mat.transparent = false;
+            mat.opacity = 1.0;
+          });
+        }
+      });
     });
+    console.log("[rhino model] real zone groups found:", Object.keys(zoneGroupObjects));
 
     model.setCoords([EAP.lng, EAP.lat, EAP.alt]);
     window.tb.add(model);
     rhinoMosqueObj = model;
 
-    // Live readout while the user manually repositions the model (see enableDraggingObjects/
-    // enableRotatingObjects in initMosqueLayer above). Threebox fires this event on the object after
-    // every Shift/Ctrl/Alt+drag; tb.unprojectFromWorld converts the object's current Threebox world
-    // position back to a real lnglat so the readout - and the console log, for copy-pasting exact
-    // values - show real coordinates, not internal scene units. This does NOT save anything; it's
-    // purely a readout so the final numbers can be reported back and hardcoded into EAP/a rotation
-    // constant once the placement looks right, the same deliberate way every other geo-anchoring
-    // value on this page has been set from a checked, disclosed number rather than left live.
-    model.addEventListener("ObjectDragged", function(e){
-      const detail = (e && e.detail) || {};
-      const action = detail.draggedAction || "unknown";
-      const coords = window.tb.unprojectFromWorld(model.position);
-      const rotZDeg = (model.rotation.z * 180 / Math.PI).toFixed(2);
-      const readout = document.getElementById("model-drag-readout");
-      const line1 = "action: " + action;
-      const line2 = "lng: " + coords.lng.toFixed(8) + "  lat: " + coords.lat.toFixed(8);
-      const line3 = "alt (m): " + (model.position.z != null ? model.position.z.toFixed(3) : "n/a") + "   rotation.z (deg): " + rotZDeg;
-      console.log("[rhino model] ObjectDragged -", line1 + " | " + line2 + " | " + line3);
-      if (readout){
-        readout.style.display = "block";
-        readout.innerHTML = "<div style='padding:8px 10px;'><strong>Live drag readout</strong><br>" + line1 + "<br>" + line2 + "<br>" + line3 + "<br><span style='opacity:.7;'>Tell me these numbers once placement looks right and I'll bake them into EAP.</span></div>";
-      }
-    }, false);
+    // Manual repositioning (arrow/Q/E/PageUp/PageDown keys once the model is clicked/selected) is
+    // implemented right after this function - see selectModelForEdit/nudgeModelMeters/
+    // rotateModelDeg/updateEditReadout below. That live readout replaces what used to be a
+    // Threebox ObjectDragged listener here, since the native drag system it depended on
+    // (enableDraggingObjects/enableRotatingObjects) wasn't working reliably and has been turned off.
 
-    // No per-part names on this export (see comment above) - so, unlike the old decimated model,
-    // none of the individual zone keys have a real mesh to point at. This is the SAME fallback
-    // path already used for the meshless "Courtyard wall" zone, not a new special case.
-    zoneMeshes.minaret = false;
-    zoneMeshes.dome = false;
-    zoneMeshes.portico = false;
+    // "Fountain" has never appeared as a named group in any export (the Rapid Damage Assessment's
+    // report text mentions fountain-roof damage, but no fountain geometry exists in the Rhino model)
+    // - keep it explicitly false so selectZone/updateDashboard still show the graceful meshless
+    // fallback for it, same as "Courtyard wall". Every other zone key was set true above, dynamically,
+    // only if its named group was actually found in this load - not assumed.
     zoneMeshes.fountain = false;
 
     const legend = document.getElementById("model-legend");
     if (legend){
-      const hex = "#" + GREY.wall.toString(16).padStart(6, "0");
+      const swatches = Object.keys(zoneGroupObjects).map(key=>{
+        const hex = "#" + (BASE_ZONE_COLOR[key] != null ? BASE_ZONE_COLOR[key] : GREY.wall).toString(16).padStart(6, "0");
+        return `<div><span class="sw" style="background:${hex}"></span>${key}</div>`;
+      }).join("");
       legend.innerHTML = `
-        <div><span class="sw" style="background:${hex}"></span>Mosque (real, user's Rhino model, glTF export - ${MOSQUE_MODEL_URL})</div>
-        <div style="margin-top:5px;font-style:italic;">This export has no per-part names yet, so zones can't be individually selected/highlighted or the dome collapsed - see the browser console for the loaded part count. Zoom controls and the rest of the dashboard still work.</div>
+        <div>Mosque (real, user's Rhino model, glTF export - ${MOSQUE_MODEL_URL})</div>
+        ${swatches}
+        <div style="margin-top:5px;font-style:italic;">Minaret/Central dome/Portico have real damage-assessment data (report figures below); Walls/Struc-Columns/Base are real model geometry with no report data behind them. Click a zone button, or the model itself, to select/highlight a part.</div>
       `;
     }
   })).catch(err=>{
@@ -2077,18 +2085,128 @@ function loadRhinoModel(){
   });
 }
 
+// ============================ MANUAL MODEL REPOSITIONING (keyboard) ============================
+// Threebox's built-in click-to-select + Shift/Ctrl/Alt+drag (docs/Threebox.md) did not reliably show
+// a selection box or respond to drag in testing, so this replaces it with a self-contained system:
+// click the mosque to select it (draws a real green THREE.Box3Helper around it, updated live) and
+// arrow/Q/E/PageUp/PageDown keys move/rotate/raise it - built entirely on APIs already confirmed
+// working elsewhere on this page (tb.unprojectFromWorld, setCoords, rotation.z), not on Threebox's
+// object-drag machinery.
+let modelEditSelected = false;
+let modelBBoxHelper = null;
+const EDIT_STEP_M = 0.5;        // meters per arrow-key press (horizontal nudge)
+const EDIT_STEP_M_BIG = 5;      // meters per arrow-key press with Shift held
+const EDIT_ROT_STEP_DEG = 1;    // degrees per Q/E press
+const EDIT_ROT_STEP_DEG_BIG = 10; // degrees per Q/E press with Shift held
+const EDIT_ALT_STEP_M = 0.25;   // meters per PageUp/PageDown press
+const EDIT_ALT_STEP_M_BIG = 2;  // meters per PageUp/PageDown press with Shift held
+
+function selectModelForEdit(){
+  if (!rhinoMosqueObj) return;
+  modelEditSelected = true;
+  if (!modelBBoxHelper){
+    const box = new window.THREE.Box3().setFromObject(rhinoMosqueObj);
+    modelBBoxHelper = new window.THREE.Box3Helper(box, 0x35c46a);
+    modelBBoxHelper.raycasted = false; // shouldn't itself be clickable/pickable
+    // added as a sibling of rhinoMosqueObj (same parent) so it shares the exact same coordinate
+    // space - no separate geo-anchoring needed for a helper that already mirrors real world coords.
+    (rhinoMosqueObj.parent || window.tb.world).add(modelBBoxHelper);
+  }
+  modelBBoxHelper.visible = true;
+  updateEditReadout();
+}
+
+function deselectModelForEdit(){
+  modelEditSelected = false;
+  if (modelBBoxHelper) modelBBoxHelper.visible = false;
+  const readout = document.getElementById("model-drag-readout");
+  if (readout) readout.style.display = "none";
+}
+
+function updateEditReadout(){
+  if (!rhinoMosqueObj) return;
+  if (modelBBoxHelper) modelBBoxHelper.box.setFromObject(rhinoMosqueObj);
+  const coords = window.tb.unprojectFromWorld(rhinoMosqueObj.position);
+  const rotZDeg = (rhinoMosqueObj.rotation.z * 180 / Math.PI).toFixed(2);
+  const alt = rhinoMosqueObj.position.z != null ? rhinoMosqueObj.position.z.toFixed(3) : "n/a";
+  const line1 = "lng: " + coords.lng.toFixed(8) + "  lat: " + coords.lat.toFixed(8);
+  const line2 = "alt (m): " + alt + "   rotation.z (deg): " + rotZDeg;
+  console.log("[rhino model] edit position -", line1 + " | " + line2);
+  const readout = document.getElementById("model-drag-readout");
+  if (readout){
+    readout.style.display = "block";
+    readout.innerHTML = "<div style='padding:8px 10px;'><strong>Model selected - arrows move, Q/E rotate, PgUp/PgDn altitude, Shift = bigger step, Esc deselects</strong><br>" + line1 + "<br>" + line2 + "<br><span style='opacity:.7;'>Tell me these numbers once placement looks right and I'll bake them into EAP.</span></div>";
+  }
+}
+
+// dxMeters/dzMeters: real-world meter offsets along the model's local X/Z (screen left-right /
+// forward-back, NOT compass-relative - the map's own bearing isn't factored in, disclosed here
+// rather than pretending arrow keys mean true north/south). Converts to a lng/lat delta using the
+// standard ~111,320 m-per-degree-latitude approximation, then re-anchors via the same setCoords()
+// call used at initial placement, so this stays consistent with how the model was placed originally.
+function nudgeModelMeters(dxMeters, dzMeters, dAltMeters){
+  if (!rhinoMosqueObj) return;
+  const cur = window.tb.unprojectFromWorld(rhinoMosqueObj.position);
+  const curAlt = rhinoMosqueObj.position.z || 0;
+  const dLat = dzMeters / 111320;
+  const dLng = dxMeters / (111320 * Math.cos(cur.lat * Math.PI / 180));
+  rhinoMosqueObj.setCoords([cur.lng + dLng, cur.lat + dLat, curAlt + dAltMeters]);
+  updateEditReadout();
+}
+
+function rotateModelDeg(deltaDeg){
+  if (!rhinoMosqueObj) return;
+  rhinoMosqueObj.rotation.z += deltaDeg * Math.PI / 180;
+  updateEditReadout();
+}
+
+document.addEventListener("keydown", function(e){
+  if (!modelEditSelected || !rhinoMosqueObj) return;
+  const big = e.shiftKey;
+  const step = big ? EDIT_STEP_M_BIG : EDIT_STEP_M;
+  const rotStep = big ? EDIT_ROT_STEP_DEG_BIG : EDIT_ROT_STEP_DEG;
+  const altStep = big ? EDIT_ALT_STEP_M_BIG : EDIT_ALT_STEP_M;
+  let handled = true;
+  switch (e.key){
+    case "ArrowLeft": nudgeModelMeters(-step, 0, 0); break;
+    case "ArrowRight": nudgeModelMeters(step, 0, 0); break;
+    case "ArrowUp": nudgeModelMeters(0, step, 0); break;
+    case "ArrowDown": nudgeModelMeters(0, -step, 0); break;
+    case "q": case "Q": rotateModelDeg(-rotStep); break;
+    case "e": case "E": rotateModelDeg(rotStep); break;
+    case "PageUp": nudgeModelMeters(0, 0, altStep); break;
+    case "PageDown": nudgeModelMeters(0, 0, -altStep); break;
+    case "Escape": deselectModelForEdit(); break;
+    default: handled = false;
+  }
+  if (handled) e.preventDefault();
+});
+
 // Kept under its old deck.gl-era name (rebuildDeckLayers) since selectZone/clearModelHighlight/
 // applyTimelineToModel/the dashboard/the ontology graph all already call it by that name -
 // renaming it would mean touching every one of those call sites for no functional benefit. It no
-// longer builds deck.gl layers; it re-applies selection/damage/collapse state to the one Threebox
-// object currently loaded - a no-op until that object has real per-part names to act on (see the
-// comment on loadRhinoModel above).
+// longer builds deck.gl layers; it walks the real named zone groups captured in zoneGroupObjects
+// (see loadRhinoModel) and recolors/hides each one based on selectedZone/crossRefZone/damagedZones/
+// domeCollapsed - real per-part highlighting, now that hh.gltf actually has per-part groups to act on.
 function rebuildDeckLayers(){
   if (!rhinoMosqueObj) return;
-  // Placeholder for when mo.json carries real per-part names: this is where selectedZone/
-  // crossRefZone/damagedZones/domeCollapsed would be walked against rhinoMosqueObj's named
-  // children to recolor/hide the matching part, the same way buildDeckLayers used to per deck.gl
-  // layer. Left as a no-op for now rather than guessing at a mapping that doesn't exist yet.
+  Object.entries(zoneGroupObjects).forEach(([key, group])=>{
+    const isSelected = (key === selectedZone) || (key === crossRefZone);
+    const isDamaged = !!damagedZones[key];
+    const color = isSelected ? GREY.selected
+      : isDamaged ? GREY.damaged
+      : (BASE_ZONE_COLOR[key] != null ? BASE_ZONE_COLOR[key] : GREY.wall);
+    group.traverse(node=>{
+      if (node.isMesh && node.material){
+        const mats = Array.isArray(node.material) ? node.material : [node.material];
+        mats.forEach(mat=>{ if (mat.color) mat.color.setHex(color); });
+      }
+    });
+    // Documented collapse: hide the dome group entirely once its destruction date has passed
+    // (matches applyTimelineToModel's domeCollapsed flag, and un-hides it again when scrubbing back
+    // before that date via the Pre-Conflict toggle or manual scrub).
+    if (key === "dome") group.visible = !domeCollapsed;
+  });
 }
 
 function initMosqueLayer(){
@@ -2097,42 +2215,43 @@ function initMosqueLayer(){
     type: "custom",
     renderingMode: "3d",
     onAdd: function(){
-      // enableSelectingObjects/enableDraggingObjects/enableRotatingObjects/enableTooltips turn on
-      // Threebox's own built-in mouse interactions for 3D objects (documented in docs/Threebox.md):
-      // click the mosque to select it (shows a bounding box), then Shift+drag moves it horizontally,
-      // Ctrl+drag changes its altitude, Alt+drag rotates it over its center. This is how the mosque
-      // gets manually repositioned/re-oriented on the real map, rather than guessing rotation values
-      // in code - see the ObjectDragged listener in loadRhinoModel() for the live coordinate readout.
+      // Threebox's own click-to-select + Shift/Ctrl/Alt+drag (enableSelectingObjects/
+      // enableDraggingObjects/enableRotatingObjects) did not reliably show a selection box or
+      // respond to drag in testing, so those are left off here - repositioning is handled entirely
+      // by the self-built keyboard system below (selectModelForEdit/nudgeModelMeters/rotateModelDeg).
       window.tb = window.tb || new Threebox(map, map.getCanvas().getContext("webgl"), {
-        defaultLights: true,
-        enableSelectingObjects: true,
-        enableDraggingObjects: true,
-        enableRotatingObjects: true,
-        enableTooltips: true,
-        enableHelpTooltips: true
+        defaultLights: true
       });
       loadRhinoModel();
 
-      // Click-to-inspect: proves Threebox's own raycast picking (tb.queryRenderedFeatures +
-      // tb.findParent3DObject, both documented Threebox APIs) works end-to-end against the real
-      // loaded model, even though mo7g.gltf has no per-part names yet to turn this into real zone
-      // selection (see loadRhinoModel's comment above). Once a re-export tags parts, this is the
-      // hook point to call selectZone(zoneKey) instead of just logging - not wired to selectZone
-      // yet since there's no real name-to-zone mapping to act on. This runs alongside (not instead
-      // of) the native selection enabled above - Threebox's own click-to-select still works for
-      // dragging/rotating; this handler is purely a debug log of the raw mesh/parent uuids.
+      // Click-to-select: uses Threebox's own raycast picking (tb.queryRenderedFeatures) to find the
+      // clicked mesh, then walks UP its parent chain to the nearest ancestor whose name is a real
+      // zone group (see ZONE_GROUP_NAME_TO_KEY/loadRhinoModel). A hit both syncs the zone dashboard
+      // (selectZone, skipFlyTo so the camera doesn't jump mid-interaction) AND arms the manual-
+      // repositioning system (selectModelForEdit - draws the real bounding box, arms the keyboard
+      // controls). Clicking empty map/background deselects the model for editing.
       map.on("click", function(e){
         if (!window.tb || !window.tb.queryRenderedFeatures) return;
         const hits = window.tb.queryRenderedFeatures(e.point);
-        if (hits && hits.length){
-          const mesh = hits[0];
-          const parent = window.tb.findParent3DObject ? window.tb.findParent3DObject(mesh) : null;
-          console.log("[rhino model] clicked mesh uuid:", mesh && mesh.uuid, "- parent object uuid:", parent && parent.uuid);
+        if (!hits || !hits.length){ deselectModelForEdit(); return; }
+        const mesh = hits[0];
+        let node = mesh, zoneKey = null;
+        while (node){
+          if (ZONE_GROUP_NAME_TO_KEY[node.name]){ zoneKey = ZONE_GROUP_NAME_TO_KEY[node.name]; break; }
+          node = node.parent;
+        }
+        console.log("[rhino model] clicked mesh uuid:", mesh && mesh.uuid, "- resolved zone:", zoneKey);
+        if (zoneKey){
+          selectZone(zoneKey, { skipFlyTo: true });
+          selectModelForEdit();
         }
       });
     },
     render: function(){
       if (window.tb) window.tb.update();
+      if (modelEditSelected && modelBBoxHelper && rhinoMosqueObj){
+        modelBBoxHelper.box.setFromObject(rhinoMosqueObj);
+      }
     }
   });
 }
@@ -2144,12 +2263,19 @@ function initMosqueLayer(){
 const SITE_DEFAULT_VIEW = { zoom: 17.6, pitch: 62, bearing: -20 };
 const SITE_SELECTED_VIEW = { zoom: 18.6, pitch: 68, bearing: -20 };
 
-function selectZone(zoneKey){
+// opts.skipFlyTo: clicking directly on the model (see the map.on("click",...) handler in
+// initMosqueLayer) needs to sync the dashboard/highlighting WITHOUT also flying/re-centering the
+// camera on every click - that flyTo was firing on every single click on the mosque, including
+// clicks meant to select-then-Shift/Ctrl/Alt+drag, which yanked the camera mid-interaction and made
+// it look like Threebox's own selection box wasn't appearing / rotation "wasn't working". Zone-button
+// clicks still want the camera to fly in, so this only skips it for direct-model clicks.
+function selectZone(zoneKey, opts){
+  const skipFlyTo = !!(opts && opts.skipFlyTo);
   selectedZone = zoneKey;
   selectedNodeId = zoneKey ? (zoneKeyToId[zoneKey] || null) : null;
   rebuildDeckLayers();
   document.getElementById("model-selected").textContent = zoneKey ? zoneKey : "none selected";
-  if (typeof map !== "undefined" && map){
+  if (!skipFlyTo && typeof map !== "undefined" && map){
     const v = zoneKey ? SITE_SELECTED_VIEW : SITE_DEFAULT_VIEW;
     map.flyTo({ center: SITE_ZOOM_CENTER, zoom: v.zoom, pitch: v.pitch, bearing: v.bearing, duration: 900 });
   }
@@ -2600,7 +2726,10 @@ function initDashboard(){ updateDashboard(); }
 
 function updateZoneButtons(){
   const wrap = document.getElementById("zone-buttons");
-  const keys = [["minaret","Minaret"],["dome","Central dome"],["portico","Portico"],["fountain","Fountain"]];
+  // Minaret/dome/portico/fountain are the report-documented zones (fountain has no mesh, meshless
+  // fallback). Walls/Struc-Columns/Base are hh.gltf's real remaining layer groups - added so every
+  // real part of the model is selectable from the dashboard, not just the 3 with report data.
+  const keys = [["minaret","Minaret"],["dome","Central dome"],["portico","Portico"],["fountain","Fountain"],["walls","Walls"],["columns","Struc-Columns"],["base","Base"]];
   wrap.innerHTML = "";
   keys.forEach(([k,label])=>{
     const b = document.createElement("span");
@@ -2653,6 +2782,10 @@ function updateDashboard(){
   const reportDate = new Date(2019,5,25);
   if (selectedZone === "fountain" || selectedZone === "courtyard"){
     dmgEl.innerHTML = `<div class="dash-empty">Report's brief summary mentions this element as damaged (fountain roof / courtyard north wall) but provides no detailed CC/UC assessment for it - nothing further to show without inventing figures.</div>`;
+    return;
+  }
+  if (selectedZone === "walls" || selectedZone === "columns" || selectedZone === "base"){
+    dmgEl.innerHTML = `<div class="dash-empty">This is a real structural group from the 3D model's own layer structure (hh.gltf), not a zone covered by the Rapid Damage Assessment report - no CC/UC class or loss-% figure exists for it. The Minaret/Central dome/Portico zones are the ones with real report data.</div>`;
     return;
   }
   const zLabel = zoneLabelMap[selectedZone];
