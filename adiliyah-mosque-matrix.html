@@ -2234,16 +2234,25 @@ function initMosqueLayer(){
         if (!window.tb || !window.tb.queryRenderedFeatures) return;
         const hits = window.tb.queryRenderedFeatures(e.point);
         if (!hits || !hits.length){ deselectModelForEdit(); return; }
-        const mesh = hits[0];
+        // tb.queryRenderedFeatures does NOT always return the raw THREE.Mesh directly - some
+        // Threebox builds wrap the raycast hit as {object: THREE.Mesh, distance, point, ...}
+        // (standard THREE.Raycaster.intersectObjects shape). Reading .uuid off the wrong one of
+        // these silently gave "undefined" and made every click resolve to no zone. Handle both.
+        const rawHit = hits[0];
+        const mesh = (rawHit && rawHit.isObject3D) ? rawHit : (rawHit && rawHit.object && rawHit.object.isObject3D) ? rawHit.object : null;
         let node = mesh, zoneKey = null;
+        const namesSeen = [];
         while (node){
+          namesSeen.push(node.name || "(unnamed)");
           if (ZONE_GROUP_NAME_TO_KEY[node.name]){ zoneKey = ZONE_GROUP_NAME_TO_KEY[node.name]; break; }
           node = node.parent;
         }
-        console.log("[rhino model] clicked mesh uuid:", mesh && mesh.uuid, "- resolved zone:", zoneKey);
+        console.log("[rhino model] raw hit:", rawHit, "- resolved mesh:", mesh, "- parent chain names:", namesSeen, "- resolved zone:", zoneKey);
         if (zoneKey){
           selectZone(zoneKey, { skipFlyTo: true });
           selectModelForEdit();
+        } else if (!mesh) {
+          console.warn("[rhino model] could not extract a THREE.Object3D from the click hit - check the 'raw hit' object logged above to see its actual shape.");
         }
       });
     },
