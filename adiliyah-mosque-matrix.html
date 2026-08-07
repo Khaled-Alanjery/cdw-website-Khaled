@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<link rel="stylesheet" href="shared-style.css">
 <meta charset="UTF-8">
 <title>Enter</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
@@ -17,7 +18,6 @@
 <link rel="stylesheet" href="https://use.typekit.net/yoz2aka.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   /* ================================================================
      BUNCH: COLORS & THEME
@@ -35,7 +35,7 @@
     --gutter: 40px;
   }
   *{box-sizing:border-box;}
-  html,body{ margin:0; height:100%; background:var(--bg); color:var(--ink); font-family:'Cairo',Helvetica,Arial,sans-serif; }
+  html,body{ margin:0; height:100%; background:var(--bg); color:var(--ink); font-family:"futura-pt", Helvetica, Arial, sans-serif; }
   #app{ display:flex; flex-direction:column; height:100%; }
   /* ================================================================
      BUNCH: MATRIX DASHBOARD - TOP BAR (the timeline scrubber)
@@ -55,16 +55,16 @@
   #timeline-track-wrap input[type=range]{ width:100%; accent-color:var(--w1); position:relative; z-index:2; margin:0; display:block; }
   #timeline-ticks{ position:absolute; left:0; right:0; top:16px; height:16px; }
   #timeline-ticks .tick{ position:absolute; top:0; transform:translateX(-50%); font-size:9px; color:var(--muted); white-space:nowrap; cursor:pointer; margin-top:6px; }
-  #timeline-ticks .tick::before{ content:""; position:absolute; left:50%; top:0; width:1px; height:5px; background:var(--w3); }
+  /* tick leader lines removed - they read as rules between the years */
   #timeline-ticks .tick:hover{ color:var(--ink); }
   #timeline-date{ font-size:12px; font-variant-numeric:tabular-nums; color:var(--ink); min-width:150px; text-align:right; margin-top:4px; }
-  #reset-btn{ font-size:11px; border:1px solid var(--line); background:var(--w5); color:var(--w0); margin:4px 10px 5px; border-radius:5px; cursor:pointer; }
+  #reset-btn{ font-size:11px; border:1px solid var(--line); background:none; color:var(--ink); margin:4px 10px 5px; border-radius:5px; cursor:pointer; }
   #reset-btn:hover{ background:var(--w4); }
   #conflict-toggle{ display:flex; margin:4px 0 5px; border:1px solid var(--line); border-radius:5px; overflow:hidden; }
   #conflict-toggle button{ font-size:11px; border:none; background:var(--panel); color:var(--muted); padding:0 10px; height:100%; cursor:pointer; }
   #conflict-toggle button:first-child{ border-right:1px solid var(--line); }
   #conflict-toggle button:hover{ color:var(--ink); }
-  #conflict-toggle button.active{ background:var(--w5); color:var(--w0); }
+  #conflict-toggle button.active{ background:rgba(244,244,244,0.12); color:var(--ink); }
   #conflict-toggle-scale{ font-size:10px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); margin:8px 10px 5px 0; }
   #timeline-hint{ margin:4px 18px 8px; font-size:10px; color:var(--muted); background:var(--panel); border-bottom:1px solid var(--line); line-height:1.5; }
 
@@ -85,68 +85,62 @@
 
   /* ---- BUNCH: NETWORK GRAPH / INTENSITY SPHERE PANE (top-right) - the web of connected dots,
      with a toggle to swap it for a cloud-of-dots alternate view ---- */
-  #pane-graph{ flex:1.05; min-height:0; }
+  /* Re-balanced: the graph was being squeezed to about a fifth of the column and its outer nodes
+     were cut off by the pane edge, so it gets the largest share and a hard floor. The dashboard
+     scrolls, so giving it less height costs less than cropping a graph that cannot scroll. */
+  #pane-graph{ flex:1.9; min-height:340px; }
   /* ---- BUNCH: SELECTED-NODE INFO PANE (middle-right) - details for whatever you just clicked ---- */
-  #pane-info{ flex:0.62; min-height:120px; }
+  #pane-info{ flex:0.85; min-height:150px; }
   /* ---- BUNCH: DASHBOARD SUMMARY PANE (bottom-right) - environmental, damage & conflict numbers ---- */
-  #pane-dash{ flex:1.15; min-height:0; }
+  #pane-dash{ flex:1.9; min-height:0; }
 
   #pane-3d canvas{ display:block; }
-  #model-hint{ position:absolute; left:14px; bottom:12px; font-size:10.5px; color:var(--w1); background:rgba(255,255,255,0.85); margin:6px 9px; border-radius:6px; max-width:340px; line-height:1.5; }
-  #model-drag-readout{ position:absolute; left:14px; bottom:120px; font-size:10.5px; color:#fff; background:rgba(20,20,20,0.85); margin:6px 9px; border-radius:6px; max-width:340px; line-height:1.6; font-family:'IBM Plex Mono',monospace; }
-  #model-legend{ position:absolute; right:14px; top:44px; font-size:10px; color:var(--w1); background:rgba(255,255,255,0.9); margin:8px 10px; border-radius:6px; line-height:1.6; max-width:215px; }
-  #model-legend .sw{ display:inline-block; width:9px; height:9px; margin-right:6px; border:1px solid #333; }
-  #model-legend .lg-title{ font-size:9.5px; text-transform:uppercase; letter-spacing:.06em; color:#888; margin:13px 0 3px; border-top:1px dotted #ccc; }
-  #model-legend .lg-title:first-child{ border-top:none; margin-top:0; }
-  #map-container{ position:absolute; inset:0; z-index:0; background:var(--w5); }
+  #model-drag-readout{ position:absolute; left:14px; bottom:120px; font-size:10.5px; color:#fff; background:rgba(20,20,20,0.85); margin:6px 9px; border-radius:6px; max-width:340px; line-height:1.6; font-family:"futura-pt", Helvetica, Arial, sans-serif; }
+  /* #model-legend rules removed with the panel they styled. */
+  #map-container{ position:absolute; inset:0; z-index:0; background:none; }
   #map-container .mapboxgl-ctrl-attrib{ font-size:9px; }
   #map-container .mapboxgl-ctrl-bottom-right{ transform:scale(0.85); transform-origin:bottom right; }
   #map-controls{ position:absolute; left:14px; top:44px; z-index:2; display:flex; flex-direction:column; gap:5px; }
-  #map-controls button{ font-size:10.5px; border:1px solid var(--line); background:rgba(255,255,255,0.92); color:var(--w0); margin:5px 9px; border-radius:5px; cursor:pointer; text-align:left; }
-  #map-controls button:hover{ background:var(--w4); }
-  #map-legend{ position:absolute; right:14px; bottom:12px; z-index:2; font-size:9.5px; color:var(--w1); background:rgba(255,255,255,0.92); margin:7px 9px; border-radius:6px; line-height:1.6; max-width:210px; }
-  #map-legend .ramp{ display:flex; height:8px; margin:4px 0 2px; border-radius:2px; overflow:hidden; }
-  #map-legend .ramp div{ flex:1; }
+  #map-controls button{ font-size:10.5px; border:1px solid var(--line); background:rgba(51,51,51,0.85); color:var(--ink); margin:5px 9px; border-radius:5px; cursor:pointer; text-align:left; }
+  #map-controls button:hover{ background:rgba(77,77,77,0.95); }
   #map-tooltip{ position:absolute; z-index:3; pointer-events:none; background:rgba(20,20,20,0.92); color:#fff; font-size:10.5px; margin:5px 8px; border-radius:4px; display:none; line-height:1.5; max-width:210px; }
 
   #pane-graph .pane-body{ overflow:hidden; position:relative; }
   #pane-graph svg{ width:100%; height:100%; display:block; }
-  #view-toggle-btn{ margin-right:8px; }
-  #cloud-svg{ position:absolute; inset:0; }
-  #cloud-legend{ position:absolute; left:10px; bottom:8px; font-size:9.5px; color:var(--w1); background:rgba(255,255,255,0.92); margin:7px 9px; border-radius:6px; line-height:1.6; max-width:280px; }
-  #cloud-legend .sw{ display:inline-block; width:8px; height:8px; margin-right:5px; border-radius:50%; }
-  #cloud-legend .g{ background:#4a7a4a; } #cloud-legend .p{ background:#7a4a8a; } #cloud-legend .y{ background:#c9a227; }
 
-  #pane-info .pane-body{ margin:9px 14px 12px; font-size:12px; }
+  #pane-info .pane-body{ margin:9px 14px 14px; font-size:12px; line-height:1.7; }
   #info-empty{ color:var(--muted); font-style:italic; font-size:11.5px; }
   #info-title{ font-size:13px; font-weight:600; margin-bottom:2px; line-height:1.35; }
   #info-meta{ font-size:10.5px; color:var(--muted); margin-bottom:7px; text-transform:uppercase; letter-spacing:.04em; }
   #info-body .dash-row{ font-size:11.5px; }
-  #info-hist{ font-size:11.5px; color:var(--ink); line-height:1.5; margin:4px 0; }
+  #info-hist{ font-size:11.5px; color:var(--ink); line-height:1.8; margin:6px 0; }
   #info-hist ul{ margin:3px 0 0 16px; }
   #info-hist li{ margin-bottom:3px; }
   #info-source{ font-size:10.5px; color:var(--muted); margin-top:13px; line-height:1.5; border-top:1px dotted var(--line); }
 
-  #pane-dash .pane-body{ margin:10px 14px 16px; display:flex; flex-direction:column; gap:14px; }
-  .dash-col-title{ font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--ink); margin: 4px 0 10px; border-bottom:1px solid var(--line); }
-  .dash-row{ display:flex; justify-content:space-between; font-size:12px; margin:4px 0; border-bottom: 1px dotted var(--line); gap:10px; }
+  /* Line spacing opened up throughout this pane - at 1.4-1.5 the running paragraphs (the VIIRS
+     note, the "fetched once from live APIs" note, the per-zone loss descriptions) set far too
+     tight to scan, which is the whole job of a dashboard. */
+  #pane-dash .pane-body{ margin:10px 14px 16px; display:flex; flex-direction:column; gap:20px; line-height:1.75; }
+  .dash-col-title{ font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--ink); margin: 4px 0 12px; border-bottom:1px solid var(--line); padding-bottom:4px; }
+  .dash-row{ display:flex; justify-content:space-between; font-size:12px; margin:7px 0; padding-bottom:3px; line-height:1.6; border-bottom: 1px dotted var(--line); gap:10px; }
   .dash-row .k{ color:var(--muted); }
   .dash-row .v{ color:var(--ink); text-align:right; font-variant-numeric:tabular-nums; }
   .dash-empty{ font-size:11.5px; color:var(--muted); font-style:italic; margin:6px 0; }
-  .dash-note{ font-size:10.5px; color:var(--muted); line-height:1.5; margin-top:6px; }
-  .zone-btn{ display:inline-block; font-size:11px; margin: 6px 13px 6px 9px; border:1px solid var(--line); border-radius: 12px; cursor:pointer; background: var(--w5); color:var(--w0); }
-  .zone-btn.active{ background: var(--w1); color:#fff; border-color:var(--w1); }
-  .flag{ display:inline-block; font-size:9.5px; border-radius:4px; background:var(--w4); color:var(--w0); margin:1px 6px 1px 12px; }
+  .dash-note{ font-size:10.5px; color:var(--muted); line-height:1.85; margin-top:10px; }
+  .zone-btn{ appearance:none; -webkit-appearance:none; font:inherit; font-size:11px; padding:5px; margin:0 4px 4px 0; background:none; border:1px solid var(--line); border-radius:6px; color:var(--ink); cursor:pointer; }
+  .zone-btn.active{ background:rgba(244,244,244,0.12); color:var(--ink); border-color:rgba(244,244,244,0.55); }
+  .flag{ display:inline-block; font-size:9.5px; border-radius:4px; background:none; border:1px solid var(--line); color:var(--muted); padding:2px 5px; margin:1px 6px 1px 12px; }
   .conflict-row{ font-size:11px; margin:5px 0; border-bottom:1px dotted var(--line); cursor:pointer; }
   .conflict-row:hover{ background:rgba(244,244,244,0.08); }
   .conflict-row .cf-date{ color:var(--muted); font-variant-numeric:tabular-nums; margin-right:6px; }
   .conflict-row .cf-name{ color:var(--ink); }
-  .conflict-row.current{ background:rgba(122,220,122,0.14); border-left:2px solid #6fae6f; margin-left:4px; }
+  .conflict-row.current{ background:rgba(244,244,244,0.10); border-left:2px solid rgba(244,244,244,0.55); margin-left:4px; }
   .wiki-link{ color:var(--ink); text-decoration:underline; font-size:10.5px; }
   .cf-stats{ display:flex; gap:10px; margin:4px 0 8px; flex-wrap:wrap; }
-  .cf-stat{ font-size:10px; color:var(--w1); background:var(--w5); border-radius:5px; margin:4px 7px; }
-  .cf-stat b{ color:var(--w0); font-size:12px; display:block; }
-  .xref{ font-size:10px; color:#4a4a4a; background:#f2f2f2; border-radius:4px; margin:5px 6px 2px; display:inline-block; }
+  .cf-stat{ font-size:10px; color:var(--ink); background:none; border:1px solid var(--line); border-radius:5px; padding:5px; margin:4px 7px 4px 0; }
+  .cf-stat b{ color:var(--ink); font-size:12px; display:block; }
+  .xref{ display:block; font-size:10px; color:var(--muted); background:none; border:none; padding:0; margin:2px 0 0; }
 
   /* ---- BUNCH: FOOTER - the small credits/sources line at the very bottom of the Matrix tab ---- */
   footer{ margin:8px 18px; font-size:10.5px; color:var(--muted); border-top:1px solid var(--line); background:var(--panel); }
@@ -161,20 +155,8 @@
      by default, fading in when you hover that marker.
      ================================================================ */
   #shell{ display:flex; flex-direction:column; height:100vh; }
-  #site-nav{ position:fixed; top:0; left:0; width:100%; height:80px; z-index:200; pointer-events:none; }
-  #site-nav .nav-tabs{ position:relative; width:100%; height:100%; }
-  .nav-tab{ appearance:none; -webkit-appearance:none; position:absolute; display:inline-flex; align-items:center; font-family:'Cairo',Helvetica,Arial,sans-serif; font-weight:300; font-size:21px; letter-spacing:-.06em; line-height:1; background:none; border:none; color:var(--ink); margin:0; cursor:pointer; pointer-events:auto; }
-  .nav-tab .nt-label{ opacity:0; transition:opacity .35s ease; }
-  .nav-tab:hover .nt-label, .nav-tab:focus-visible .nt-label{ opacity:1; }
-  .nav-tab .nt-bar{ position:absolute; background:var(--ink); }
-  .nav-tab .nt-icon{ display:inline-block; width:20px; height:20px; background:var(--ink); margin-right:5px; flex:0 0 auto; }
-  /* nav's leftmost item now starts flush with --gutter (doubled from its original 10px), the rest
-     of the cluster shifts by the same delta so their relative spacing is unchanged */
-  .nav-tab-matrix{ left:var(--gutter); top:15px; }
-  .nav-tab-matrix .nt-bar{ left:0; top:25px; width:70px; height:10px; }
-  .nav-tab-prosthesis{ left:calc(var(--gutter) + 75px); top:50px; }
-  .nav-tab-prosthesis .nt-bar{ left:-5px; top:-20px; width:170px; height:10px; }
-  .nav-tab-sources{ left:calc(var(--gutter) + 240px); top:8px; }
+  /* Nav CSS lives in shared-style.css now (built from Figma "Page-07-Navbar"),
+     so all four pages stay identical. Nothing page-specific here. */
 
   /* ---- BUNCH: TAB SWITCHING - only one of Sources/Matrix/Prosthesis for Memoir is shown at a time ---- */
   .tab-panel{ display:none; flex:1; min-height:0; }
@@ -190,8 +172,8 @@
      BUNCH: SOURCES PAGE (the Data / Bibliography tab)
      ================================================================ */
   .sub-nav{ display:flex; gap:8px; margin-bottom:42px; border-bottom:1px solid var(--line); }
-  .sub-tab{ font-family:'Cairo',Helvetica,Arial,sans-serif; font-size:11px; letter-spacing:.05em; text-transform:uppercase; background:var(--w5); border:1px solid var(--line); color:var(--w0); margin:7px 16px; border-radius:14px; cursor:pointer; }
-  .sub-tab.active{ background:var(--w1); color:#fff; border-color:var(--w1); }
+  .sub-tab{ font-family:"futura-pt", Helvetica, Arial, sans-serif; font-size:11px; letter-spacing:.05em; text-transform:uppercase; background:none; border:1px solid var(--line); color:var(--muted); padding:5px 12px; margin:7px 16px; border-radius:14px; cursor:pointer; }
+  .sub-tab.active{ background:rgba(244,244,244,0.12); color:var(--ink); border-color:rgba(244,244,244,0.55); }
   .sub-panel{ display:none; }
   .sub-panel.active{ display:block; }
   .sub-panel h2{ font-size:18px; margin:0 0 16px; }
@@ -233,8 +215,8 @@
   /* extra breathing room above the "Ruins carry fragments..." closing line specifically - double
      the standard paragraph gap so it reads as a distinct, separated pull-line after the metalogue */
   .tw-line-spaced{ margin-top:calc(var(--gutter) * 2); }
-  .narrative-section h3{ font-family:'Cairo',Helvetica,Arial,sans-serif; font-weight:600; font-size:18px; letter-spacing:-.01em; margin:var(--gutter) 0 10px; color:var(--ink); opacity:0; transform:translateY(14px); transition:opacity .5s ease, transform .5s ease; }
-  .narrative-section p{ font-family:'Cairo',Helvetica,Arial,sans-serif; font-weight:600; font-size:18px; letter-spacing:-.01em; line-height:1.2; color:var(--ink); margin:0 0 var(--gutter); width:100%; opacity:0; transform:translateY(14px); transition:opacity .5s ease, transform .5s ease; }
+  .narrative-section h3{ font-family:"futura-pt", Helvetica, Arial, sans-serif; font-weight:600; font-size:18px; letter-spacing:-.01em; margin:var(--gutter) 0 10px; color:var(--ink); opacity:0; transform:translateY(14px); transition:opacity .5s ease, transform .5s ease; }
+  .narrative-section p{ font-family:"futura-pt", Helvetica, Arial, sans-serif; font-weight:600; font-size:18px; letter-spacing:-.01em; line-height:1.2; color:var(--ink); margin:0 0 var(--gutter); width:100%; opacity:0; transform:translateY(14px); transition:opacity .5s ease, transform .5s ease; }
   .narrative-section.in-view h3,
   .narrative-section.in-view p{ opacity:1; transform:translateY(0); }
 
@@ -242,8 +224,8 @@
   .citation-block p{ font-size:13px; color:var(--muted); max-width:none; margin:0; }
 
   .metalogue{ border-left:3px solid var(--ink); margin:28px 20px 18px; max-height:34vh; overflow-y:auto; }
-  .metalogue p{ font-family:"IBM Plex Mono",monospace; font-size:11.5px; line-height:1.8; color:var(--ink); margin:0 0 10px; max-width:none; }
-  .metalogue-title{ font-family:"IBM Plex Mono",monospace; font-weight:500; text-transform:uppercase; letter-spacing:.05em; font-size:10.5px; color:var(--muted); margin-bottom:14px; opacity:1; transform:none; }
+  .metalogue p{ font-family:"futura-pt", Helvetica, Arial, sans-serif; font-size:11.5px; line-height:1.8; color:var(--ink); margin:0 0 10px; max-width:none; }
+  .metalogue-title{ font-family:"futura-pt", Helvetica, Arial, sans-serif; font-weight:500; text-transform:uppercase; letter-spacing:.05em; font-size:10.5px; color:var(--muted); margin-bottom:14px; opacity:1; transform:none; }
 
   /* ================================================================
      BUNCH: DRAGGABLE PHOTO WINDOWS
@@ -251,7 +233,7 @@
      panels with no border/shadow, and you can grab and drag them
      anywhere once they're showing.
      ================================================================ */
-  .win{ position:relative; background:#fff; cursor:grab; user-select:none; -webkit-user-select:none; touch-action:none; }
+  .win{ position:relative; background:none; cursor:grab; user-select:none; -webkit-user-select:none; touch-action:none; }
   .win:active{ cursor:grabbing; }
   .win-body{ width:100%; height:100%; display:block; pointer-events:none; background-size:cover; background-position:center; }
   /* matte color behind each photo, cycling through the page's 4-color grayscale ramp - a fallback
@@ -281,7 +263,7 @@
      the label stays hidden until you hover the square, same as the nav labels */
   .visualize-btn{ appearance:none; -webkit-appearance:none; position:absolute; z-index:25; width:20px; height:20px; margin:0; border:none; background:none; cursor:pointer; }
   .visualize-btn .nt-bar{ position:absolute; left:0; top:0; width:20px; height:20px; background:var(--ink); }
-  .visualize-btn .nt-label{ position:absolute; left:28px; top:50%; transform:translateY(-50%); white-space:nowrap; font-family:'Cairo',Helvetica,Arial,sans-serif; font-weight:300; font-size:21px; letter-spacing:-.06em; color:var(--ink); opacity:0; transition:opacity .35s ease; }
+  .visualize-btn .nt-label{ position:absolute; left:28px; top:50%; transform:translateY(-50%); white-space:nowrap; font-family:"futura-pt", Helvetica, Arial, sans-serif; font-weight:300; font-size:21px; letter-spacing:-.06em; color:var(--ink); opacity:0; transition:opacity .35s ease; }
   .visualize-btn:hover .nt-label, .visualize-btn:focus-visible .nt-label{ opacity:1; }
   /* per-window transition-delay (120ms/step, same cadence as before - big enough to read as
      sequential, not simultaneous) is now set inline by positionPhotoCascade() in JS, since the
@@ -324,11 +306,10 @@
      the bottom of the file).
      ============================================================ -->
 <nav id="site-nav">
-  <div class="nav-tabs">
-    <button class="nav-tab nav-tab-matrix active" data-tab="tab-matrix"><span class="nt-label">Matrix</span><span class="nt-bar"></span></button>
-    <button class="nav-tab nav-tab-prosthesis" data-tab="tab-prosthesis"><span class="nt-bar"></span><span class="nt-label">Prosthesis for Memoir</span></button>
-    <button class="nav-tab nav-tab-sources" data-tab="tab-sources"><span class="nt-icon"></span><span class="nt-label">Sources</span></button>
-  </div>
+  <a class="nav-tab nav-tab-prosthesis" href="prosthesis-memoir.html"><span class="nt-box"></span><span class="nt-label">Prosthesis for Memoir</span></a>
+  <a class="nav-tab nav-tab-matrix current" href="adiliyah-mosque-matrix.html"><span class="nt-box"></span><span class="nt-label">Matrix</span></a>
+  <a class="nav-tab nav-tab-carousel" href="carousel.html"><span class="nt-box"></span><span class="nt-label">Carousel</span></a>
+  <a class="nav-tab nav-tab-sources" href="#tab-sources" data-tab="tab-sources"><span class="nt-box"></span><span class="nt-label">Sources</span></a>
 </nav>
 
 <section id="tab-sources" class="tab-panel">
@@ -403,11 +384,11 @@
       <button id="reset-btn">Reset selection</button>
     </div>
   </header>
-  <div id="timeline-hint">Drag to scrub day-by-day through the real 2010–2023 station record. Labeled ticks are documented events - click one, or any node/row elsewhere on the page, to jump straight to it.</div>
+  <div id="timeline-hint">2010–2023 station record</div>
 
   <div id="main">
     <div class="pane" id="pane-3d">
-      <div class="pane-head"><span>Procedural Model (grayscale) - click a zone</span><span id="model-selected">none selected</span></div>
+      <div class="pane-head" hidden><span id="model-selected"></span></div>
       <div class="pane-body" id="model-body">
         <div id="map-container"></div>
         <div id="map-tooltip"></div>
@@ -415,26 +396,20 @@
           <button id="zoom-district-btn">Zoom to Aleppo district</button>
           <button id="zoom-site-btn">Zoom to mosque site</button>
         </div>
-        <div id="map-legend"></div>
       </div>
-      <div id="model-legend"></div>
-      <div id="model-hint">Drag empty map to orbit/tilt · scroll to zoom · click a zone button or graph node to select it.<br><strong>Repositioning the mosque model:</strong> click directly on the mosque to select it (a green box appears around it), then use <strong>arrow keys</strong> to move it, <strong>Q/E</strong> to rotate it, <strong>Page Up/Down</strong> to change its altitude - hold <strong>Shift</strong> for a bigger step, <strong>Esc</strong> to deselect. The resulting coordinates/rotation are logged live below and in the console - read them off once you're happy with the placement so they can be saved permanently.</div>
+      
       <div id="model-drag-readout" style="display:none;"></div>
     </div>
     <div id="right-col">
       <div class="pane" id="pane-graph">
         <div class="pane-head">
-          <span id="graph-view-label">Ontology - Force-Directed Graph (populates with timeline)</span>
-          <span><button id="view-toggle-btn" class="zone-btn">Show intensity sphere ↦</button><span id="graph-count"></span></span>
         </div>
         <div class="pane-body">
           <svg id="graph-svg"></svg>
-          <svg id="cloud-svg" style="display:none;"></svg>
-          <div id="cloud-legend" style="display:none;"></div>
         </div>
       </div>
       <div class="pane" id="pane-info">
-        <div class="pane-head"><span>Selected Node - Full Record</span></div>
+        
         <div class="pane-body"><div id="info-empty">Click a node in the graph above, or a building part in the model, to see everything on record for it - history and source.</div></div>
       </div>
       <div class="pane" id="pane-dash">
@@ -650,7 +625,7 @@
 window.onerror = function(msg, src, line, col, err){
   var el = document.getElementById('model-body');
   var banner = document.createElement('div');
-  banner.style.cssText = 'margin:12px 14px;font-size:11.5px;color:#a33;font-family:monospace;white-space:pre-wrap;background:#fdeeee;border-bottom:1px solid #d99;';
+  banner.style.cssText = 'margin:12px 14px;font-size:11.5px;color:#a33;font-family:futura-pt, Helvetica, Arial, sans-serif;white-space:pre-wrap;background:#fdeeee;border-bottom:1px solid #d99;';
   banner.textContent = 'JS error: ' + msg + ' (line ' + line + ')';
   if (el) el.prepend(banner);
   console.error(err || msg);
@@ -670,7 +645,11 @@ const GREY = { wall:0x232323, dome:0x141414, column:0x2a2a2a, fountain:0x2e2e2e,
 // applyTimelineToModel so all four stay in sync instead of hardcoding their own copies. walls/
 // columns/base were added once hh.gltf's real named layer groups (Portico/Central Dome/Minaret/
 // Walls/Struc-Columns/Base) made real per-part selection possible - see loadRhinoModel().
-const BASE_ZONE_COLOR = { minaret:GREY.minaret, dome:GREY.dome, portico:GREY.wall, structure:GREY.wall, fountain:GREY.fountain, walls:GREY.wall, columns:GREY.column, base:GREY.base };
+/* The mosque now reads as ONE white mass rather than a grey per-part hierarchy - the parts are
+   still individually selectable, they just no longer announce themselves by value. #f4f4f4 is the
+   site's white; pure 0xffffff blows out against the dark basemap under the map's own lighting. */
+const MOSQUE_WHITE = 0xf4f4f4;
+const BASE_ZONE_COLOR = { minaret:MOSQUE_WHITE, dome:MOSQUE_WHITE, portico:MOSQUE_WHITE, structure:MOSQUE_WHITE, fountain:MOSQUE_WHITE, walls:MOSQUE_WHITE, columns:MOSQUE_WHITE, base:MOSQUE_WHITE };
 function hexToRgb(hex){ return [(hex>>16)&255, (hex>>8)&255, hex&255]; }
 // deck.gl layers take [r,g,b] 0-255 arrays, not THREE.Color hex ints - same base palette, different format.
 const BASE_ZONE_COLOR_RGB = Object.fromEntries(Object.entries(BASE_ZONE_COLOR).map(([k,v])=>[k, hexToRgb(v)]));
@@ -1741,8 +1720,23 @@ function parseFlexDate(s){
   if (/^\d{4}-\d{2}$/.test(s)) { const [y,m]=s.split("-"); return new Date(+y,+m-1,1); }
   return parseISODate(s);
 }
-function loadCsv(name, fb){ return d3.csv(name).then(r=>r&&r.length?r:fb).catch(()=>fb); }
-function loadJson(name, fb){ return d3.json(name).then(d=>d||fb).catch(()=>fb); }
+/* The seven data files live in assets/data/, but these loaders were asking for them at the page
+   root - so all seven 404'd on every load and the page silently ran on the fallback copies
+   embedded further up this file. Silently, because both loaders .catch() into the fallback by
+   design. The upshot was that editing any of these CSVs changed nothing on the page: the real
+   damage_zones.csv, conflict_events.csv and temperature.csv were never actually being read.
+   Prefixed here rather than at the seven call sites so there is one path to keep correct. */
+const DATA_DIR = "assets/data/";
+function loadCsv(name, fb){
+  return d3.csv(DATA_DIR + name)
+    .then(r=>r&&r.length?r:fb)
+    .catch(err=>{ console.warn("[data] falling back to the embedded copy of " + name, err); return fb; });
+}
+function loadJson(name, fb){
+  return d3.json(DATA_DIR + name)
+    .then(d=>d||fb)
+    .catch(err=>{ console.warn("[data] falling back to the embedded copy of " + name, err); return fb; });
+}
 
 Promise.all([
   loadCsv("events.csv", eventsFallback),
@@ -1763,11 +1757,11 @@ Promise.all([
   conflictEvents.sort((a,b)=>a._date-b._date);
 
   document.getElementById("footer-note").innerHTML =
-    "<strong>Data sources</strong> - Mosque &amp; damage: Rapid Damage Assessment (25.06.2019, Museum for Islamic Art Berlin / Syrian Heritage Archive Project, RC3) · earlier CAD survey FLS1615 (DXF, layers WALL/PLAN/DOME/COLUMN/FOUNTAIN, used for prior research) · the 3D model itself is the user's own Rhino model, exported directly to glTF with real named layer groups preserved (hh.gltf, 382 meshes across 6 groups: Portico, Central Dome, Minaret, Walls, Struc-Columns, Base) - this is the first export where individual parts can actually be selected/highlighted on the 3D model itself (see below) · Wikipedia: Al-Adiliyah Mosque. " +
+    "<strong>Data sources</strong> - Mosque &amp; damage: Rapid Damage Assessment (25.06.2019, Museum for Islamic Art Berlin / Syrian Heritage Archive Project, RC3) · earlier CAD survey FLS1615 (DXF, layers WALL/PLAN/DOME/COLUMN/FOUNTAIN, used for prior research) · the 3D model itself is the user's own Rhino model, exported directly to glTF with real named layer groups preserved (Mosque-Pre.glb, the pre-conflict state, 392 meshes across 6 groups: Portico, Central Dome, Minaret, Walls, Struc-Columns, Base) - this is the first export where individual parts can actually be selected/highlighted on the 3D model itself (see below) · Wikipedia: Al-Adiliyah Mosque. " +
     "Environment: NOAA GHCN Daily Summaries, station SYE00147760 (Aleppo) - " + temperature.length + " real daily readings, " + (temperature.length?d3.timeFormat('%Y')(temperature[0].date):'') + "–" + (temperature.length?d3.timeFormat('%Y')(temperature[temperature.length-1].date):'') + ", including the real ~7-year station gap 14 Nov 2012–20 Nov 2019 · Open-Elevation API + OpenTopoData API (SRTM90m/ASTER30m) - 8 readings · sunrisesunset.io API (25 Jun 2019 solar calc.) · NASA Earth Observatory VIIRS Day/Night Band (city-scale, published 16 May 2017). " +
     "Conflict: <a class=\"wiki-link\" href=\"" + CONFLICT_WIKI_URL + "\" target=\"_blank\" rel=\"noopener\">Wikipedia - Battle of Aleppo (2012–2016)</a> and <a class=\"wiki-link\" href=\"" + CONFLICT_2024_WIKI_URL + "\" target=\"_blank\" rel=\"noopener\">Battle of Aleppo (2024)</a>, casualty figures via the Violations Documentation Center in Syria. " +
     "Map: " + neighborhoodsFallback.features.length + " real Aleppo neighborhood polygons with % buildings damaged, from UNOSAT (UNITAR's Operational Satellite Applications Programme) Comprehensive/Shelter Damage Assessment (2016 release), via the Humanitarian Data Exchange, CC BY-SA · landmark coordinates (Al-Adiliyah Mosque, Umayyad Mosque, Aleppo Citadel) cross-referenced against those same UNOSAT neighborhood polygons. Rendered with Mapbox GL JS - a real Mapbox account/token, real basemap tiles and building massing fetched live over the network, unlike the rest of this page's embedded data (see below). The mosque model (the user's own Rhino model, not a procedural approximation) is embedded as a real 3D layer inside this same Mapbox WebGL scene via the Threebox plugin (a Mapbox custom layer sharing one GL context and camera with the map's other extrusions), geo-anchored to the mosque's true coordinate at true scale - not a separately composited image or canvas. " +
-    "<strong>Disclosed interpretive choices</strong> (not sourced measurements): hh.gltf's vertex coordinates are already real-world meters and already Y-up (confirmed by decoding the file's own accessor bounding boxes: extent 43.0 x 37.2 x 33.8 m), so no unit-scale or axis-rotation correction is applied - the geometry loads as exported. Threebox anchors the model's base (not its centroid) and horizontal footprint center - not a corner - on the anchor coordinate (36.19758141817091, 37.15769092453652), and the exact position/rotation can be adjusted by hand on the live model (select it, then Shift/Ctrl/Alt+drag) - a disclosed manual placement, not a measured survey value. This export's 6 named layer groups (Portico/Central Dome/Minaret/Walls/Struc-Columns/Base) are real Rhino layers, confirmed by walking the glTF file's own node hierarchy - clicking a zone button or the model itself now recolors/selects the real corresponding geometry; only Minaret/Central dome/Portico have report-sourced CC/UC/loss-% figures behind them, Walls/Struc-Columns/Base are real geometry with no report data. The timeline's stop-index scale, node-appearance dates in the ontology graph, and the Intensity Sphere's point positions (a 2D disc standing in for a sphere) are visualization choices - the underlying figures behind them (event counts, station-reading recency, real % structural loss) are not; neighborhood damage now cuts a void BELOW ground rather than a bar above it, at the same disclosed 6 meters per percentage point scale - only the direction is a visualization choice, the magnitude and the underlying % figure are real; building massing around the mosque uses Mapbox's own real 3D building data rather than a generic interpretive height; the page now opens on the mosque site rather than the district view, since a 41m building is close to sub-pixel at true district scale - use \"Zoom to Aleppo district\" for the wide view; the mosque model's materials (6 real distinct colors in this export, likely inherited from Rhino layer colors but not yet confirmed) are recolored per-zone to the grayscale ramp, with the selected zone temporarily switched to a glowing white instead - both are deliberate visual-hierarchy choices, not data values; the model's compass bearing/yaw is not corrected to true north (no true-north alignment was documented for the Rhino model or the earlier CAD survey) unless manually rotated by hand as described above; selecting a zone also tightens the map's zoom/pitch since all real zones share one small site footprint with no independent coordinate of their own. " +
+    "<strong>Disclosed interpretive choices</strong> (not sourced measurements): Mosque-Pre.glb's vertex coordinates are already real-world meters (confirmed by decoding the file's own accessor bounding boxes: extent 43.0 x 33.8 x 37.2 m), so no unit-scale correction is applied; it is exported Z-up (Rhino's native world axis, height running 1.96 to 39.2 m in Z), which is the same convention the renderer's own world uses, so no axis correction is applied. The model is yawed 90 degrees about its vertical axis - a deliberate placement choice, since no true-north alignment was ever documented for the Rhino model or the earlier CAD survey. Threebox anchors the model's base (not its centroid) and horizontal footprint center - not a corner - on the anchor coordinate (36.19758141817091, 37.15769092453652), and the exact position/rotation can be adjusted by hand on the live model (select it, then Shift/Ctrl/Alt+drag) - a disclosed manual placement, not a measured survey value. This export's 6 named layer groups (Portico/Central Dome/Minaret/Walls/Struc-Columns/Base) are real Rhino layers, confirmed by walking the glTF file's own node hierarchy - clicking a zone button or the model itself now recolors/selects the real corresponding geometry; only Minaret/Central dome/Portico have report-sourced CC/UC/loss-% figures behind them, Walls/Struc-Columns/Base are real geometry with no report data. The timeline's stop-index scale, node-appearance dates in the ontology graph, and the Intensity Sphere's point positions (a 2D disc standing in for a sphere) are visualization choices - the underlying figures behind them (event counts, station-reading recency, real % structural loss) are not; neighborhood damage now cuts a void BELOW ground rather than a bar above it, at the same disclosed 6 meters per percentage point scale - only the direction is a visualization choice, the magnitude and the underlying % figure are real; building massing around the mosque uses Mapbox's own real 3D building data rather than a generic interpretive height; the page now opens on the mosque site rather than the district view, since a 41m building is close to sub-pixel at true district scale - use \"Zoom to Aleppo district\" for the wide view; the mosque model's materials (6 real distinct colors in this export, likely inherited from Rhino layer colors but not yet confirmed) are recolored per-zone to the grayscale ramp, with the selected zone temporarily switched to a glowing white instead - both are deliberate visual-hierarchy choices, not data values; the model's compass bearing/yaw is not corrected to true north (no true-north alignment was documented for the Rhino model or the earlier CAD survey) unless manually rotated by hand as described above; selecting a zone also tightens the map's zoom/pitch since all real zones share one small site footprint with no independent coordinate of their own. " +
     "The neighborhood damage, landmark, weather, elevation, and conflict data are all fetched once during research and embedded statically in this page - they make no live API calls at runtime, and most of their source endpoints don't expose browser CORS for arbitrary local origins anyway. The map basemap and building massing are the one exception: Mapbox GL JS fetches real tiles and style data over the network each time this page loads.";
 
   initMap();
@@ -1789,7 +1783,13 @@ Promise.all([
 // was reduced from ~474,000 to ~21,000 vertices before it became practical to load in a browser.
 
 // ============================ THREE.JS MODEL ============================
-let selectedZone = null, selectedNodeId = null, domeCollapsed = false, crossRefZone = null; // deckOverlay removed - Threebox's own custom layer (see initMosqueLayer) replaces it, no separate overlay object to hold
+/* timelinePassedZone was being assigned in applyTimelineToModel and read in rebuildDeckLayers
+   but never declared anywhere - so the first READ threw a ReferenceError, which killed
+   rebuildDeckLayers, which aborted selectZone, which is why every button that routes through
+   selection stopped responding. Declared here alongside the other selection state. */
+let selectedZone = null, selectedNodeId = null, domeCollapsed = false, crossRefZone = null,
+    timelineZone = null,        // the scrubber is sitting ON this part's documented loss date
+    timelinePassedZone = null;  // this part's loss is already behind the current date // deckOverlay removed - Threebox's own custom layer (see initMosqueLayer) replaces it, no separate overlay object to hold
 const zoneMeshes = {}; // presence flags per zone (true = a real mesh exists) - used by UI logic elsewhere
 const damagedZones = {}; // set by applyTimelineToModel as the timeline crosses each documented damage date
 const zoneState = { minaret:{visible:true,damaged:false}, dome:{visible:true,damaged:false}, portico:{visible:true,damaged:false} };
@@ -1838,11 +1838,13 @@ function initMap(){
     // theme:monochrome/lightPreset:day/font:"DIN Pro" already baked in) - referencing it by style
     // URL, not embedding the JSON, so it stays in sync with anything edited in Studio later. It's
     // marked "private" in Studio, which is fine - the access token above already authenticates.
-    // show3dObjects isn't set inside the style's own config, so it's still overridden here to use
-    // Mapbox's own real building massing (not the old hand-rolled "neigh-mass" layer, removed below -
-    // that was a fixed 8m interpretive height with no real per-building data behind it).
+    //
+    // NO config override here, deliberately. In Standard the 3D buildings are a basemap CONFIG
+    // property, not a deletable layer, so a `config: { basemap: { show3dObjects: true } }` at init
+    // silently outranks whatever is set in Studio - which is why turning them off there appeared to
+    // do nothing. With the override gone, Studio is the single source of truth for the basemap:
+    // toggle 3D objects (or anything else) there and this page follows without a code change.
     style: "mapbox://styles/khaledalanjery/cms9qcrrk00g601qo1xsy9cvh",
-    config: { basemap: { show3dObjects: true } },
     center: SITE_ZOOM_CENTER,
     zoom: 12,
     pitch: 50,
@@ -1856,6 +1858,19 @@ function initMap(){
   map.addControl(new mapboxgl.AttributionControl({ compact:true, customAttribution:"UNOSAT / HDX (neighborhood damage) · CAD survey (site) · Wikipedia (landmarks) · Mapbox" }));
   map.addControl(new mapboxgl.NavigationControl({ showCompass:true, visualizePitch:true }), "top-right");
 
+  /* Camera readout. Framing values (SITE_DEFAULT_VIEW / SITE_SELECTED_VIEW) have been guessed
+     from screenshots twice now and both times the guess was off, because a pitched view's
+     apparent scale depends on where the building sits in the frame, not just the zoom. So:
+     drag/zoom the map to exactly the framing you want, read the line this prints in the browser
+     console, and hand me those numbers - then they get baked in and stop being a guess. */
+  map.on("moveend", ()=>{
+    const c = map.getCenter();
+    console.log("[view] zoom " + map.getZoom().toFixed(2) +
+                " · pitch " + map.getPitch().toFixed(0) +
+                " · bearing " + map.getBearing().toFixed(0) +
+                " · centre [" + c.lng.toFixed(6) + ", " + c.lat.toFixed(6) + "]");
+  });
+
   // Mapbox GL JS reports auth/network/style failures via an "error" event on the map object, not a
   // throwable exception - the page's global window.onerror handler (see near the top of this
   // script) never sees these, so a bad token or blocked request used to fail completely silently:
@@ -1866,7 +1881,7 @@ function initMap(){
     const el = document.getElementById("model-body");
     if (el){
       const banner = document.createElement("div");
-      banner.style.cssText = "margin:12px 14px;font-size:11.5px;color:#a33;font-family:monospace;white-space:pre-wrap;background:#fdeeee;border-bottom:1px solid #d99;";
+      banner.style.cssText = 'margin:12px 14px;font-size:11.5px;color:#a33;font-family:futura-pt, Helvetica, Arial, sans-serif;white-space:pre-wrap;background:#fdeeee;border-bottom:1px solid #d99;';
       const msg = (e && e.error && (e.error.message || (e.error.status ? "HTTP " + e.error.status : null))) || "unknown Mapbox error - see browser console";
       banner.textContent = "Mapbox error: " + msg;
       el.prepend(banner);
@@ -1878,25 +1893,15 @@ function initMap(){
 
     // The old hand-rolled "neigh-mass" extrusion layer (generic 8m-tall UNOSAT-footprint blocks,
     // since no real per-building height dataset exists for this district) is removed - Mapbox's own
-    // real 3D building massing (show3dObjects:true above) replaces it, per request.
+    // real 3D building massing replaces it, per request - now controlled entirely from Studio
+    // rather than forced on here (see the style comment above).
 
     // Damage (downward): real UNOSAT percent_damaged now cuts a void BELOW the ground plane
     // instead of a bar above it - loss represented as absence/depth rather than presence/height.
     // Same disclosed 6m-per-percentage-point scale as before, direction inverted only.
-    map.addLayer({
-      id:"neigh-fill", type:"fill-extrusion", source:"neighborhoods",
-      paint:{
-        "fill-extrusion-color": ["interpolate", ["linear"], ["get","percent_damaged"], 0, "#f5f5f5", 20, "#c9c9c9", 40, "#9a9a9a", 70, "#5a5a5a"],
-        "fill-extrusion-height": 0,
-        "fill-extrusion-base": ["*", ["get","percent_damaged"], -6],
-        "fill-extrusion-opacity": 0.92,
-        "fill-extrusion-vertical-gradient": true
-      }
-    });
-    map.addLayer({
-      id:"neigh-line", type:"line", source:"neighborhoods",
-      paint:{ "line-color":"#8a8a8a", "line-width":0.6 }
-    });
+    /* Neighbourhood damage extrusions and their outlines removed - the Mapbox style now
+       carries the look, and these sat on top of it. The neighborhoods SOURCE stays so the
+       hover tooltip and the damage figures still work; only the drawn layers are gone. */
 
     // Topography grid ("pale blocks = real topography (ASTER 30m)" in the old legend) removed per
     // request - this was a sparse 9x7 grid of small extruded squares across the district. The
@@ -1912,10 +1917,10 @@ function initMap(){
     });
     map.addLayer({
       id:"landmark-circles", type:"circle", source:"landmarks",
-      paint:{ "circle-radius":6, "circle-color":"#111111", "circle-stroke-width":2, "circle-stroke-color":"#ffffff" }
+      paint:{ "circle-radius":4, "circle-color":"rgba(244,244,244,0.9)", "circle-stroke-width":0 }
     });
 
-    ["neigh-fill","landmark-circles"].forEach(layerId=>{
+    ["landmark-circles"].forEach(layerId=>{
       map.on("mousemove", layerId, (e)=>{
         const f = e.features[0];
         const tip = document.getElementById("map-tooltip");
@@ -1937,19 +1942,17 @@ function initMap(){
       });
     });
 
-    document.getElementById("map-legend").innerHTML = `
-      <div><strong>% buildings damaged</strong> (UNOSAT, real, 115 neighborhoods) - now a downward void</div>
-      <div class="ramp"><div style="background:#f5f5f5"></div><div style="background:#c9c9c9"></div><div style="background:#9a9a9a"></div><div style="background:#5a5a5a"></div></div>
-      <div style="display:flex;justify-content:space-between;">0%<span>70%+</span></div>
-      <div style="margin-top:5px;">● black = named landmark &nbsp; ● building massing = Mapbox's own real 3D buildings &nbsp; ● darkest mass = the mosque model</div>
-    `;
-
     // Default view is the SITE, not the district: at true district-wide scale a 41m building is
     // genuinely sub-pixel, so opening on the district view made the mosque model effectively
     // invisible. The "Zoom to Aleppo district" button still gives the wide damage view on demand.
-    map.jumpTo({ center: SITE_ZOOM_CENTER, zoom: 17.6, pitch: 62, bearing: -20 });
-    map.setPitch(62);
-    map.setBearing(-20);
+    /* Reads SITE_DEFAULT_VIEW instead of its own hardcoded 17.6. The opening view and the
+       "Zoom to mosque site" button both carried their own literal copies of the framing, so
+       raising SITE_DEFAULT_VIEW changed nothing at all - the console readout kept reporting
+       17.60 no matter what the constant said. One source of truth now. */
+    map.jumpTo({ center: SITE_ZOOM_CENTER, zoom: SITE_DEFAULT_VIEW.zoom,
+                 pitch: SITE_DEFAULT_VIEW.pitch, bearing: SITE_DEFAULT_VIEW.bearing });
+    map.setPitch(SITE_DEFAULT_VIEW.pitch);
+    map.setBearing(SITE_DEFAULT_VIEW.bearing);
     mapLoaded = true;
     initMosqueLayer(); // adds the procedural model as a real layer inside this same map/GL context
   });
@@ -1960,7 +1963,8 @@ function initMapControls(){
     map.fitBounds(ALEPPO_DISTRICT_BOUNDS, { padding:40, pitch:50, bearing:-15, duration:800 });
   });
   document.getElementById("zoom-site-btn").addEventListener("click", ()=>{
-    map.flyTo({ center:SITE_ZOOM_CENTER, zoom:17.6, pitch:62, bearing:-20, duration:1000 });
+    map.flyTo({ center:SITE_ZOOM_CENTER, zoom:SITE_DEFAULT_VIEW.zoom,
+                pitch:SITE_DEFAULT_VIEW.pitch, bearing:SITE_DEFAULT_VIEW.bearing, duration:1000 });
   });
 }
 
@@ -1990,10 +1994,84 @@ const ZONE_GROUP_NAME_TO_KEY = {
   "Struc-Columns": "columns",
   "Base": "base"
 };
+/* Look the zone key up TOLERANTLY rather than by exact string match. three.js's GLTFLoader runs
+   node names through PropertyBinding.sanitizeNodeName, which replaces whitespace with
+   underscores - so Rhino's layer "Central Dome" arrives as "Central_Dome" and an exact-match
+   lookup silently misses it. That is why the console reported only 5 zone groups found out of
+   the 6 in the file, and why the dome could not be selected or highlighted: it was never
+   captured into zoneGroupObjects at all. Normalising underscores/spaces and case fixes it and
+   also makes the mapping survive a rename in Rhino that only changes separators or capitals. */
+function zoneKeyForGroupName(name){
+  if (!name) return null;
+  const norm = s => String(s).replace(/[_\s]+/g, " ").trim().toLowerCase();
+  const target = norm(name);
+  for (const key in ZONE_GROUP_NAME_TO_KEY){
+    if (norm(key) === target) return ZONE_GROUP_NAME_TO_KEY[key];
+  }
+  return null;
+}
+
 const zoneGroupObjects = {}; // zone key -> the real THREE.Object3D group for that part, once loaded
-const MOSQUE_MODEL_URL = "hh.gltf"; // 73MB glTF, 382 meshes across 6 named layer groups, real meters + Y-up
+
+/* ------------------------------------------------------------------------------
+   BUILDING STATES
+   One entry per exported state of the mosque, so the pre/post pair is a data
+   question rather than a code change. Both states MUST share the EAP below and
+   the same axis correction, or the damage read-across is meaningless - the whole
+   point is that the two models occupy the identical patch of ground and the only
+   thing that differs between them is the building.
+
+   Mosque-Pre.glb: 52MB binary glTF, 392 meshes across the same 6 named Rhino
+   layer groups, vertices already in real metres (43.0 x 33.8 x 37.2 m, decoded
+   from the file's own accessor bounds), but exported Z-UP - Rhino's native world
+   axis, height running 1.96 -> 39.2 m in Z. Threebox expects Y-up, so this needs
+   the -90 X rotation below; the previous hh.gltf was a Y-up export and needed
+   none, which is the one substantive difference between the two files.
+   (hh.gltf was also being requested from the site root while the file actually
+   sits in assets/model/, so it was 404ing - the path here is the real one.)
+   ------------------------------------------------------------------------------ */
+const MOSQUE_STATES = {
+  pre: {
+    url: "assets/model/Mosque-Pre.glb",
+    /* NO x rotation. Threebox's world is Z-UP, not Y-up - which is exactly why its own glTF
+       examples pass {x:90}: standard glTF is Y-up and has to be stood upright. Mosque-Pre.glb
+       is a Rhino export and is ALREADY Z-up, so it needs no axis correction at all. An x:-90
+       here tipped the whole mosque onto its edge.
+       z is therefore a plain yaw about the world vertical - it spins the plan, nothing else.
+       180 = a further quarter turn from the 90 that put the portico facing lower-left, which
+       swings the portico round to face right. Positive z is counter-clockwise seen from above,
+       so go to 270 to carry on the same way, or back to 0/90 to undo. */
+    rotation: { x: 0, y: 0, z: 180 }
+  }
+  // post: { url: "assets/model/Mosque-Post.glb", rotation: { x: -90, y: 0, z: 0 } }
+};
+let mosqueState = "pre";
+const MOSQUE_MODEL_URL      = MOSQUE_STATES[mosqueState].url;
+const MOSQUE_MODEL_ROTATION = MOSQUE_STATES[mosqueState].rotation;
 // Earth Anchor Point: geo coordinate where the mosque model is pinned on the map (lng, lat, alt m).
 const EAP = { lng: 37.15769092453652, lat: 36.19758141817091, alt: 0 };
+
+/* ------------------------------------------------------------------------------
+   PLACEMENT NUDGE
+   Kept separate from the EAP on purpose: the EAP above is the mosque's real
+   documented coordinate and the methodology text cites it, so it should not be
+   quietly edited to fix what is a visual placement problem. This is the declared
+   hand-adjustment on top of it, in metres, and both building states inherit it -
+   which is what keeps pre and post landing on the same patch of ground.
+
+   Solved off your marked-up view rather than in pixels, since the 62 degree pitch
+   makes a screen pixel worth wildly different ground distances up the frame. The
+   model's own 43 m footprint gave the scale near the building; the gap from where
+   it sat to the marked footprint measured ~27 m across the screen and ~17 m towards
+   the camera, which under the -20 bearing resolves to roughly 20 m west and 25 m
+   south of where it was - hence the numbers below.
+   ------------------------------------------------------------------------------ */
+const MODEL_OFFSET_M = { east: 9.9, north: -14.1 };
+function anchorCoords(){
+  const dLat = MODEL_OFFSET_M.north / 111320;
+  const dLng = MODEL_OFFSET_M.east  / (111320 * Math.cos(EAP.lat * Math.PI / 180));
+  return [EAP.lng + dLng, EAP.lat + dLat, EAP.alt];
+}
 
 let rhinoMosqueObj = null; // the Threebox-wrapped THREE.Object3D once loaded, or null until then
 
@@ -2001,7 +2079,11 @@ function loadRhinoModel(){
   const options = {
     obj: MOSQUE_MODEL_URL,
     type: "gltf",
-    units: "meters", // hh.gltf's vertices are already real-world meters - no scale correction needed
+    units: "meters", // vertices are already real-world metres - no scale correction needed
+    // Axis correction only, no yaw: the model keeps exactly the compass orientation it was
+    // exported with, same as before. Nudge it live (select, then arrow/Q/E) and tell me the
+    // final angle if it reads wrong against the satellite imagery, and I'll bake it in here.
+    rotation: MOSQUE_MODEL_ROTATION,
     // anchor: Threebox's default is "bottom-left" (confirmed against the official jscastro76/threebox
     // docs, Object3D/loadObj option table), which anchors the object's horizontal MIN corner - not
     // its center - to the EAP lng/lat. "bottom" anchors the vertical (Y) at the model's base while
@@ -2026,13 +2108,20 @@ function loadRhinoModel(){
     // over the whole model) both recolors per-zone AND captures a reference to each group's real
     // THREE.Object3D in zoneGroupObjects, which is what makes real selection/highlighting possible.
     model.traverse(node=>{
-      const zoneKey = ZONE_GROUP_NAME_TO_KEY[node.name];
+      const zoneKey = zoneKeyForGroupName(node.name);
       if (!zoneKey) return;
       zoneGroupObjects[zoneKey] = node;
       zoneMeshes[zoneKey] = true;
       const baseColor = (BASE_ZONE_COLOR[zoneKey] != null) ? BASE_ZONE_COLOR[zoneKey] : GREY.wall;
       node.traverse(child=>{
         if (child.isMesh && child.material){
+          /* CLONE the material first. The export carries only 6 materials for 392 meshes, so
+             they are shared - and a shared material means recolouring or lifting the emissive
+             on one zone would silently do it to every zone that happens to share the material,
+             making per-part highlighting impossible. Cloning gives each mesh its own. */
+          child.material = Array.isArray(child.material)
+            ? child.material.map(m=>m.clone())
+            : child.material.clone();
           const mats = Array.isArray(child.material) ? child.material : [child.material];
           mats.forEach(mat=>{
             if (mat.color) mat.color.setHex(baseColor);
@@ -2044,7 +2133,7 @@ function loadRhinoModel(){
     });
     console.log("[rhino model] real zone groups found:", Object.keys(zoneGroupObjects));
 
-    model.setCoords([EAP.lng, EAP.lat, EAP.alt]);
+    model.setCoords(anchorCoords());
     window.tb.add(model);
     rhinoMosqueObj = model;
 
@@ -2061,24 +2150,17 @@ function loadRhinoModel(){
     // only if its named group was actually found in this load - not assumed.
     zoneMeshes.fountain = false;
 
-    const legend = document.getElementById("model-legend");
-    if (legend){
-      const swatches = Object.keys(zoneGroupObjects).map(key=>{
-        const hex = "#" + (BASE_ZONE_COLOR[key] != null ? BASE_ZONE_COLOR[key] : GREY.wall).toString(16).padStart(6, "0");
-        return `<div><span class="sw" style="background:${hex}"></span>${key}</div>`;
-      }).join("");
-      legend.innerHTML = `
-        <div>Mosque (real, user's Rhino model, glTF export - ${MOSQUE_MODEL_URL})</div>
-        ${swatches}
-        <div style="margin-top:5px;font-style:italic;">Minaret/Central dome/Portico have real damage-assessment data (report figures below); Walls/Struc-Columns/Base are real model geometry with no report data behind them. Click a zone button, or the model itself, to select/highlight a part.</div>
-      `;
-    }
+    /* The #model-legend panel that used to be written here (file name, per-zone swatches, and the
+       "click a zone button" note) is removed - it sat over the model in the top-right corner and the
+       swatches carried no information at all once every zone became one white. The zone buttons in
+       the dashboard below already do the selecting, and the sourcing note lives in the methodology
+       text at the foot of the page. */
   })).catch(err=>{
     console.error("[rhino model] failed to load", MOSQUE_MODEL_URL, err);
     const el = document.getElementById("model-body");
     if (el){
       const banner = document.createElement("div");
-      banner.style.cssText = "margin:12px 14px;font-size:11.5px;color:#a33;font-family:monospace;white-space:pre-wrap;background:#fdeeee;border-bottom:1px solid #d99;";
+      banner.style.cssText = 'margin:12px 14px;font-size:11.5px;color:#a33;font-family:futura-pt, Helvetica, Arial, sans-serif;white-space:pre-wrap;background:#fdeeee;border-bottom:1px solid #d99;';
       banner.textContent = "Rhino model failed to load (" + MOSQUE_MODEL_URL + "): " + err.message;
       el.prepend(banner);
     }
@@ -2188,24 +2270,138 @@ document.addEventListener("keydown", function(e){
 // longer builds deck.gl layers; it walks the real named zone groups captured in zoneGroupObjects
 // (see loadRhinoModel) and recolors/hides each one based on selectedZone/crossRefZone/damagedZones/
 // domeCollapsed - real per-part highlighting, now that hh.gltf actually has per-part groups to act on.
+/* ------------------------------------------------------------------------------
+   HIGHLIGHT: BRIGHTER + STROKE
+   Now that every zone shares one white base colour, a colour swap alone cannot read
+   as "this part is highlighted" - so highlighting is done two ways at once:
+
+     brighter - an EMISSIVE lift rather than a lighter base colour. Emissive adds
+                light on top of the shading instead of replacing it, so the part
+                brightens without flattening into a silhouette. #d9d9d9 is the same
+                grey the prosthesis pages use for their lifted text.
+     stroke   - real edge lines built off the geometry itself.
+
+   The stroke is built ONCE per zone, lazily, the first time that zone is
+   highlighted, and then just toggled visible - rebuilding it every time the
+   timeline ticked would be brutal. Portico is 907k vertices on its own (the other
+   five groups total ~72k), so an EdgesGeometry pass over it would stall the frame
+   and produce line soup; anything over the budget falls back to a bounding-box
+   stroke instead, computed in the group's own local space so it inherits the
+   model's placement and yaw exactly.
+   ------------------------------------------------------------------------------ */
+/* Toned down: pure white plus a strong emissive read as a lightbulb against a near-black
+   basemap. The highlighted part is now filled with #d9d9d9 - the prosthesis pages' grey - and
+   the emissive is only a low lift, enough to separate it from the unselected parts without
+   blowing out the shading that makes the domes and arches legible. */
+const HIGHLIGHT_COLOUR   = 0xd9d9d9;   // the prosthesis grey, not white
+const HIGHLIGHT_EMISSIVE = 0x3d3d3d;   // a lift, not a glow
+const OUTLINE_COLOUR     = 0xf4f4f4;
+const OUTLINE_BUDGET_VERTS = 120000;
+const zoneOutlines = {};               // zone key -> array of LineSegments, or null if unavailable
+
+function buildZoneOutline(key, group){
+  if (zoneOutlines[key] !== undefined) return zoneOutlines[key];
+  if (!window.THREE){ return (zoneOutlines[key] = null); }
+  try {
+    const meshes = [];
+    let verts = 0;
+    group.updateWorldMatrix(true, true);
+    group.traverse(n=>{
+      if (n.isMesh && n.geometry && n.geometry.attributes && n.geometry.attributes.position){
+        meshes.push(n);
+        verts += n.geometry.attributes.position.count;
+      }
+    });
+    if (!meshes.length){ return (zoneOutlines[key] = null); }
+
+    const mat = new THREE.LineBasicMaterial({ color: OUTLINE_COLOUR, transparent: true, opacity: 0.95 });
+    const lines = [];
+
+    if (verts <= OUTLINE_BUDGET_VERTS){
+      // Real edges, one LineSegments per mesh, parented to that mesh so it tracks it exactly.
+      meshes.forEach(m=>{
+        const ls = new THREE.LineSegments(new THREE.EdgesGeometry(m.geometry, 30), mat);
+        ls.name = "__zone-outline__";
+        m.add(ls);
+        lines.push(ls);
+      });
+    } else {
+      // Too heavy for real edges - one box stroke round the whole part instead. Built in the
+      // group's LOCAL space (each mesh's box pushed through group^-1 * mesh) so that adding it
+      // as a child of the group does not double-apply the model's own transform.
+      const inv = new THREE.Matrix4().copy(group.matrixWorld).invert();
+      const box = new THREE.Box3();
+      const tmp = new THREE.Matrix4();
+      meshes.forEach(m=>{
+        m.geometry.computeBoundingBox();
+        const b = m.geometry.boundingBox.clone();
+        b.applyMatrix4(tmp.multiplyMatrices(inv, m.matrixWorld));
+        box.union(b);
+      });
+      if (box.isEmpty()){ return (zoneOutlines[key] = null); }
+      const size = box.getSize(new THREE.Vector3());
+      const ctr  = box.getCenter(new THREE.Vector3());
+      const ls = new THREE.LineSegments(
+        new THREE.EdgesGeometry(new THREE.BoxGeometry(size.x, size.y, size.z)), mat);
+      ls.name = "__zone-outline__";
+      ls.position.copy(ctr);
+      group.add(ls);
+      lines.push(ls);
+      console.log("[zone outline]", key, "used a box stroke -", verts.toLocaleString(), "verts is over budget");
+    }
+
+    lines.forEach(l=>{ l.visible = false; });
+    return (zoneOutlines[key] = lines);
+  } catch(err){
+    console.warn("[zone outline] could not build one for", key, err);
+    return (zoneOutlines[key] = null);
+  }
+}
+
+function setZoneOutline(key, group, on){
+  const lines = on ? buildZoneOutline(key, group) : zoneOutlines[key];
+  if (!lines) return;
+  lines.forEach(l=>{ l.visible = on; });
+}
+
 function rebuildDeckLayers(){
   if (!rhinoMosqueObj) return;
   Object.entries(zoneGroupObjects).forEach(([key, group])=>{
     const isSelected = (key === selectedZone) || (key === crossRefZone);
     const isDamaged = !!damagedZones[key];
-    const color = isSelected ? GREY.selected
+    /* The timeline's own claim on a part, in two tiers:
+         timelineZone       - the scrubber is ON this part's documented damage date. It LIGHTS UP,
+                              identically to a selected part, so landing on the date reads as the
+                              building answering the record.
+         timelinePassedZone - this part's loss is already behind the current date. Stroke only, so
+                              what has already been lost stays legible without competing. */
+    const isLit    = isSelected || (key === timelineZone);
+    const isPassed = (key === timelinePassedZone) && !isLit;
+    const color = isLit ? HIGHLIGHT_COLOUR
       : isDamaged ? GREY.damaged
       : (BASE_ZONE_COLOR[key] != null ? BASE_ZONE_COLOR[key] : GREY.wall);
     group.traverse(node=>{
       if (node.isMesh && node.material){
         const mats = Array.isArray(node.material) ? node.material : [node.material];
-        mats.forEach(mat=>{ if (mat.color) mat.color.setHex(color); });
+        mats.forEach(mat=>{
+          if (mat.color) mat.color.setHex(color);
+          // Brighter, not just lighter: emissive lifts the part off the rest without
+          // flattening its shading. Cleared on every other part so only one reads as live.
+          if (mat.emissive) mat.emissive.setHex(isLit ? HIGHLIGHT_EMISSIVE : 0x000000);
+        });
       }
     });
+    /* Stroke on both tiers: a part selected from the zone buttons, clicked on the model,
+       cross-referenced from a damage-assessment node, sitting under the scrubber, or already
+       lost behind it. Brightness separates the first four from the last. */
+    setZoneOutline(key, group, isLit || isPassed);
     // Documented collapse: hide the dome group entirely once its destruction date has passed
     // (matches applyTimelineToModel's domeCollapsed flag, and un-hides it again when scrubbing back
     // before that date via the Pre-Conflict toggle or manual scrub).
-    if (key === "dome") group.visible = !domeCollapsed;
+    /* ...but never while the dome is the thing you have selected. Selecting a part now drives
+       the timeline TO that part's loss date, and without this guard clicking "Central dome"
+       would jump the date to the collapse and then hide the very geometry you asked to look at. */
+    if (key === "dome") group.visible = !domeCollapsed || isLit;
   });
 }
 
@@ -2244,7 +2440,8 @@ function initMosqueLayer(){
         const namesSeen = [];
         while (node){
           namesSeen.push(node.name || "(unnamed)");
-          if (ZONE_GROUP_NAME_TO_KEY[node.name]){ zoneKey = ZONE_GROUP_NAME_TO_KEY[node.name]; break; }
+          const hit = zoneKeyForGroupName(node.name);
+          if (hit){ zoneKey = hit; break; }
           node = node.parent;
         }
         console.log("[rhino model] raw hit:", rawHit, "- resolved mesh:", mesh, "- parent chain names:", namesSeen, "- resolved zone:", zoneKey);
@@ -2269,8 +2466,50 @@ function initMosqueLayer(){
 // All mosque parts share one small site footprint, so "zoom into the selected" is expressed as
 // tightening the view rather than panning to a different lon/lat (there is no independent real
 // coordinate per zone - only the model's single anchor point, see initMosqueLayer above).
-const SITE_DEFAULT_VIEW = { zoom: 17.6, pitch: 62, bearing: -20 };
-const SITE_SELECTED_VIEW = { zoom: 18.6, pitch: 68, bearing: -20 };
+const SITE_DEFAULT_VIEW = { zoom: 19.0, pitch: 62, bearing: -20 };
+const SITE_SELECTED_VIEW = { zoom: 20.1, pitch: 68, bearing: -20 };
+
+/* ------------------------------------------------------------------------------
+   PER-COMPONENT CAMERA
+   The old comment here said the parts have "no independent real coordinate", so
+   selecting one could only tighten the zoom on the shared anchor. That was true of
+   the data, but not of the geometry: each zone group is a real THREE.Object3D in
+   the Threebox scene, so its own centre can be measured and unprojected back to a
+   lng/lat. That gives a real per-part coordinate to fly to - derived from the
+   model, not invented - so clicking the dome now actually goes TO the dome.
+
+   Falls back to the shared anchor if the model has not loaded yet or Threebox
+   has not exposed unprojectFromWorld, so selection never breaks the camera.
+   ------------------------------------------------------------------------------ */
+/* Each zone's plan centre as a metre offset from the model's own footprint centre - measured
+   straight off Mosque-Pre.glb's accessor bounds, in the file's own local (Rhino, Z-up) axes,
+   BEFORE any yaw. Baked rather than measured at runtime on purpose: the first version of this
+   asked Threebox to unproject the live bounding box back to a lng/lat, and it returned
+   coordinates that sent the camera off the site entirely - which is why clicking a zone flew
+   into blackness and "Central dome" framed the portico. This needs no Threebox internals.
+
+   Footprint centre of the whole model is local (1.9, 55.062); these are centre-minus-that.  */
+const ZONE_PLAN_OFFSET_M = {
+  portico: { x:  0.00, y:  0.00 },
+  dome:    { x:  0.00, y:  6.25 },
+  minaret: { x: 19.30, y: -3.65 },
+  walls:   { x:  0.00, y:  5.25 },
+  columns: { x: -2.75, y:  5.50 },
+  base:    { x:  0.00, y:  0.00 }
+};
+
+function zoneCentreLngLat(zoneKey){
+  const off = ZONE_PLAN_OFFSET_M[zoneKey];
+  if (!off) return null;
+  // Same yaw the model is drawn with, so the camera follows if the rotation is ever changed.
+  const yaw = (MOSQUE_MODEL_ROTATION && MOSQUE_MODEL_ROTATION.z || 0) * Math.PI / 180;
+  const east  = off.x * Math.cos(yaw) - off.y * Math.sin(yaw) + MODEL_OFFSET_M.east;
+  const north = off.x * Math.sin(yaw) + off.y * Math.cos(yaw) + MODEL_OFFSET_M.north;
+  return [
+    EAP.lng + east  / (111320 * Math.cos(EAP.lat * Math.PI / 180)),
+    EAP.lat + north / 111320
+  ];
+}
 
 // opts.skipFlyTo: clicking directly on the model (see the map.on("click",...) handler in
 // initMosqueLayer) needs to sync the dashboard/highlighting WITHOUT also flying/re-centering the
@@ -2278,16 +2517,57 @@ const SITE_SELECTED_VIEW = { zoom: 18.6, pitch: 68, bearing: -20 };
 // clicks meant to select-then-Shift/Ctrl/Alt+drag, which yanked the camera mid-interaction and made
 // it look like Threebox's own selection box wasn't appearing / rotation "wasn't working". Zone-button
 // clicks still want the camera to fly in, so this only skips it for direct-model clicks.
+/* ------------------------------------------------------------------------------
+   COMPONENT -> TIMELINE
+   The fourth edge of the link. The model, the dashboard and the ontology graph all
+   already answered to each other, but the timeline only ever pushed - nothing could
+   push back INTO it. Selecting a part that has a documented loss date now drives the
+   scrubber to that date, so the dashboard figures, the conflict list and the graph
+   all resolve to the moment that part was lost, instead of leaving the reader to
+   find it by hand.
+
+   Only the three zones with a documented threshold can do this (minaret / dome /
+   portico); the rest select silently and leave the date where it was, rather than
+   inventing a date for a part nobody dated.
+   ------------------------------------------------------------------------------ */
+function timelineIndexForDate(date){
+  if (!Array.isArray(timelineStops) || !timelineStops.length) return -1;
+  let best = -1, bestDelta = Infinity;
+  timelineStops.forEach((s, i)=>{
+    const delta = Math.abs(s.date - date);
+    if (delta < bestDelta){ bestDelta = delta; best = i; }
+  });
+  return best;
+}
+
+let _syncingTimeline = false;
+function syncTimelineToZone(zoneKey){
+  const threshold = ZONE_DESTRUCTION_THRESHOLDS[zoneKey];
+  if (!threshold || _syncingTimeline) return;
+  const idx = timelineIndexForDate(threshold);
+  const input = document.getElementById("timeline");
+  if (idx < 0 || !input) return;
+  _syncingTimeline = true;          // applyTimelineStop re-enters the model; don't loop
+  input.value = idx;
+  applyTimelineStop(idx);
+  _syncingTimeline = false;
+}
+
 function selectZone(zoneKey, opts){
   const skipFlyTo = !!(opts && opts.skipFlyTo);
   selectedZone = zoneKey;
   selectedNodeId = zoneKey ? (zoneKeyToId[zoneKey] || null) : null;
   rebuildDeckLayers();
-  document.getElementById("model-selected").textContent = zoneKey ? zoneKey : "none selected";
+  (document.getElementById("model-selected")||{}).textContent = zoneKey ? zoneKey : "none selected";
   if (!skipFlyTo && typeof map !== "undefined" && map){
     const v = zoneKey ? SITE_SELECTED_VIEW : SITE_DEFAULT_VIEW;
-    map.flyTo({ center: SITE_ZOOM_CENTER, zoom: v.zoom, pitch: v.pitch, bearing: v.bearing, duration: 900 });
+    // Fly to the component's OWN centre when one can be measured off the geometry,
+    // not the shared site anchor - so selecting the dome frames the dome.
+    const centre = zoneKey ? (zoneCentreLngLat(zoneKey) || SITE_ZOOM_CENTER) : SITE_ZOOM_CENTER;
+    map.flyTo({ center: centre, zoom: v.zoom, pitch: v.pitch, bearing: v.bearing, duration: 900 });
   }
+  // Drive the timeline to this part's documented loss date (no-op for the parts with no date).
+  if (zoneKey) syncTimelineToZone(zoneKey);
   updateDashboard();
   updateGraphSelection();
   updateZoneButtons();
@@ -2311,7 +2591,7 @@ function onNodeSelected(id){
     }
     selectedZone = "courtyard";
     clearModelHighlight();
-    document.getElementById("model-selected").textContent = "none selected (Courtyard wall has no CAD mesh)";
+    (document.getElementById("model-selected")||{}).textContent = "none selected (Courtyard wall has no CAD mesh)";
   } else {
     selectedZone = null;
     clearModelHighlight();
@@ -2323,9 +2603,9 @@ function onNodeSelected(id){
     if (meshKey && zoneMeshes[meshKey]){
       crossRefZone = meshKey;
       rebuildDeckLayers();
-      document.getElementById("model-selected").textContent = "cross-referenced: " + meshKey + " (from \"" + d.label + "\")";
+      (document.getElementById("model-selected")||{}).textContent = "cross-referenced: " + meshKey + " (from \"" + d.label + "\")";
     } else {
-      document.getElementById("model-selected").textContent = "none selected";
+      (document.getElementById("model-selected")||{}).textContent = "none selected";
     }
   }
   selectedNodeId = id;
@@ -2486,9 +2766,7 @@ function initGraph(){
     return d3.drag().on("start",started).on("drag",dragged).on("end",ended);
   }
 
-  document.getElementById("graph-count").textContent = nodes.length + " nodes / " + links.length + " edges (total - populates as timeline advances)";
   updateGraphTimeline(graphDate);
-  document.getElementById("view-toggle-btn").addEventListener("click", toggleGraphView);
 }
 
 function updateGraphTimeline(refDate){
@@ -2498,7 +2776,6 @@ function updateGraphTimeline(refDate){
        .style("pointer-events", d=> nodeActive(d,refDate) ? "auto" : "none");
   gLink.attr("opacity", d=> (nodeActive(d.source,refDate) && nodeActive(d.target,refDate)) ? 0.45 : 0.03);
   const activeCount = graphNodes.filter(d=>nodeActive(d,refDate)).length;
-  document.getElementById("graph-count").textContent = activeCount + " / " + graphNodes.length + " nodes active at " + d3.timeFormat("%d %b %Y")(refDate) + " · " + graphLinks.length + " edges total";
 }
 
 function updateGraphSelection(){
@@ -2510,104 +2787,9 @@ function updateGraphSelection(){
     .attr("r", d => (radiusByType[d.type]||6) * (d.id===selectedNodeId ? 1.9 : 1));
 }
 
-// ============================ INTENSITY SPHERE ============================
-// A second view of the same pane: ONE merged point cloud ("sphere") representing
-// three real intensities at once - conflict (green), environmental (purple),
-// damage (yellow). Each point is drawn from whichever aggregate it belongs to,
-// chosen in proportion to that aggregate's real, data-derived intensity share -
-// so the sphere's overall colour is dominated by whichever intensity is
-// currently highest, and total point density scales with combined intensity.
-// This is the one deliberate departure from grayscale, per explicit instruction.
-// Interpretive choices (disclosed): point positions are random within a disc
-// (a 2D stand-in for a "sphere"), not sourced coordinates; only the counts,
-// shares, and colour-dominance are derived from real data below.
-const CLOUD_COLORS = { conflict:"#4a7a4a", environmental:"#7a4a8a", damage:"#c9a227" };
-let cloudInited = false;
+/* toggleGraphView removed with the Intensity Sphere - the pane shows the ontology
+   graph and nothing else now. See intensity-sphere-unused.js. */
 
-function initIntensitySphere(){
-  const svg = d3.select("#cloud-svg");
-  svg.selectAll("*").remove();
-  svg.append("g").attr("id","cloud-points");
-  cloudInited = true;
-
-  document.getElementById("cloud-legend").innerHTML = `
-    <div><span class="sw g"></span><strong>Conflict</strong> <span id="ci-conflict">0%</span> - share of documented Battle-of-Aleppo events reached by the timeline. Source: Wikipedia.</div>
-    <div><span class="sw p"></span><strong>Environmental</strong> <span id="ci-environmental">0%</span> - how close the timeline date sits to a real NOAA station reading (dense 2010–2023, sparse in the real 2012–2019 gap). Source: NOAA GHCN.</div>
-    <div><span class="sw y"></span><strong>Damage</strong> <span id="ci-damage">0%</span> - cumulative real % structural loss (Rapid Damage Assessment) across zones damaged by the current date.</div>
-    <div style="margin-top:4px;">One sphere, one merged cloud: each point's colour is chosen in proportion to its aggregate's real intensity share, so the dominant colour shifts as the timeline moves. Total density scales with combined intensity. Conflict deaths (~31,000) are a fixed historical total and do not change with the slider.</div>
-  `;
-}
-
-function updateIntensitySphere(){
-  const cloudSvgEl = document.getElementById("cloud-svg");
-  if (!cloudSvgEl || cloudSvgEl.style.display === "none") return; // not the active view; skip work
-  if (!cloudInited) initIntensitySphere();
-  const container = document.querySelector("#pane-graph .pane-body");
-  const w = container.clientWidth, h = container.clientHeight;
-  const cx = w/2, cy = h/2;
-
-  // ---- three real intensities, each normalized 0-1 ----
-  const activeConflict = conflictEvents.filter(c=>c._date<=currentDate).length;
-  const conflictIntensity = conflictEvents.length ? Math.min(1, activeConflict/conflictEvents.length) : 0;
-
-  const tRead = nearestReading(temperature, "tavg", currentDate);
-  const daysSinceReading = tRead ? Math.abs(currentDate - tRead.date)/86400000 : Infinity;
-  const envIntensity = daysSinceReading <= 3 ? 1 : daysSinceReading <= 30 ? 0.55 : daysSinceReading <= 365 ? 0.25 : 0.07;
-
-  const dmgThresholds = { Minaret: new Date(2014,5,1), "Central dome": new Date(2015,0,1), Portico: new Date(2016,11,1) };
-  let lossSum = 0, maxLoss = 0;
-  zones.forEach(z=>{ maxLoss += (+z.overall_loss_pct||0); const th = dmgThresholds[z.zone]; if (th && currentDate >= th) lossSum += (+z.overall_loss_pct||0); });
-  const damageIntensity = maxLoss ? Math.min(1, lossSum/maxLoss) : 0;
-
-  const total = conflictIntensity + envIntensity + damageIntensity;
-  const shares = total > 0
-    ? { conflict:conflictIntensity/total, environmental:envIntensity/total, damage:damageIntensity/total }
-    : { conflict:1/3, environmental:1/3, damage:1/3 };
-
-  // ---- combined intensity drives total point density: more intensity, more points ----
-  const combined = total / 3;
-  const n = Math.round(24 + combined*260);
-
-  // ---- each point's aggregate is chosen in proportion to real intensity share ----
-  const points = [];
-  for (let i=0;i<n;i++){
-    const r0 = Math.random();
-    let color = CLOUD_COLORS.damage;
-    if (r0 < shares.conflict) color = CLOUD_COLORS.conflict;
-    else if (r0 < shares.conflict + shares.environmental) color = CLOUD_COLORS.environmental;
-    const ang = Math.random()*Math.PI*2;
-    const rad = Math.pow(Math.random(),0.5) * Math.min(w,h)*0.30;
-    points.push({ x:cx+Math.cos(ang)*rad, y:cy+Math.sin(ang)*rad, color });
-  }
-
-  const svg = d3.select("#cloud-svg");
-  const pSel = svg.select("#cloud-points").selectAll("circle").data(points);
-  pSel.exit().remove();
-  pSel.enter().append("circle").attr("r",0)
-    .merge(pSel)
-    .attr("cx",d=>d.x).attr("cy",d=>d.y)
-    .attr("fill",d=>d.color).attr("opacity",0.6)
-    .transition().duration(300).attr("r",2.4);
-
-  const ciConflict = document.getElementById("ci-conflict");
-  const ciEnv = document.getElementById("ci-environmental");
-  const ciDamage = document.getElementById("ci-damage");
-  if (ciConflict) ciConflict.textContent = Math.round(conflictIntensity*100)+"%";
-  if (ciEnv) ciEnv.textContent = Math.round(envIntensity*100)+"%";
-  if (ciDamage) ciDamage.textContent = Math.round(damageIntensity*100)+"%";
-}
-
-function toggleGraphView(){
-  const showingGraph = document.getElementById("graph-svg").style.display !== "none";
-  document.getElementById("graph-svg").style.display = showingGraph ? "none" : "block";
-  document.getElementById("cloud-svg").style.display = showingGraph ? "block" : "none";
-  document.getElementById("cloud-legend").style.display = showingGraph ? "block" : "none";
-  document.getElementById("graph-view-label").textContent = showingGraph
-    ? "Intensity Sphere - environment / conflict / damage, blended"
-    : "Ontology - Force-Directed Graph (populates with timeline)";
-  document.getElementById("view-toggle-btn").textContent = showingGraph ? "↤ Show ontology graph" : "Show intensity sphere ↦";
-  if (showingGraph) updateIntensitySphere();
-}
 
 // ============================ NODE INFO PANEL ============================
 // ================================================================
@@ -2800,7 +2982,7 @@ function updateDashboard(){
   const zLabel = zoneLabelMap[selectedZone];
   const z = zones.find(zz=>zz.zone===zLabel);
   if (!z){
-    dmgEl.innerHTML = `<div class="dash-empty">Select a zone in the model or graph to see its damage assessment.</div>` +
+    dmgEl.innerHTML = `` +
       zones.map(zz=>row(zz.zone, zz.cc_class+" / "+zz.uc_class+" · "+zz.overall_loss_pct+"% loss")).join("");
     return;
   }
@@ -2961,11 +3143,17 @@ function renderTimelineTicks(){
   if (shown[0] !== 0) shown.unshift(0);
   if (shown[shown.length-1] !== n-1) shown.push(n-1);
 
+  // Ticks are labelled by YEAR, so two stops in the same year print the same number
+  // twice - that is the doubled 2024. Drop any tick whose year already appeared.
+  let lastYear = null;
   wrap.innerHTML = shown.map(i=>{
     const s = timelineStops[i];
+    const yr = s.date.getFullYear();
+    if (yr === lastYear) return "";
+    lastYear = yr;
     const pct = (i/(n-1))*100;
     const label = (s.labels[0]||"").replace(/"/g,"&quot;");
-    return `<div class="tick" style="left:${pct}%" data-idx="${i}" title="${label} (${d3.timeFormat('%d %b %Y')(s.date)})">${s.date.getFullYear()}</div>`;
+    return `<div class="tick" style="left:${pct}%" data-idx="${i}" title="${label} (${d3.timeFormat('%d %b %Y')(s.date)})">${yr}</div>`;
   }).join("");
 
   wrap.querySelectorAll(".tick").forEach(el=>{
@@ -2975,6 +3163,7 @@ function renderTimelineTicks(){
       applyTimelineStop(idx);
     });
   });
+
 }
 
 function applyTimelineStop(idx){
@@ -2987,7 +3176,6 @@ function applyTimelineStop(idx){
   applyTimelineToModel(currentDate);
   updateGraphTimeline(currentDate);
   updateConflictPanel();
-  updateIntensitySphere();
   refreshConflictToggleButtons();
 }
 
@@ -3007,7 +3195,7 @@ function initTimeline(){
     } else {
       selectedZone = null; selectedNodeId = null;
       updateDashboard(); updateGraphSelection(); showNodeInfo(null);
-      document.getElementById("model-selected").textContent = "none selected";
+      (document.getElementById("model-selected")||{}).textContent = "none selected";
       refreshConflictToggleButtons();
     }
   });
@@ -3027,21 +3215,34 @@ function applyTimelineToModel(date){
   });
   // Documented collapse: hide the dome mesh entirely once its threshold date has passed.
   domeCollapsed = !!damagedZones.dome;
+
+  /* TIMELINE -> COMPONENT. Whichever documented loss the scrubber has most recently passed is
+     the part the timeline is "standing on", and rebuildDeckLayers strokes it. This is the link
+     back the other way: the model already changed as you scrub, but nothing said WHICH part
+     the current date belongs to. Reset to null before the first threshold so scrubbing back to
+     pre-conflict leaves nothing marked. */
+  timelineZone = null;        // ON the date - lights up, same treatment as a selected part
+  timelinePassedZone = null;  // already gone by - stroke only, so the losses stay legible behind you
+  const curIdx = timelineIndexForDate(date);
+  let latest = null;
+  Object.entries(ZONE_DESTRUCTION_THRESHOLDS).forEach(([zone, thDate])=>{
+    // "the same date as the damage assessment": compared by timeline STOP, not by raw
+    // millisecond, because the scrubber only ever lands on discrete stops - an exact
+    // date equality would almost never fire.
+    if (curIdx >= 0 && timelineIndexForDate(thDate) === curIdx) timelineZone = zone;
+    if (date >= thDate && (!latest || thDate > latest)){ latest = thDate; timelinePassedZone = zone; }
+  });
+  if (timelineZone === timelinePassedZone) timelinePassedZone = null;
+
   rebuildDeckLayers();
+  updateGraphSelection();
 }
 
 // ---- BUNCH: PRE/POST-CONFLICT TOGGLE ----
 // Two-state control that jumps the day-by-day timeline scrubber to a representative date instead of
 // requiring the user to drag to it by hand, operating at whichever scale the dashboard is currently
 // showing:
-//   LOCAL scale = a specific destruction point is selected (selectedZone is minaret/dome/portico -
-//     the only zones with a documented threshold so far; fountain/courtyard have none yet, so they
-//     fall back to built-environment scale). Post-Conflict jumps to THAT zone's own threshold date.
-//   BUILT-ENVIRONMENT scale = no zone selected, or a zone with no documented threshold - viewing the
-//     whole mosque. Post-Conflict jumps to the LATEST documented threshold (the date by which every
-//     currently-known destruction event has already happened).
-//   Pre-Conflict is always the SAME site-wide date regardless of scale: one day before the EARLIEST
-//     documented threshold, i.e. before any part of the mosque had been hit yet. A "pre" state
+//   "pre" state
 //     showing one part destroyed and another intact isn't a coherent single date, so this
 //     deliberately does not vary by selected zone the way Post-Conflict does.
 //   Regional (Aleppo-wide) scale is not wired up yet - no regional destruction dataset exists in
@@ -3056,8 +3257,10 @@ function conflictToggleTargetDate(mode){
 }
 
 function conflictToggleScaleLabel(){
-  const localZone = (selectedZone && ZONE_DESTRUCTION_THRESHOLDS[selectedZone]) ? selectedZone : null;
-  return localZone ? ("local – " + localZone) : "built environment – whole mosque";
+  /* Emptied on request - the scale badge ("built environment - whole mosque" /
+     "local - <zone>") is no longer shown. The function stays so the callers and the
+     #conflict-toggle-scale element keep working; it simply renders nothing. */
+  return "";
 }
 
 // Reflects current state into the toggle UI: which button (if either) matches currentDate exactly,
@@ -3090,7 +3293,6 @@ function jumpTimelineToExactDate(date, label){
   applyTimelineToModel(currentDate);
   updateGraphTimeline(currentDate);
   updateConflictPanel();
-  updateIntensitySphere();
 }
 
 function setConflictToggleState(mode){
@@ -3119,16 +3321,16 @@ function initConflictToggle(){
   var navTabs = Array.prototype.slice.call(document.querySelectorAll('.nav-tab'));
   var panels = Array.prototype.slice.call(document.querySelectorAll('.tab-panel'));
   navTabs.forEach(function(btn){
-    btn.addEventListener('click', function(){
+    btn.addEventListener('click', function(e){
       // "Prosthesis for Memoir" no longer switches to the in-app #tab-prosthesis panel -
       // it navigates to the new illustrated page instead. The content that used to live in
       // #tab-prosthesis (narrative text + photo gallery) is being reworked in Figma into
       // that page; #tab-prosthesis itself is left in the DOM as reference material for now
       // (unreachable via nav, still display:none by default, harmless) rather than deleted.
-      if (btn.classList.contains('nav-tab-prosthesis')){
-        window.location.href = 'prosthesis-memoir.html';
-        return;
-      }
+      /* Matrix / PFM / Carousel are plain links now. Only Sources still switches a
+         panel in-page, so it is the only one intercepted here. */
+      if (!btn.classList.contains('nav-tab-sources')) return;
+      e.preventDefault();
       navTabs.forEach(function(b){ b.classList.remove('active'); });
       panels.forEach(function(p){ p.classList.remove('active'); });
       btn.classList.add('active');

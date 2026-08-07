@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Carousel</title>
+
+<link rel="stylesheet" href="shared-style.css">
+<link rel="stylesheet" href="https://use.typekit.net/yoz2aka.css">
+
+<style>
+  /* ================================================================
+     CAROUSEL
+     One fixed camera angle. The whole rig spins on Y like a carousel;
+     it never tumbles, so the read stays architectural rather than
+     "3D viewer". Drag to spin, release and it settles onto the
+     nearest bay (a real detent - the bay ends up square to camera).
+     Click a bay to fly into its point cloud and explore it freely;
+     Escape or Back returns to the ring.
+     ================================================================ */
+  :root{
+    --ink2:#d9d9d9;
+    --font-futura-light:"futura-pt", Helvetica, Arial, sans-serif;
+    --font-futura-book:"futura-pt", Helvetica, Arial, sans-serif;
+  }
+  html,body{ height:100%; margin:0; background:#333; overflow:hidden; }
+  #stage{ position:fixed; inset:0; }
+  #stage canvas{ display:block; width:100%; height:100%; cursor:grab; }
+  #stage.dragging canvas{ cursor:grabbing; }
+  #stage.exploring canvas{ cursor:default; }
+
+  /* Bay labels are HTML, not sprites - they stay crisp at any zoom and use the
+     real Futura, which a canvas-texture sprite cannot. Positions are projected
+     from each bay's world position every frame. */
+  .bay-label{
+    position:fixed; left:0; top:0; z-index:20; pointer-events:none;
+    font-family:var(--font-futura-light); font-weight:300; font-size:18px; line-height:1.15;
+    color:var(--ink2); white-space:nowrap; opacity:0;
+    /* offset up-left of the corner it is pinned to, so it floats clear of the geometry */
+    transform:translate(-100%,-100%); transition:opacity .35s ease, color .25s ease;
+  }
+  .bay-label.is-visible{ opacity:1; }
+  .bay-label.is-focus{ color:#f4f4f4; }
+
+  #hint{
+    position:fixed; left:0; right:0; bottom:22px; text-align:center; z-index:30;
+    font-family:"futura-pt", Helvetica, Arial, sans-serif; font-size:10px; text-transform:uppercase;
+    letter-spacing:.1em; color:var(--muted); pointer-events:none;
+    transition:opacity .4s ease;
+  }
+  #back{
+    position:fixed; left:40px; top:100px; z-index:30;
+    font-family:"futura-pt", Helvetica, Arial, sans-serif; font-size:10.5px; text-transform:uppercase;
+    letter-spacing:.08em; color:var(--muted); background:none; border:none; padding:0;
+    cursor:pointer; opacity:0; pointer-events:none; transition:opacity .35s ease;
+  }
+  #back.is-on{ opacity:1; pointer-events:auto; }
+  #back:hover{ color:var(--ink); }
+
+  #loading{
+    position:fixed; inset:0; display:flex; align-items:center; justify-content:center; z-index:40;
+    font-family:"futura-pt", Helvetica, Arial, sans-serif; font-size:11px; letter-spacing:.1em;
+    text-transform:uppercase; color:var(--muted); background:#333;
+    transition:opacity .5s ease;
+  }
+  #loading.is-done{ opacity:0; pointer-events:none; }
+
+  /* The photograph this bay's cloud was reconstructed from. Only while a bay is entered,
+     flush to the site's 40px RIGHT / 100px top frame, fading in after the camera settles. */
+  #bay-image{
+    position:fixed; right:40px; top:100px; z-index:25; max-width:320px; width:24vw;
+    opacity:0; pointer-events:none; transition:opacity .6s ease;
+    display:block;
+  }
+  #bay-image.is-on{ opacity:1; }
+</style>
+</head>
+<body>
+
+<nav id="site-nav">
+  <a class="nav-tab nav-tab-prosthesis" href="prosthesis-memoir.html"><span class="nt-box"></span><span class="nt-label">Prosthesis for Memoir</span></a>
+  <a class="nav-tab nav-tab-matrix" href="adiliyah-mosque-matrix.html"><span class="nt-box"></span><span class="nt-label">Matrix</span></a>
+  <a class="nav-tab nav-tab-carousel current" href="carousel.html"><span class="nt-box"></span><span class="nt-label">Carousel</span></a>
+  <a class="nav-tab nav-tab-sources" href="adiliyah-mosque-matrix.html#tab-sources"><span class="nt-box"></span><span class="nt-label">Sources</span></a>
+</nav>
+
+<div id="stage"></div>
+<button type="button" id="back">&larr; Back to carousel</button>
+<div id="hint">Drag to spin &middot; click a bay to enter</div>
+<img id="bay-image" alt="" aria-hidden="true">
+<div id="loading">Loading</div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+
+<script type="module">
+import * as THREE from "three";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { PLYLoader } from "three/addons/loaders/PLYLoader.js";
+
+/* ==================================================================
+   1. READING CARO.glb AS EXPORTED
+      Inspected the actual file rather than assuming the contract:
+        "Bay One / Portico West"      - bay node, holds its own cloud
+        "Bay Two / Portico East"
+        "Bay Three / Portico Interior"
+        "Layer 01"                    - the SubD frame (1 triangle mesh,
+                                        145k verts, + 73 edge line-strips)
+      So bays are matched on "Bay <word|number>", and the LABEL is taken
+      from the text after the slash - no need to maintain a separate map,
+      and renaming in Rhino renames it here.
+
+      The clouds are POSITION-only (no COLOR_0) and ~1.5M points each,
+      4.47M total - they're depth maps, so they get shaded by height
+      below instead of carrying colour.
+   ================================================================== */
+const MODEL_URL = "assets/model/caro.glb";
+/* Point size as a fraction of the model's longest dimension. The file is in Rhino
+   millimetres (span is in the thousands), so this must be relative - a literal value is
+   either invisible or a solid slab depending on export units. Raise for a denser read. */
+const POINT_SIZE_FACTOR = 0.00004;
+/* Multiplies the clouds' vertex colours. 1 = exactly what is in the PLY. Raise to lift them
+   off the #333 background, lower to sit them back into it. */
+const CLOUD_BRIGHTNESS = 1.25;
+/* The one camera angle, as multiples of the model span. Negative Y = below the rig looking
+   UP at it, matching your Rhino view. Tune these three and nothing else moves. */
+const CAM = { x: 0.4004, y: -0.3234, z: 0.6006 };  // 0.52/-0.42/0.78 pulled 30% in, then 10% back out
+/* The SubD frame: near-white and semi-transparent, so the clouds read through it. */
+const FRAME_COLOUR  = 0xf4f4f4;
+const FRAME_OPACITY = 0.22;
+const EDGE_OPACITY  = 0.55;
+
+/* ------------------------------------------------------------------------------
+   COLOURED CLOUDS VIA PLY
+   Rhino's glTF exporter drops point-cloud vertex colours; PLY keeps them.
+
+   You exported ONE combined file (4,465,863 points - exactly the sum of the three
+   glb clouds) rather than one per bay, so this splits it back apart by testing each
+   point against the bays' own bounding boxes taken from the glb. That is more
+   reliable than splitting on point counts, which would break the moment you
+   re-export in a different order.
+   ------------------------------------------------------------------------------ */
+const PLY_URL = "assets/model/caro_points.ply";
+/* The source photograph each cloud was reconstructed from. Shown only while that bay is
+   entered, top-left. Filenames are exactly as they sit in assets/carousel/. */
+const BAY_IMAGE = {
+  1: "assets/carousel/mosque-04 (Bay 1).jpg",
+  2: "assets/carousel/mosque-02 (Bay 2).jpg",
+  3: "assets/carousel/mosque-05 (Bay 3).jpg"
+};
+const WORD_NUM = { one:1, two:2, three:3, four:4, five:5, six:6, seven:7, eight:8 };
+
+function bayNumber(name){
+  const m = String(name).match(/^bay[\s\-_]+([a-z]+|\d+)/i);
+  if (!m) return null;
+  const t = m[1].toLowerCase();
+  return WORD_NUM[t] || (parseInt(t, 10) || null);
+}
+function bayLabel(name){
+  const parts = String(name).split("/");
+  return (parts.length > 1 ? parts.slice(1).join("/") : parts[0]).trim();
+}
+
+/* ------------------------------------------------------------------------------
+   ROUND DOTS
+   A GL point is a square quad - gl_PointCoord runs 0..1 across a square, so an
+   unmapped PointsMaterial can only ever draw squares. This masks the corners off
+   with a circular alpha map.
+
+   alphaTest (discard) rather than transparent blending, deliberately: with 4.5M
+   points, blending would force per-point depth sorting and murder the frame rate,
+   and unsorted blended points produce visible ordering artefacts. Discarding keeps
+   depth writes correct and costs nothing.
+   ------------------------------------------------------------------------------ */
+const DOT_TEXTURE = (() => {
+  const S = 64;
+  const c = document.createElement("canvas");
+  c.width = c.height = S;
+  const g = c.getContext("2d");
+  g.fillStyle = "#fff";
+  g.beginPath();
+  g.arc(S/2, S/2, S/2 - 1, 0, Math.PI*2);
+  g.fill();
+  const t = new THREE.CanvasTexture(c);
+  t.minFilter = THREE.LinearMipmapLinearFilter;
+  t.magFilter = THREE.LinearFilter;
+  t.generateMipmaps = true;
+  return t;
+})();
+
+function dotMaterial(size, vertexColors, colour){
+  return new THREE.PointsMaterial({
+    size, sizeAttenuation: true, vertexColors,
+    color: colour, map: DOT_TEXTURE,
+    alphaTest: 0.5, transparent: false, depthWrite: true
+  });
+}
+
+const stage = document.getElementById("stage");
+const loadingEl = document.getElementById("loading");
+const hintEl = document.getElementById("hint");
+const backBtn = document.getElementById("back");
+const bayImgEl = document.getElementById("bay-image");
+
+/* ---------------- renderer / scene ---------------- */
+const renderer = new THREE.WebGLRenderer({ antialias:true, alpha:false });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setClearColor(0x333333, 1);
+stage.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(38, window.innerWidth/window.innerHeight, 0.1, 20000);
+
+scene.add(new THREE.HemisphereLight(0xffffff, 0x2a2a2a, 2.1));
+const key = new THREE.DirectionalLight(0xffffff, 1.35);
+key.position.set(1, 2, 1.4);
+scene.add(key);
+
+/* rig: everything that spins lives here, so the camera never moves in carousel mode */
+const rig = new THREE.Group();
+scene.add(rig);
+
+const bays = [];          // { n, node, cloud, angle, labelEl, proxy }
+const allPoints = [];
+let frameNode = null;
+let ringRadius = 1;
+
+/* ---------------- load ---------------- */
+new GLTFLoader().load(MODEL_URL, (gltf) => {
+  const root = gltf.scene;
+
+  root.traverse((o) => {
+    const n = bayNumber(o.name);
+    if (n) bays.push({ n, node: o, cloud: null, label: bayLabel(o.name) });
+    else if (/^layer|frame|carousel structure/i.test(o.name || "")) frameNode = o;
+  });
+
+  // GLTFLoader does not guarantee world matrices are current, and everything below
+  // (Box3.setFromObject, worldToLocal, getWorldPosition) depends on them.
+  root.updateMatrixWorld(true);
+
+  // each bay owns its cloud as a descendant ("Point Cloud 0")
+  bays.forEach((bay) => {
+    bay.node.traverse((c) => {
+      if (!c.isPoints) return;
+      bay.cloud = bay.cloud || c;
+      allPoints.push(c);
+      setupCloud(c);
+      // Raycasting 1.5M points is far too slow to do per click, so each bay gets an
+      // invisible box proxy sized to its own bounds and that is what we hit-test.
+    });
+    const bb = new THREE.Box3().setFromObject(bay.node);
+    const size = bb.getSize(new THREE.Vector3());
+    const mid = bb.getCenter(new THREE.Vector3());
+    const proxy = new THREE.Mesh(
+      new THREE.BoxGeometry(size.x || 1, size.y || 1, size.z || 1),
+      new THREE.MeshBasicMaterial({ visible:false })
+    );
+    bay.node.worldToLocal(mid);
+    proxy.position.copy(mid);
+    bay.node.add(proxy);
+    bay.proxy = proxy;
+  });
+
+  // Rhino's glTF materials arrive with KHR_materials_transmission / clearcoat / ior, which
+  // without an environment map render as the near-black slabs in the screenshot. The frame is
+  // a drawing here, not a rendering - give it the site's own matte grey.
+  if (frameNode){
+    frameNode.traverse((o) => {
+      if (o.isMesh){
+        o.material = new THREE.MeshStandardMaterial({
+          color:FRAME_COLOUR, roughness:0.9, metalness:0.0,
+          side:THREE.DoubleSide, transparent:true, opacity:FRAME_OPACITY,
+          /* depthWrite off so the frame never occludes the clouds behind it - with it on, a
+             transparent surface still writes depth and punches holes in whatever it covers. */
+          depthWrite:false
+        });
+        o.renderOrder = 2;          // draw after the clouds, blend over them
+      } else if (o.isLine || o.isLineSegments || o.isLineLoop){
+        o.material = new THREE.LineBasicMaterial({
+          color:FRAME_COLOUR, transparent:true, opacity:EDGE_OPACITY, depthWrite:false
+        });
+        o.renderOrder = 2;
+      }
+    });
+  }
+
+  bays.sort((a,b) => a.n - b.n);
+  rig.add(root);
+
+  // Frame the rig: measure it, then place the camera once. This is the ONE angle -
+  // it never changes in carousel mode, only the rig's Y rotation does.
+  const box = new THREE.Box3().setFromObject(root);
+  const size = box.getSize(new THREE.Vector3());
+  const center = box.getCenter(new THREE.Vector3());
+  /* SPIN AXIS = THE MAST.
+     Recentring on the bounding-box centre swept the pole around a circle, because the bays
+     hang off it asymmetrically and that centre is not the mast.
+
+     The previous attempt looked for a separate thin vertical OBJECT and failed: your pole is
+     not its own object, it is part of the single 145k-vertex SubD mesh, so nothing matched
+     and it silently fell back to the bbox centre. That is why it still moved.
+
+     This reads the geometry itself. The very highest and very lowest vertices in the whole
+     frame are the two tips of the mast - nothing else in the structure reaches them - so the
+     average of their X/Z is the axis the carousel turns on. */
+  let axisX = center.x, axisZ = center.z;
+  if (frameNode){
+    let topY = -Infinity, botY = Infinity;
+    let topX = 0, topZ = 0, botX = 0, botZ = 0, found = false;
+    const v = new THREE.Vector3();
+    frameNode.traverse((o) => {
+      const g = o.geometry;
+      if (!g) return;
+      const pos = g.getAttribute("position");
+      if (!pos) return;
+      o.updateWorldMatrix(true, false);
+      for (let i = 0; i < pos.count; i++){
+        v.fromBufferAttribute(pos, i).applyMatrix4(o.matrixWorld);
+        if (v.y > topY){ topY = v.y; topX = v.x; topZ = v.z; found = true; }
+        if (v.y < botY){ botY = v.y; botX = v.x; botZ = v.z; found = true; }
+      }
+    });
+    if (found){
+      axisX = (topX + botX) / 2;
+      axisZ = (topZ + botZ) / 2;
+      console.log("[carousel] mast tips at y=" + topY.toFixed(3) + " / " + botY.toFixed(3) +
+        " -> spin axis x=" + axisX.toFixed(3) + " z=" + axisZ.toFixed(3) +
+        "  (bbox centre was x=" + center.x.toFixed(3) + " z=" + center.z.toFixed(3) + ")");
+    }
+  }
+  root.position.set(-axisX, -center.y, -axisZ);
+  ringRadius = Math.max(size.x, size.z) * 0.5;
+  const span = Math.max(size.x, size.y, size.z);
+
+  // The model is in Rhino millimetres, so its bounding box is thousands of units across. A
+  // fixed world-space point size of 0.9 therefore made 1.5M points overlap into the solid
+  // white slabs in the screenshot. Derive it from the model so it reads as a cloud at any
+  // export scale.
+  const psize = Math.max(span * POINT_SIZE_FACTOR, 0.0001);
+  allPoints.forEach((pt) => { pt.material.size = psize; });
+
+  const dist = span * 1.9;
+  void dist;
+  // near/far must track the model's scale. Left at 0.1/20000 against a span of several
+  // thousand millimetres, the depth buffer's precision collapses and the frame z-fights
+  // with the clouds.
+  camera.near = span * 0.001;
+  camera.far  = span * 20;
+  camera.updateProjectionMatrix();
+  camera.position.set(span * CAM.x, span * CAM.y, span * CAM.z);
+  camera.lookAt(0, 0, 0);
+
+  // Angles and label anchors both come from the bay's PROXY, which sits at the bay's real
+  // bounding-box centre. bay.node.getWorldPosition() returns the node's transform ORIGIN, and
+  // in this export all three bays sit at 0,0,0 with their offsets baked into the geometry - so
+  // every bay reported the same position, every angle came out identical (killing the snap),
+  // and all three labels stacked on one point. That is the overlap in the screenshot.
+  root.updateWorldMatrix(true, true);
+  const wp = new THREE.Vector3();
+  bays.forEach((b) => {
+    b.proxy.getWorldPosition(wp);
+    b.angle = -Math.atan2(wp.x, wp.z);
+    b.labelEl = makeLabel(b.label || ("Bay " + String(b.n).padStart(2,"0")));
+  });
+
+  // Report what actually made it in, so a missing cloud is diagnosable from the console
+  // rather than by eye.
+  bays.forEach((b) => {
+    const n = b.cloud ? b.cloud.geometry.getAttribute("position").count : 0;
+    const bb = b.cloud ? b.cloud.geometry.boundingBox : null;
+    console.log("[carousel] bay " + b.n + " \"" + b.label + "\": " + n.toLocaleString() +
+      " points" + (bb ? "  size " + bb.getSize(new THREE.Vector3()).toArray().map(v=>Math.round(v)).join(" x ") : "  NO CLOUD"));
+  });
+  if (!bays.length) console.warn("[carousel] no nodes matching /^Bay <n>/ found in " + MODEL_URL);
+  loadPlyClouds();          // swaps in coloured clouds where a PLY exists
+  loadingEl.classList.add("is-done");
+  snapTarget = nearestBayAngle(rig.rotation.y);
+}, (evt) => {
+  if (evt && evt.lengthComputable){
+    loadingEl.textContent = "Loading " + Math.round((evt.loaded / evt.total) * 100) + "%";
+  } else if (evt) {
+    loadingEl.textContent = "Loading " + (evt.loaded / 1048576).toFixed(1) + " MB";
+  }
+}, (err) => {
+  loadingEl.textContent = "Could not load " + MODEL_URL;
+  console.error("[carousel]", err);
+});
+
+/* ------------------------------------------------------------------------------
+   NO RECOLOURING. If the cloud arrives with COLOR_0 we use it verbatim; if it does
+   not, it renders flat and a warning is logged. The previous version synthesised a
+   grey ramp from geometry, which meant what you saw was never your data.
+
+   CARO.glb as currently exported has NO colour on any cloud - POSITION only. Your
+   Rhino viewport clearly shows colour, so it is being dropped on export, not
+   missing from the source. See the note in the response.
+   ------------------------------------------------------------------------------ */
+function setupCloud(pts){
+  const hasColour = !!pts.geometry.getAttribute("color");
+  // size is set for real once the model span is known
+  pts.material = dotMaterial(1, hasColour, hasColour ? 0xffffff : 0xd9d9d9);
+  pts.geometry.computeBoundingSphere();
+  pts.geometry.computeBoundingBox();
+  pts.frustumCulled = false;
+  console.log("[carousel] cloud " + pts.geometry.getAttribute("position").count.toLocaleString() +
+    " points, vertex colour: " + (hasColour ? "YES (using it)" : "NONE IN FILE - rendering flat"));
+}
+
+/* Rhino is Z-up; glTF is Y-up, and Rhino's glTF exporter rotates the scene on the way
+   out. A raw PLY does NOT get that rotation, so dropping one in unmodified lands it on
+   its side. Rather than assume which convention a given export used, we test: compare
+   the PLY's bounding-box dimensions against the glb cloud it replaces, both as-is and
+   after a Z-up -> Y-up rotation, and keep whichever matches. Then translate so the two
+   centres coincide. That makes the swap self-aligning regardless of exporter settings. */
+function alignPlyToCloud(plyGeom, refCloud){
+  const ref = refCloud.geometry.boundingBox.clone();
+  const refSize = ref.getSize(new THREE.Vector3());
+
+  function fitError(g){
+    g.computeBoundingBox();
+    const s = g.boundingBox.getSize(new THREE.Vector3());
+    return Math.abs(s.x-refSize.x) + Math.abs(s.y-refSize.y) + Math.abs(s.z-refSize.z);
+  }
+
+  const asIs = fitError(plyGeom);
+  const rotated = plyGeom.clone();
+  rotated.rotateX(-Math.PI / 2);                    // Z-up -> Y-up
+  const rotErr = fitError(rotated);
+
+  let geom = plyGeom, how = "as exported";
+  if (rotErr < asIs){ geom = rotated; how = "rotated Z-up -> Y-up"; }
+
+  geom.computeBoundingBox();
+  const delta = ref.getCenter(new THREE.Vector3())
+    .sub(geom.boundingBox.getCenter(new THREE.Vector3()));
+  geom.translate(delta.x, delta.y, delta.z);
+  geom.computeBoundingBox();
+  geom.computeBoundingSphere();
+  console.log("[carousel] PLY aligned (" + how + "), residual fit error " +
+    Math.round(Math.min(asIs, rotErr)));
+  return geom;
+}
+
+/* PLYLoader hands back 0-1 values straight from the file's 0-255 bytes, i.e. sRGB.
+   Three treats a colour attribute as linear, so without this the clouds render
+   noticeably washed out and pale. */
+function srgbToLinear(geom){
+  const c = geom.getAttribute("color");
+  if (!c) return;
+  for (let i = 0; i < c.array.length; i++){
+    const v = c.array[i];
+    c.array[i] = v < 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+  }
+  c.needsUpdate = true;
+}
+
+function loadPlyClouds(){
+  const refs = bays.filter(b => b.cloud);
+  if (!refs.length) return;
+
+  /* WORLD boxes, not geometry.boundingBox. The glb scales its clouds down hard via node
+     transforms - the geometry-local boxes read ~0.1 units while the same clouds occupy
+     ~0.1 units of WORLD space only after those transforms. Comparing local boxes against a
+     PLY in Rhino coordinates compares two different spaces and gets everything wrong. */
+  const bayBoxes = refs.map(b => new THREE.Box3().setFromObject(b.cloud));
+  const union = new THREE.Box3();
+  bayBoxes.forEach(bb => union.union(bb));
+  const uSize = union.getSize(new THREE.Vector3());
+  const uMax = Math.max(uSize.x, uSize.y, uSize.z);
+
+  loadingEl.classList.remove("is-done");
+  loadingEl.textContent = "Loading colour";
+
+  new PLYLoader().load(PLY_URL, (geom) => {
+    if (!geom.getAttribute("color")){
+      console.warn("[carousel] " + PLY_URL + " has no vertex colour - keeping the glb clouds");
+      loadingEl.classList.add("is-done");
+      return;
+    }
+
+    /* Three steps, in order: orient, then SCALE, then translate.
+       - Orient: Rhino is Z-up, glTF is Y-up and Rhino's glTF exporter applies that rotation
+         on the way out; a raw PLY does not get it. Decided by comparing normalised box
+         shapes, so it works whichever convention the export used.
+       - Scale: the glb clouds sit at ~0.1 world units, the PLY at ~270. Roughly 2700x. This
+         is the step the first version was missing entirely.
+       - Translate: centres together. */
+    function shapeOf(g){
+      g.computeBoundingBox();
+      const v = g.boundingBox.getSize(new THREE.Vector3());
+      const m = Math.max(v.x, v.y, v.z) || 1;
+      return v.divideScalar(m);
+    }
+    const target = uSize.clone().divideScalar(uMax || 1);
+    const asIs = shapeOf(geom).sub(target).length();
+    const rot = geom.clone(); rot.rotateX(-Math.PI / 2);
+    const rotErr = shapeOf(rot).sub(target).length();
+
+    let g = geom, how = "as exported";
+    if (rotErr < asIs){ g = rot; how = "rotated Z-up -> Y-up"; }
+
+    g.computeBoundingBox();
+    const gSize = g.boundingBox.getSize(new THREE.Vector3());
+    const scale = uMax / (Math.max(gSize.x, gSize.y, gSize.z) || 1);
+    g.scale(scale, scale, scale);
+
+    g.computeBoundingBox();
+    const d = union.getCenter(new THREE.Vector3())
+      .sub(g.boundingBox.getCenter(new THREE.Vector3()));
+    g.translate(d.x, d.y, d.z);
+    console.log("[carousel] PLY " + how + ", scaled x" + scale.toPrecision(4) +
+      ", shape error " + Math.min(asIs, rotErr).toFixed(4));
+
+    /* NO sRGB->linear conversion here, deliberately. PLYLoader has done it itself since
+       three r152 - it builds each colour with setRGB(..., SRGBColorSpace), which converts
+       into the renderer's linear working space on load. Applying it again here squared the
+       curve: a mid-grey 0.5 went to 0.214 and then to 0.037. That was the darkness.
+       CLOUD_BRIGHTNESS is the honest knob instead - a straight multiplier on your values. */
+    const col = g.getAttribute("color");
+    if (CLOUD_BRIGHTNESS !== 1){
+      for (let i = 0; i < col.array.length; i++){
+        col.array[i] = Math.min(1, col.array[i] * CLOUD_BRIGHTNESS);
+      }
+    }
+
+    // split the one combined cloud back into bays, using each bay's own world box
+    const pos = g.getAttribute("position");
+    const boxes = bayBoxes.map(bb => bb.clone().expandByScalar(uMax * 0.02));
+    const buckets = refs.map(() => ({ p: [], c: [] }));
+    const pt = new THREE.Vector3();
+    let orphan = 0;
+    for (let i = 0; i < pos.count; i++){
+      pt.set(pos.array[i*3], pos.array[i*3+1], pos.array[i*3+2]);
+      let hit = -1;
+      for (let b = 0; b < boxes.length; b++) if (boxes[b].containsPoint(pt)){ hit = b; break; }
+      if (hit < 0){ orphan++; continue; }
+      buckets[hit].p.push(pt.x, pt.y, pt.z);
+      buckets[hit].c.push(col.array[i*3], col.array[i*3+1], col.array[i*3+2]);
+    }
+    if (orphan) console.warn("[carousel] " + orphan.toLocaleString() +
+      " of " + pos.count.toLocaleString() + " points fell outside every bay box");
+
+    const psize = refs[0].cloud.material.size;
+    refs.forEach((bay, i) => {
+      const bk = buckets[i];
+      if (!bk.p.length){ console.warn("[carousel] bay " + bay.n + " got no PLY points"); return; }
+      const ng = new THREE.BufferGeometry();
+      ng.setAttribute("position", new THREE.Float32BufferAttribute(bk.p, 3));
+      ng.setAttribute("color",    new THREE.Float32BufferAttribute(bk.c, 3));
+      ng.computeBoundingBox(); ng.computeBoundingSphere();
+      const pts = new THREE.Points(ng, dotMaterial(psize, true, 0xffffff));
+      pts.frustumCulled = false;
+      /* Added to the RIG, not to bay.cloud.parent. The geometry is already in world
+         coordinates after the alignment above; re-parenting it under the bay would apply
+         that node's transform a second time and fling it off. */
+      rig.add(pts);
+      bay.cloud.visible = false;         // keep the glb one as the alignment reference
+      bay.cloud = pts;
+      console.log("[carousel] bay " + bay.n + " \"" + bay.label + "\" -> " +
+        (bk.p.length/3).toLocaleString() + " coloured points");
+    });
+    loadingEl.classList.add("is-done");
+  }, (evt) => {
+    if (evt && evt.lengthComputable)
+      loadingEl.textContent = "Loading colour " + Math.round(evt.loaded/evt.total*100) + "%";
+  }, () => {
+    console.warn("[carousel] no " + PLY_URL + " - glb clouds stand");
+    loadingEl.classList.add("is-done");
+  });
+}
+
+/* The eight corners of a bay's world box; whichever is closest to the camera wins. Recomputed
+   per frame because the rig is turning - the winning corner changes as it goes. */
+const _cornerBox = new THREE.Box3();
+const _corner = new THREE.Vector3();
+function nearestCorner(bay, out){
+  _cornerBox.setFromObject(bay.node);
+  const mn = _cornerBox.min, mx = _cornerBox.max;
+  let best = Infinity;
+  for (let i = 0; i < 8; i++){
+    _corner.set(i & 1 ? mx.x : mn.x, i & 2 ? mx.y : mn.y, i & 4 ? mx.z : mn.z);
+    const d = _corner.distanceToSquared(camera.position);
+    if (d < best){ best = d; out.copy(_corner); }
+  }
+  return out;
+}
+
+function makeLabel(text){
+  const el = document.createElement("div");
+  el.className = "bay-label";
+  el.textContent = text;
+  document.body.appendChild(el);
+  return el;
+}
+
+/* ==================================================================
+   2. CAROUSEL SPIN - drag with inertia, then settle onto the nearest
+      bay. Snapping is a real detent: the release velocity decays and
+      is blended into a spring toward the nearest bay's angle, so it
+      never overshoots into a half-turned position.
+   ================================================================== */
+let spinning = false, lastX = 0, velocity = 0, snapTarget = 0;
+let mode = "carousel";                       // "carousel" | "exploring"
+
+function nearestBayAngle(y){
+  if (!bays.length) return y;
+  let best = bays[0].angle, bestD = Infinity;
+  bays.forEach((b) => {
+    // compare in the same revolution as the current rotation
+    const turns = Math.round((y - b.angle) / (Math.PI*2));
+    const cand = b.angle + turns * Math.PI*2;
+    const d = Math.abs(cand - y);
+    if (d < bestD){ bestD = d; best = cand; }
+  });
+  return best;
+}
+
+renderer.domElement.addEventListener("pointerdown", (e) => {
+  if (mode !== "carousel") return;
+  spinning = true; lastX = e.clientX; velocity = 0;
+  stage.classList.add("dragging");
+  renderer.domElement.setPointerCapture(e.pointerId);
+});
+renderer.domElement.addEventListener("pointermove", (e) => {
+  if (!spinning) return;
+  const dx = e.clientX - lastX;
+  lastX = e.clientX;
+  velocity = dx * 0.005;
+  rig.rotation.y += velocity;
+});
+function endDrag(){
+  if (!spinning) return;
+  spinning = false;
+  stage.classList.remove("dragging");
+  snapTarget = nearestBayAngle(rig.rotation.y + velocity * 12);   // let the throw carry
+}
+renderer.domElement.addEventListener("pointerup", endDrag);
+renderer.domElement.addEventListener("pointercancel", endDrag);
+
+/* ==================================================================
+   3. CLICK A BAY -> ENTER ITS CLOUD
+      The frame fades out, the rig stops, and OrbitControls is handed
+      the cloud so it can be explored freely. Coming back restores the
+      exact carousel angle you left from.
+   ================================================================== */
+const raycaster = new THREE.Raycaster();
+raycaster.params.Points.threshold = 2;
+const pointer = new THREE.Vector2();
+let controls = null, savedRotation = 0, activeBay = null;
+
+renderer.domElement.addEventListener("click", (e) => {
+  if (mode !== "carousel" || Math.abs(velocity) > 0.002) return;
+  pointer.x = (e.clientX / window.innerWidth) * 2 - 1;
+  pointer.y = -(e.clientY / window.innerHeight) * 2 + 1;
+  raycaster.setFromCamera(pointer, camera);
+  for (const b of bays){
+    if (b.proxy && raycaster.intersectObject(b.proxy, false).length){ enter(b); return; }
+  }
+});
+
+function enter(bay){
+  mode = "exploring";
+  activeBay = bay;
+  savedRotation = rig.rotation.y;
+  stage.classList.add("exploring");
+  backBtn.classList.add("is-on");
+  hintEl.style.opacity = "0";
+  bays.forEach(b => b.labelEl && b.labelEl.classList.remove("is-visible"));
+  /* Isolate the bay you entered. The PLY clouds live on the RIG, not under their bay node
+     (their geometry is already in world coordinates - see loadPlyClouds), so hiding the bay
+     node alone left all three clouds on screen. Both have to be toggled. */
+  if (frameNode) frameNode.visible = false;
+  bays.forEach(b => {
+    const on = (b === bay);
+    b.node.visible = on;
+    if (b.cloud) b.cloud.visible = on;
+  });
+
+  const src = BAY_IMAGE[bay.n];
+  if (src){
+    bayImgEl.src = src;
+    // fade in after the camera has arrived, so it reads as a caption rather than a flash
+    setTimeout(() => { if (mode === "exploring") bayImgEl.classList.add("is-on"); }, 260);
+  }
+
+  const target = bay.cloud || bay.node;
+  const box = new THREE.Box3().setFromObject(target);
+  const c = box.getCenter(new THREE.Vector3());
+  const s = box.getSize(new THREE.Vector3());
+  const d = Math.max(s.x, s.y, s.z) * 1.4;
+
+  controls = new OrbitControls(camera, renderer.domElement);
+  controls.target.copy(c);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.06;
+  controls.screenSpacePanning = true;
+  camera.position.set(c.x + d * 0.7, c.y + d * 0.35, c.z + d * 0.8);
+  controls.update();
+}
+
+function exit(){
+  if (mode !== "exploring") return;
+  mode = "carousel";
+  activeBay = null;
+  stage.classList.remove("exploring");
+  backBtn.classList.remove("is-on");
+  hintEl.style.opacity = "1";
+  bayImgEl.classList.remove("is-on");
+  if (controls){ controls.dispose(); controls = null; }
+  if (frameNode) frameNode.visible = true;
+  bays.forEach(b => {
+    b.node.visible = true;
+    if (b.cloud) b.cloud.visible = true;   // the superseded glb cloud stays hidden on its own
+  });
+  rig.rotation.y = savedRotation;
+  snapTarget = nearestBayAngle(savedRotation);
+  frameCamera();
+}
+backBtn.addEventListener("click", exit);
+window.addEventListener("keydown", (e) => { if (e.key === "Escape") exit(); });
+
+function frameCamera(){
+  const box = new THREE.Box3().setFromObject(rig);
+  const size = box.getSize(new THREE.Vector3());
+  const span = Math.max(size.x, size.y, size.z);
+  camera.position.set(span * CAM.x, span * CAM.y, span * CAM.z);
+  camera.lookAt(0, 0, 0);
+}
+
+/* ==================================================================
+   4. LOOP
+   ================================================================== */
+const v = new THREE.Vector3();
+function tick(){
+  requestAnimationFrame(tick);
+
+  if (mode === "carousel"){
+    if (!spinning){
+      velocity *= 0.94;                                  // inertia
+      rig.rotation.y += velocity;
+      if (Math.abs(velocity) < 0.0015){
+        velocity = 0;
+        rig.rotation.y += (snapTarget - rig.rotation.y) * 0.09;   // detent
+      }
+    }
+    // project each bay to screen for its label
+    const focus = nearestBayAngle(rig.rotation.y);
+    bays.forEach((b) => {
+      if (!b.labelEl) return;
+      /* Anchor to the bay's nearest CORNER, not its centre - the label rides the corner that
+         is currently facing the camera and swaps to the next one as the rig turns, so it
+         reads as attached to the box rather than floating in the middle of it. */
+      nearestCorner(b, v);
+      const behind = v.clone().project(camera);
+      const onScreen = behind.z < 1;
+      b.labelEl.classList.toggle("is-visible", onScreen);
+      if (!onScreen) return;
+      b.labelEl.style.transform =
+        "translate(-100%,-100%) translate(" +
+        ((behind.x * 0.5 + 0.5) * window.innerWidth) + "px," +
+        ((-behind.y * 0.5 + 0.5) * window.innerHeight) + "px)";
+      const turns = Math.round((rig.rotation.y - b.angle) / (Math.PI*2));
+      b.labelEl.classList.toggle("is-focus",
+        Math.abs((b.angle + turns * Math.PI*2) - focus) < 1e-6);
+    });
+  } else if (controls){
+    controls.update();
+  }
+
+  renderer.render(scene, camera);
+}
+tick();
+
+window.addEventListener("resize", () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  if (mode === "carousel") frameCamera();
+});
+</script>
+
+
+<script>
+/* Navbar plate fades in on scroll. Listens to #memoir where that is the scroller,
+   otherwise the window - the two pages scroll differently. */
+(function(){
+  var nav = document.getElementById("site-nav");
+  if (!nav) return;
+  var scroller = document.getElementById("memoir") || window;
+  function onScroll(){
+    var y = scroller === window ? window.scrollY : scroller.scrollTop;
+    nav.classList.toggle("is-scrolled", y > 8);
+  }
+  scroller.addEventListener("scroll", onScroll, { passive:true });
+  onScroll();
+})();
+</script>
+</body>
+</html>

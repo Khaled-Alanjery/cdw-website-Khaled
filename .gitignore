@@ -1,0 +1,36 @@
+# macOS
+.DS_Store
+
+# ---------------------------------------------------------------------------
+# SOURCE DATA - kept locally, never committed.
+#
+# These are inputs, not outputs: every one of them is re-downloadable from its
+# original source, and together they are ~5.7GB. GitHub hard-rejects any single
+# file over 100MB, and 17 of the rasters below are over it - so committing this
+# folder doesn't just bloat the repo, it makes the push impossible.
+#
+# What the site actually needs is already committed: the derived GeoJSON in
+# msys-project-repo-folder/mapbox-upload/ and the CSVs in assets/data/.
+# ---------------------------------------------------------------------------
+
+# Sentinel-2 scenes and derived mosaics (4.9GB) - re-fetchable via the STAC
+# queries in msys-project-repo-folder/*.ipynb
+Data/
+*.tif
+*.tiff
+
+# UNOSAT damage assessment shapefiles (756MB) - the original zip is the source
+# of record; the notebooks read from it and export the small GeoJSON we ship.
+msys-project-repo-folder/damage/damage data/
+
+# Python / Jupyter
+__pycache__/
+.ipynb_checkpoints/
+.venv/
+venv/
+
+# ---------------------------------------------------------------------------
+# NOT ignored, deliberately: assets/model/*.glb and *.ply (50-63MB each).
+# They're large, but the carousel and the map can't render without them, so
+# they have to travel with the site. They sit under GitHub's 100MB limit.
+# ---------------------------------------------------------------------------

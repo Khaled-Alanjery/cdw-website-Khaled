@@ -22,18 +22,55 @@
 html,body{ margin:0; height:100%; background:var(--bg); color:var(--ink); font-family:var(--font-body); }
 
 /* ================================================================
-   SITE NAV - the small cross-link between pages (matrix <-> memoir).
-   Fixed top-right, unobtrusive, matches the mono/uppercase treatment
-   used for labels elsewhere on the matrix page.
+   SITE NAV - one navigation, every page, built from Figma
+   "Page-07-Navbar" (98:27).
+
+   100px band, fixed to the top and always present. The bars/squares
+   are the permanent markers; each label is hidden until you hover its
+   own marker. All coordinates are Figma's, measured inside the band.
+
+   The band is 100px on TOP only - left/right/bottom stay at the 40px
+   site margin, per the framing rule.
    ================================================================ */
-.site-nav{
-  position:fixed; top:0; right:0; z-index:1000;
-  margin:18px var(--gutter) 0 0;
-  display:flex; gap:16px;
+#site-nav{
+  position:fixed; top:0; left:0; width:100%; height:100px; z-index:200;
+  pointer-events:none;
 }
-.site-nav a{
-  font-family:var(--font-mono); font-size:10.5px; text-transform:uppercase; letter-spacing:.08em;
-  color:var(--muted); text-decoration:none; border-bottom:1px solid transparent;
-  transition:color .2s ease, border-color .2s ease;
+/* Blurred plate that fades in once the page scrolls, so the nav stays legible
+   over content without ever occupying more than its 100px. */
+#site-nav::before{
+  content:""; position:absolute; inset:0;
+  background:rgba(51,51,51,0.55);
+  -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px);
+  opacity:0; transition:opacity .3s ease; pointer-events:none;
 }
-.site-nav a:hover, .site-nav a.current{ color:var(--ink); border-color:var(--ink); }
+#site-nav.is-scrolled::before{ opacity:1; }
+
+.nav-tab{
+  position:absolute; inset:0; display:block; text-decoration:none;
+  pointer-events:none;                    /* only the marker is hoverable */
+  font-family:"futura-pt", Helvetica, Arial, sans-serif; font-weight:300;
+  font-size:24px; line-height:1.15; color:#d9d9d9;
+}
+.nav-tab .nt-box{
+  position:absolute; background:#d9d9d9; pointer-events:auto; cursor:pointer;
+  transition:background .25s ease;
+}
+.nav-tab .nt-label{
+  position:absolute; white-space:nowrap; opacity:0; pointer-events:none;
+  transition:opacity .35s ease;
+}
+.nav-tab:hover .nt-label,
+.nav-tab:focus-visible .nt-label,
+.nav-tab.current .nt-label{ opacity:1; }
+.nav-tab:hover .nt-box{ background:#f4f4f4; }
+
+/* --- exact Figma geometry, measured inside the 100px band --------------- */
+.nav-tab-prosthesis .nt-box{ left:40px;  top:55px; width:188px; height:23px; }
+.nav-tab-prosthesis .nt-label{ left:38px;  top:17px; }
+.nav-tab-matrix     .nt-box{ left:248px; top:23px; width:59px;  height:23px; }
+.nav-tab-matrix     .nt-label{ left:248px; top:56px; }
+.nav-tab-carousel   .nt-box{ left:327px; top:55px; width:81px;  height:23px; }
+.nav-tab-carousel   .nt-label{ left:327px; top:17px; }
+.nav-tab-sources    .nt-box{ left:428px; top:19px; width:23px;  height:23px; }
+.nav-tab-sources    .nt-label{ left:471px; top:17px; }
