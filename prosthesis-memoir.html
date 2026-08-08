@@ -571,12 +571,16 @@ import { getFirestore, doc, onSnapshot, runTransaction }
    protection comes from the Firestore security rules (see FIREBASE-POLL-SETUP.md).
    ============================================================================== */
 const firebaseConfig = {
-  apiKey: "PASTE_API_KEY",
-  authDomain: "PASTE_PROJECT_ID.firebaseapp.com",
-  projectId: "PASTE_PROJECT_ID",
-  storageBucket: "PASTE_PROJECT_ID.appspot.com",
-  messagingSenderId: "PASTE_SENDER_ID",
-  appId: "PASTE_APP_ID"
+  apiKey: "AIzaSyBcNCIyxTfRQx7AjKt2eLvuBD7EuQMwyZA",
+  authDomain: "engagement-for-pfm.firebaseapp.com",
+  projectId: "engagement-for-pfm",
+  storageBucket: "engagement-for-pfm.firebasestorage.app",
+  messagingSenderId: "932540933287",
+  appId: "1:932540933287:web:7b21c375950e2555a1e782"
+  /* measurementId is deliberately left out. It exists only to identify this site to Google
+     Analytics, and Analytics is not loaded here - importing it would add a tracking
+     dependency the poll doesn't have, which would sit badly against a schema whose whole
+     point is that nothing identifying is collected. */
 };
 
 const POLL_ID = "post-trauma";
