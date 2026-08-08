@@ -47,3 +47,4 @@ venv/
 # They're large, but the carousel and the map can't render without them, so
 # they have to travel with the site. They sit under GitHub's 100MB limit.
 # ---------------------------------------------------------------------------
+msys-project-repo-folder/assignments/web/geolocate-har-file/
