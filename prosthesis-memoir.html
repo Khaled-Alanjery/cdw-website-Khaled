@@ -536,7 +536,11 @@
           <button type="button" class="poll-btn" data-choice="untouched">Leave them untouched</button>
         </div>
         <div class="poll-results" id="poll-results" hidden></div>
-        <p class="poll-note" id="poll-note">One response per browser. No names, no accounts, no tracking &mdash; only the four totals are stored.</p>
+        <!-- Kept as an empty element, not deleted: the script writes status into it
+             ("Could not record that vote", the thank-you after voting). Removing the node
+             would make those messages throw instead of appearing. It renders nothing until
+             there is something to say. -->
+        <p class="poll-note" id="poll-note"></p>
       </div>
     </div>
   </section>
