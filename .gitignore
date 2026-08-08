@@ -19,9 +19,22 @@ Data/
 *.tif
 *.tiff
 
-# UNOSAT damage assessment shapefiles (756MB) - the original zip is the source
+# UNOSAT damage assessment shapefiles (757MB) - the original zip is the source
 # of record; the notebooks read from it and export the small GeoJSON we ship.
-msys-project-repo-folder/damage/damage data/
+#
+# Matched by folder name ANYWHERE in the tree, not by full path. The first version
+# of this rule pinned the path, and the moment the folder was moved from
+# msys-project-repo-folder/damage/ to msys-project-repo-folder/project/damage/ the
+# rule stopped matching and all 757MB became committable again without warning.
+**/damage data/
+
+# Individual shapefile components over GitHub's comfort zone show up in these two
+# extensions - .dbf attribute tables and .shp geometry. Belt and braces.
+*.dbf
+*.shp
+*.shx
+*.sbn
+*.sbx
 
 # Python / Jupyter
 __pycache__/

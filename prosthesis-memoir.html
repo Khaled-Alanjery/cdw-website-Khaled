@@ -224,12 +224,13 @@
   .poll{ z-index:30; }
   .poll-options{ display:flex; flex-wrap:wrap; gap:14px; }
   .poll-btn{
-    appearance:none; -webkit-appearance:none; background:none; cursor:pointer;
+    appearance:none; -webkit-appearance:none; cursor:pointer;
+    background:rgba(255,255,255,0.5);
     font-family:var(--font-futura-light); font-weight:300; font-size:18px; line-height:1.15;
     color:var(--ink2); border:1px solid rgba(244,244,244,0.35); border-radius:0;
     padding:11px 16px; transition:border-color .2s ease, color .2s ease, background .2s ease;
   }
-  .poll-btn:hover{ border-color:rgba(244,244,244,0.85); color:#f4f4f4; }
+  .poll-btn:hover{ background:rgba(255,255,255,0.65); border-color:rgba(244,244,244,0.85); color:#f4f4f4; }
   .poll-btn:disabled{ cursor:default; }
   .poll-btn.is-mine{ background:rgba(244,244,244,0.12); border-color:rgba(244,244,244,0.85); color:#f4f4f4; }
   .poll-row{ display:flex; align-items:baseline; gap:14px; margin:0 0 12px; font-family:var(--font-futura-light); font-weight:300; font-size:18px; color:var(--ink2); }
@@ -378,7 +379,7 @@
       <div class="bg-light"><div class="bg-light__img" style="background-image:url('assets/pfm-bgs/page-02.svg')"></div></div>
 
       <!-- FIGMA: body-1 (Num 1 - tw) . node 92:800 . in Frame 32 (92:799) . 40,40 1160w -->
-      <p class="el el-quote" data-step="1" data-anim="tw" style="left:40px;top:100px;width:1160px;">Prosthetic Preservation, in this world, is not a technique for fixing buildings; it's the refusal to govern normalcy.</p>
+      <p class="el el-quote" data-step="1" data-anim="fade" style="left:40px;top:100px;width:1160px;">Prosthetic Preservation, in this world, is not a technique for fixing buildings; it's the refusal to govern normalcy.</p>
 
       <!-- FIGMA: Rectangle 3 (Visualize Button - Stagger randomize then fix) . node 11:221 . in Frame 8 (21:590) -->
       <button type="button" class="visualize-btn label-left" style="left:1320px;bottom:66px;"><span class="nt-label">Visualize</span></button>
@@ -446,7 +447,7 @@
       <!-- FIGMA: body-2 (Num 2 - tw) . node 5:79 . in Frame 20 (21:602) . 28,24 +10 padding
            Two <p>s with whitespace-pre + nowrap in Figma - an EXPLICIT break after "what to",
            not a free wrap. Snapped to the 40/100 frame rather than Figma's 38,34. -->
-      <p class="el el-quote" data-step="2" data-anim="tw" style="left:40px;top:100px;white-space:nowrap;">Who decides what to<br>conceal and foreground?</p>
+      <p class="el el-quote" data-step="2" data-anim="fade" style="left:40px;top:100px;white-space:nowrap;">Who decides what to<br>conceal and foreground?</p>
 
       <!-- FIGMA: text-block (Num 1 - fade) . node 5:104 > title 5:105 -->
       <!-- Refetched 5:104/5:105: the wrapper HUGS its content in Figma (no fixed width/height,
@@ -481,7 +482,7 @@
       </div>
 
       <!-- FIGMA: body-2 (Num 2 - tw) . node 12:468 . in Frame 26 (21:608) < Frame 27 (21:609) -->
-      <p class="el el-quote" data-step="2" data-anim="tw" style="right:40px;top:100px;width:1360px;">Can design register history without repairing it? Can ruins testify under the law of functionality?</p>
+      <p class="el el-quote" data-step="2" data-anim="fade" style="right:40px;top:100px;width:1360px;">Can design register history without repairing it? Can ruins testify under the law of functionality?</p>
 
       <!-- FIGMA: Rectangle 3 (Visualize Button - Stagger randomize then fix) . node 12:490 . in Frame 25 (21:607) -->
       <button type="button" class="visualize-btn label-left" style="left:766px;bottom:176px;"><span class="nt-label">Visualize</span></button>
@@ -525,7 +526,7 @@
       <img class="page-bg" src="assets/pfm-bgs/page-02.svg" alt="" loading="lazy" decoding="async">
       <div class="bg-light"><div class="bg-light__img" style="background-image:url('assets/pfm-bgs/page-02.svg')"></div></div>
 
-      <p class="el el-quote" data-step="1" data-anim="tw" style="left:40px;top:100px;width:1160px;">In your imagined world, what should happen to post-trauma environments?</p>
+      <p class="el el-quote" data-step="1" data-anim="fade" style="left:40px;top:100px;width:1160px;">In your imagined world, what should happen to post-trauma environments?</p>
 
       <div class="el poll" data-step="2" data-anim="fade" style="left:40px;top:520px;width:1160px;">
         <div class="poll-options" id="poll-options">
