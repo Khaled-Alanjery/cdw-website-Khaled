@@ -48,3 +48,6 @@ venv/
 # they have to travel with the site. They sit under GitHub's 100MB limit.
 # ---------------------------------------------------------------------------
 msys-project-repo-folder/assignments/web/geolocate-har-file/
+node_modules/
+.firebase/
+firebase-debug.log

@@ -241,6 +241,42 @@
   .poll-row.is-mine .poll-label, .poll-row.is-mine .poll-pct{ color:#f4f4f4; }
   .poll-note{ margin:22px 0 0; font-family:var(--font-futura-light); font-weight:300; font-size:13px; color:rgba(217,217,217,0.65); }
 
+  /* ---- AGENT STRUCTURE: GLOSSARY (page 8) --------------------------------------------
+     Same vocabulary as the poll - Futura Light, hairline borders, no fill until you
+     interact - so the two engagement pages read as a pair rather than two visual systems. */
+  .glossary{ z-index:30; }
+  .gl-terms{ display:flex; flex-wrap:wrap; gap:10px; margin-bottom:26px; }
+  .gl-term{
+    appearance:none; -webkit-appearance:none; background:none; cursor:pointer;
+    font-family:var(--font-futura-light); font-weight:300; font-size:15px; line-height:1.15;
+    color:var(--ink2); border:1px solid rgba(244,244,244,0.28); border-radius:0;
+    padding:8px 12px; transition:border-color .2s ease, color .2s ease, background .2s ease;
+  }
+  .gl-term:hover{ background:rgba(255,255,255,0.12); border-color:rgba(244,244,244,0.8); color:#f4f4f4; }
+  .gl-form{ display:flex; gap:12px; align-items:stretch; max-width:760px; }
+  .gl-input{
+    flex:1; background:none; border:none; border-bottom:1px solid rgba(244,244,244,0.35);
+    font-family:var(--font-futura-light); font-weight:300; font-size:18px; color:var(--ink2);
+    padding:8px 2px; outline:none;
+  }
+  .gl-input::placeholder{ color:rgba(217,217,217,0.4); }
+  .gl-input:focus{ border-bottom-color:rgba(244,244,244,0.85); }
+  .gl-send{
+    appearance:none; -webkit-appearance:none; background:none; cursor:pointer;
+    font-family:var(--font-futura-light); font-weight:300; font-size:16px; color:var(--ink2);
+    border:1px solid rgba(244,244,244,0.35); padding:8px 18px;
+    transition:border-color .2s ease, color .2s ease, background .2s ease;
+  }
+  .gl-send:hover{ background:rgba(255,255,255,0.12); border-color:rgba(244,244,244,0.85); color:#f4f4f4; }
+  .gl-send:disabled{ opacity:.45; cursor:default; }
+  .gl-answer{
+    margin-top:26px; max-width:900px;
+    font-family:var(--font-futura-light); font-weight:300; font-size:18px; line-height:1.55;
+    color:#f4f4f4; border-left:1px solid rgba(244,244,244,0.35); padding-left:18px;
+  }
+  .gl-answer .gl-term-name{ display:block; font-size:14px; letter-spacing:.04em; text-transform:uppercase; color:rgba(217,217,217,0.6); margin-bottom:8px; }
+  .gl-note{ margin:18px 0 0; font-family:var(--font-futura-light); font-weight:300; font-size:13px; color:rgba(217,217,217,0.65); }
+
   /* Visualize button: random, content-avoiding placement per page (see positionVisualizeBtn),
      staggers across a few randomized spots for ~1s then fixates on its final position (see
      staggerVisualizeBtn) - matches the matrix page's existing .visualize-btn hover-label
@@ -325,6 +361,51 @@
 </style>
 </head>
 <body>
+<!-- ===================================================================================
+     ENGAGEMENT STRUCTURE
+     ===================================================================================
+     Where the matrix page is a 2D spatial canvas holding three simultaneous structures,
+     this page is the opposite: a SEQUENTIAL structure. Seven full-viewport pages, scroll-
+     snapped, read in one order, each one a fixed 1440-unit canvas scaled to the window.
+     The argument is made in sequence and cannot be entered halfway.
+
+     The ENGAGEMENT STRUCTURE is the last of those pages, and it is the only place on this
+     site where the reader writes rather than reads. It has three parts:
+
+       1. THE QUESTION  -  page 7, in the argument's own voice
+          "In your imagined world, what should happen to post-trauma environments?"
+          Set in Fayte Pixel Hard at 128px on the 40px margin, laid out identically to
+          page 2 and carrying the same scroll-linked fade as the rest of the display type.
+          Deliberate: the question is written as the closing line of the memoir, not as a
+          survey stapled to the end of it. By the time it appears, six pages have argued
+          that reconstruction is inference rather than measurement - the question asks the
+          reader what that inference should be FOR.
+          Markup: #page-07-poll .el-quote
+
+       2. THE RESPONSE  -  four mutually exclusive positions
+          Rebuild exactly · Stabilise the ruin · Build anew · Leave untouched.
+          One categorical choice. No free text, no ranking, no "other" - the four are the
+          real positions in the preservation argument this thesis sits inside.
+          Markup: #poll-options  ·  Code: the click handler in the module below
+
+       3. THE AGGREGATE  -  a shared, live state between visitors
+          Cloud Firestore holds ONE document of four integers. A vote is an atomic
+          increment inside a transaction; the totals stream back over onSnapshot, so a
+          second visitor voting moves the bars in an already-open window without a reload.
+          This is the only part of the site that is not the same for every reader - what
+          you see depends on who came before you.
+          Markup: #poll-results  ·  Code: start(), render()
+
+     WHAT IS DELIBERATELY NOT COLLECTED, and why it is structural rather than promised:
+     there is no per-response record at all. No user id, no timestamp, no IP, no free
+     text, no row of any kind. The aggregate IS the entire dataset, so there is nothing
+     that could later be traced to a person - which matters, because the subject is a real
+     building in a real city where real people were displaced. The one-vote-per-browser
+     guard is a localStorage flag and a private window defeats it; that weakness is
+     intentional, since making it robust would mean buying integrity with identity.
+
+     This note is for whoever reads the source. None of it is rendered.
+     =================================================================================== -->
 
 <nav id="site-nav">
   <a class="nav-tab nav-tab-prosthesis current" href="prosthesis-memoir.html"><span class="nt-box"></span><span class="nt-label">Prosthesis for Memoir</span></a>
@@ -391,7 +472,9 @@
     <div class="page-canvas">
       <img class="page-bg" src="assets/pfm-bgs/page-03.svg" alt="" loading="lazy" decoding="async">
       <div class="bg-light"><div class="bg-light__img" style="background-image:url('assets/pfm-bgs/page-03.svg')"></div></div>
-      <!-- FIGMA: text-block (Num 1 - fade) . node 5:101 > title 5:102 . in Frame 9 (21:591) < Frame 29 (21:612)
+      <!-- SUPERSEDED, kept for provenance: FIGMA text-block (Num 1 - fade) . node 5:101 >
+           title 5:102 . in Frame 9 (21:591) < Frame 29 (21:612). This comment was missing its
+           closing marker, so it and the note below were being read as ONE comment. -->
       <!-- FIGMA: text-block (Num 1 - fade) . node 92:813 > title 92:818 . 40,496 602x304
            Refetched: the title is TWO lines now ("Research" / "as Material") at leading 160,
            and the page-3 frame has content again - the earlier orphaned-at-y836 note is void. -->
@@ -526,15 +609,26 @@
       <img class="page-bg" src="assets/pfm-bgs/page-02.svg" alt="" loading="lazy" decoding="async">
       <div class="bg-light"><div class="bg-light__img" style="background-image:url('assets/pfm-bgs/page-02.svg')"></div></div>
 
+      <!-- ENGAGEMENT STRUCTURE, part 1 of 3: THE QUESTION.
+           Same geometry and typography as page 2 on purpose - see the banner at the top
+           of <body>. It has to read as the memoir's closing line, not as a form. -->
       <p class="el el-quote" data-step="1" data-anim="fade" style="left:40px;top:100px;width:1160px;">In your imagined world, what should happen to post-trauma environments?</p>
 
       <div class="el poll" data-step="2" data-anim="fade" style="left:40px;top:520px;width:1160px;">
+        <!-- ENGAGEMENT STRUCTURE, part 2 of 3: THE RESPONSE.
+             Four mutually exclusive positions, one categorical choice. No free text and
+             no "other": these four are the real positions in the preservation argument
+             this thesis sits inside, and a closed set is also what keeps the stored data
+             non-identifying - see part 3. -->
         <div class="poll-options" id="poll-options">
           <button type="button" class="poll-btn" data-choice="rebuild">Rebuild them exactly as they were</button>
           <button type="button" class="poll-btn" data-choice="stabilise">Stabilise the ruin and leave it</button>
           <button type="button" class="poll-btn" data-choice="new">Build something new in their place</button>
           <button type="button" class="poll-btn" data-choice="untouched">Leave them untouched</button>
         </div>
+        <!-- ENGAGEMENT STRUCTURE, part 3 of 3: THE AGGREGATE.
+             The only element on this site whose content differs per reader, because it
+             depends on who voted before them. Populated live from Firestore. -->
         <div class="poll-results" id="poll-results" hidden></div>
         <!-- Kept as an empty element, not deleted: the script writes status into it
              ("Could not record that vote", the thank-you after voting). Removing the node
@@ -545,10 +639,71 @@
     </div>
   </section>
 
+  <!-- ===== PAGE 8 . AGENT STRUCTURE: GLOSSARY ===========================================
+       Placed AFTER the engagement structure deliberately. The poll asks the reader to take
+       a position; the glossary is what lets them check the terms that position was built
+       out of. Read in order it goes: argument (1-6), commitment (7), definition (8).
+
+       Same geometry as pages 2 and 7 - Fayte Pixel Hard question line on the 40px margin,
+       response field beneath it in Futura Light - so the agent reads as part of the memoir
+       rather than a support widget bolted to the end.
+
+       The eight terms below are the same ones in the page-3 force graph (PFM_NODES), and
+       their definitions are duplicated into the Cloud Function's system prompt, which is
+       the authority the model answers from. Edit one, edit the other.
+       ==================================================================================== -->
+  <section class="memoir-page" data-page="7" id="page-08-glossary">
+    <div class="page-canvas">
+      <img class="page-bg" src="assets/pfm-bgs/page-03.svg" alt="" loading="lazy" decoding="async">
+      <div class="bg-light"><div class="bg-light__img" style="background-image:url('assets/pfm-bgs/page-03.svg')"></div></div>
+
+      <!-- AGENT STRUCTURE, part 1 of 3: THE PROMPT. -->
+      <p class="el el-quote" data-step="1" data-anim="fade" style="left:40px;top:100px;width:1160px;">Ask the glossary.</p>
+
+      <div class="el glossary" data-step="2" data-anim="fade" style="left:40px;top:420px;width:1360px;">
+        <!-- AGENT STRUCTURE, part 2 of 3: THE TERMS.
+             Shown, not hidden behind the input. A glossary whose contents you can't see is
+             a search box, and a reader shouldn't have to guess what it knows. Clicking a
+             term asks it. -->
+        <div class="gl-terms" id="gl-terms">
+          <button type="button" class="gl-term">Forensic Creativity as Agency</button>
+          <button type="button" class="gl-term">Fragment as Data</button>
+          <button type="button" class="gl-term">Craft to Computation</button>
+          <button type="button" class="gl-term">Post-Conflict Reconstruction</button>
+          <button type="button" class="gl-term">Native Computation and Algorithms</button>
+          <button type="button" class="gl-term">Physical Computation</button>
+          <button type="button" class="gl-term">Computational Design</button>
+          <button type="button" class="gl-term">Historic Preservation, Architecture, Interior, and Spatial Design</button>
+        </div>
+
+        <form class="gl-form" id="gl-form" autocomplete="off">
+          <input type="text" id="gl-input" class="gl-input" maxlength="300"
+                 placeholder="or type a term&hellip;" aria-label="Ask the glossary for a definition">
+          <button type="submit" class="gl-send" id="gl-send">Define</button>
+        </form>
+
+        <!-- AGENT STRUCTURE, part 3 of 3: THE ANSWER.
+             One answer at a time, replaced on each ask - not a chat log. A glossary is
+             consulted, not conversed with, and a transcript would imply the agent
+             remembers you, which it does not: no history is sent and none is stored. -->
+        <div class="gl-answer" id="gl-answer" hidden></div>
+        <p class="gl-note" id="gl-note"></p>
+      </div>
+    </div>
+  </section>
+
 </main>
 
 <!-- ======================================================================================
-     ENGAGEMENT POLL - FIREBASE (Cloud Firestore)
+     ENGAGEMENT STRUCTURE: FIREBASE POLL  (Cloud Firestore)
+     ======================================================================================
+     The machinery behind all three parts declared in the banner at the top of <body>:
+     part 1 THE QUESTION (#page-07-poll .el-quote), part 2 THE RESPONSE (#poll-options,
+     the click handler below), part 3 THE AGGREGATE (#poll-results, start() and render()).
+
+     This is the only structure on the site that writes rather than reads, and the only
+     one whose output differs per visitor - the page is otherwise identical for everyone.
+
      Loaded as a module so it can import the Firebase v10 SDK straight from the CDN; no build
      step, no bundler, nothing to install. It runs independently of the rest of the page, so
      if Firebase is unreachable the poll degrades to inert buttons and the memoir is unaffected.
@@ -586,6 +741,85 @@ const firebaseConfig = {
      dependency the poll doesn't have, which would sit badly against a schema whose whole
      point is that nothing identifying is collected. */
 };
+
+/* ======================================================================================
+   AGENT STRUCTURE: GLOSSARY  -  client side
+   ======================================================================================
+   Deliberately thin. It posts one string to the Cloud Function and renders one string
+   back. No API key, no model name, no system prompt, no conversation history - all of
+   that lives server-side in functions/index.js, which is the point: the key must never
+   reach the browser, and the agent's constraints must not be editable from the console.
+
+   No history is sent, so the agent cannot be steered across turns, and none is kept, so
+   it doesn't remember who asked. A glossary is consulted, not conversed with.
+
+   ENDPOINT: set after `firebase deploy --only functions` - the CLI prints the URL.
+   ====================================================================================== */
+const GLOSSARY_ENDPOINT = "https://us-central1-engagement-for-pfm.cloudfunctions.net/glossary";
+
+(function initGlossary(){
+  const form   = document.getElementById("gl-form");
+  const input  = document.getElementById("gl-input");
+  const send   = document.getElementById("gl-send");
+  const answer = document.getElementById("gl-answer");
+  const note   = document.getElementById("gl-note");
+  const terms  = document.getElementById("gl-terms");
+  if (!form || !input || !answer) return;
+
+  if (GLOSSARY_ENDPOINT.startsWith("PASTE_")){
+    note.textContent = "Glossary not connected yet - deploy the function and paste its URL into prosthesis-memoir.html.";
+    send.disabled = true;
+    input.disabled = true;
+    return;
+  }
+
+  let busy = false;
+
+  async function ask(question){
+    if (busy || !question) return;
+    busy = true;
+    send.disabled = true;
+    note.textContent = "Looking it up…";
+    answer.hidden = true;
+    try {
+      const r = await fetch(GLOSSARY_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question })
+      });
+      const data = await r.json().catch(()=>({}));
+      if (!r.ok || !data.answer) throw new Error(data.error || ("HTTP " + r.status));
+      // textContent, not innerHTML: the reply is model output and must never be able to
+      // inject markup into this page.
+      answer.textContent = "";
+      const label = document.createElement("span");
+      label.className = "gl-term-name";
+      label.textContent = question;
+      const body = document.createElement("span");
+      body.textContent = data.answer;
+      answer.appendChild(label);
+      answer.appendChild(body);
+      answer.hidden = false;
+      note.textContent = "";
+    } catch (err){
+      console.error("[glossary]", err);
+      note.textContent = "The glossary is unavailable right now.";
+    } finally {
+      busy = false;
+      send.disabled = false;
+    }
+  }
+
+  form.addEventListener("submit", e => { e.preventDefault(); ask(input.value.trim()); });
+  if (terms){
+    terms.addEventListener("click", e => {
+      const btn = e.target.closest(".gl-term");
+      if (!btn) return;
+      input.value = btn.textContent.trim();
+      ask(input.value);
+    });
+  }
+})();
 
 const POLL_ID = "post-trauma";
 const CHOICES = {

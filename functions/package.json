@@ -1,0 +1,12 @@
+{
+  "name": "pfm-glossary-functions",
+  "description": "Server-side proxy for the glossary agent - keeps the OpenAI key off the client",
+  "main": "index.js",
+  "engines": {
+    "node": "22"
+  },
+  "dependencies": {
+    "firebase-functions": "^6.0.1"
+  },
+  "private": true
+}

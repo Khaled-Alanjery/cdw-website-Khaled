@@ -297,6 +297,38 @@
 </style>
 </head>
 <body>
+<!-- ===================================================================================
+     2D SPATIAL CANVAS
+     ===================================================================================
+     This page is a single two-dimensional spatial canvas. Everything below is laid out
+     on one flat surface at once - nothing is behind a route, a modal, or a page break -
+     so the three structures can be read against each other rather than in sequence.
+
+     The canvas carries THREE STRUCTURES, each answering a different question about the
+     same subject, the Al-Adiliyah Mosque:
+
+       1. RELATIONAL STRUCTURE  -  the force-directed graph
+          What is connected to what. Zones, events, reports and conflict nodes held in
+          one ontology; proximity is meaning, not geography.
+          Markup: #pane-graph  ·  Code: initGraph()
+
+       2. GEOSPATIAL STRUCTURE  -  the map and the mosque matrix
+          Where it is. The real Mapbox basemap, the neighbourhood damage data, and the
+          user's Rhino model geo-anchored at the mosque's true coordinate, at true scale.
+          Markup: #pane-3d  ·  Code: initMap(), initMosqueLayer()
+
+       3. TEMPORAL STRUCTURE  -  the timeline and the dashboards
+          When it happened. The day-by-day scrubber, and the environmental / damage /
+          conflict panels that resolve to whatever date it is standing on.
+          Markup: #timeline-wrap, #pane-info, #pane-dash  ·  Code: initTimeline(),
+          updateDashboard()
+
+     The three are cross-linked, not parallel: selecting a building part moves the
+     timeline to its documented loss date and lights its node in the graph; scrubbing the
+     timeline marks the part on the model. See selectZone() and applyTimelineToModel().
+
+     This note is for whoever reads the source. None of it is rendered.
+     =================================================================================== -->
 <div id="shell">
 <!-- ============================================================
      BUNCH: TOP NAVIGATION MENU
@@ -370,6 +402,11 @@
 <section id="tab-matrix" class="tab-panel active">
 <div id="app">
   <header>
+    <!-- ===== TEMPORAL STRUCTURE (1 of 2): the timeline =====================
+         "When it happened." The scrubber that every other structure answers to.
+         Its companion half - the dashboards that resolve to the selected date -
+         is #pane-info / #pane-dash further down.
+         ==================================================================== -->
     <div id="timeline-wrap">
       <div id="timeline-track-wrap">
         <input type="range" id="timeline" min="0" max="1" value="0" step="1">
@@ -387,6 +424,12 @@
   <div id="timeline-hint">2010–2023 station record</div>
 
   <div id="main">
+    <!-- ===== GEOSPATIAL STRUCTURE: the map and the mosque matrix ===========
+         "Where it is." Real Mapbox basemap and neighbourhood damage data, with
+         the Rhino model (Mosque-Pre.glb) geo-anchored at the mosque's true
+         coordinate at true scale - one WebGL scene, not a composited image.
+         Code: initMap(), initMosqueLayer(), rebuildDeckLayers()
+         ==================================================================== -->
     <div class="pane" id="pane-3d">
       <div class="pane-head" hidden><span id="model-selected"></span></div>
       <div class="pane-body" id="model-body">
@@ -401,6 +444,13 @@
       <div id="model-drag-readout" style="display:none;"></div>
     </div>
     <div id="right-col">
+      <!-- ===== RELATIONAL STRUCTURE: the force-directed graph ==============
+           "What is connected to what." Zones, events, reports and conflict
+           nodes in one ontology, where proximity carries meaning rather than
+           geography. The only structure on this canvas with no coordinate and
+           no date - it is the argument's connective tissue.
+           Code: initGraph(), onNodeSelected(), updateGraphSelection()
+           ================================================================= -->
       <div class="pane" id="pane-graph">
         <div class="pane-head">
         </div>
@@ -408,6 +458,13 @@
           <svg id="graph-svg"></svg>
         </div>
       </div>
+      <!-- ===== TEMPORAL STRUCTURE (2 of 2): the dashboards =================
+           The other half of the temporal structure. #pane-info reports whatever
+           node or building part is selected; #pane-dash below carries the
+           environmental, damage and conflict figures, all resolved to the date
+           the timeline is currently standing on.
+           Code: showNodeInfo(), updateDashboard(), updateConflictPanel()
+           ================================================================= -->
       <div class="pane" id="pane-info">
         
         <div class="pane-body"><div id="info-empty">Click a node in the graph above, or a building part in the model, to see everything on record for it - history and source.</div></div>
@@ -1827,6 +1884,11 @@ const SITE_ZOOM_CENTER = [37.15769092453652, 36.19758141817091];
 
 let map, mapLoaded = false;
 
+/* ============================ GEOSPATIAL STRUCTURE ============================
+   "Where it is." Structure 2 of 3 on this 2D spatial canvas (see the banner at the
+   top of <body>). Everything from here to initMosqueLayer() builds the one WebGL
+   scene: Mapbox basemap, neighbourhood damage source, and the geo-anchored model.
+   ============================================================================= */
 function initMap(){
   const container = document.getElementById("map-container");
   mapboxgl.accessToken = MAPBOX_ACCESS_TOKEN;
@@ -2721,6 +2783,11 @@ let graphDate = new Date(2023,6,27);
 
 function nodeActive(d, refDate){ return !d.date || d.date <= (refDate==null?graphDate:refDate); }
 
+/* ============================ RELATIONAL STRUCTURE ============================
+   "What is connected to what." Structure 1 of 3 on this 2D spatial canvas (see the
+   banner at the top of <body>). The only structure here with neither a coordinate
+   nor a date: position carries relation, not location.
+   ============================================================================= */
 function initGraph(){
   const {nodes, links} = buildOntology();
   graphNodes = nodes; graphLinks = links;
@@ -3179,6 +3246,12 @@ function applyTimelineStop(idx){
   refreshConflictToggleButtons();
 }
 
+/* ============================= TEMPORAL STRUCTURE =============================
+   "When it happened." Structure 3 of 3 on this 2D spatial canvas (see the banner
+   at the top of <body>). The timeline is the clock the other two answer to:
+   applyTimelineStop() drives the model, the dashboards, the conflict list and the
+   graph from a single date, and selectZone() pushes back the other way.
+   ============================================================================= */
 function initTimeline(){
   buildTimelineStops();
   const input = document.getElementById("timeline");
