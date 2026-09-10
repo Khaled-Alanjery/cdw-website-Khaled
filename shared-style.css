@@ -72,5 +72,6 @@ html,body{ margin:0; height:100%; background:var(--bg); color:var(--ink); font-f
 .nav-tab-matrix     .nt-label{ left:248px; top:56px; }
 .nav-tab-carousel   .nt-box{ left:327px; top:55px; width:81px;  height:23px; }
 .nav-tab-carousel   .nt-label{ left:327px; top:17px; }
-.nav-tab-sources    .nt-box{ left:428px; top:19px; width:23px;  height:23px; }
-.nav-tab-sources    .nt-label{ left:471px; top:17px; }
+/* .nav-tab-sources rules removed with the tab. Its Figma geometry was left:428 / 471,
+   i.e. the fourth marker in the band - the other three keep their measured positions,
+   so removing it leaves the row ending after Carousel rather than shifting anything. */

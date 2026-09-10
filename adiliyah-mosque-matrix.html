@@ -341,10 +341,18 @@
   <a class="nav-tab nav-tab-prosthesis" href="prosthesis-memoir.html"><span class="nt-box"></span><span class="nt-label">Prosthesis for Memoir</span></a>
   <a class="nav-tab nav-tab-matrix current" href="adiliyah-mosque-matrix.html"><span class="nt-box"></span><span class="nt-label">Matrix</span></a>
   <a class="nav-tab nav-tab-carousel" href="carousel.html"><span class="nt-box"></span><span class="nt-label">Carousel</span></a>
-  <a class="nav-tab nav-tab-sources" href="#tab-sources" data-tab="tab-sources"><span class="nt-box"></span><span class="nt-label">Sources</span></a>
 </nav>
 
-<section id="tab-sources" class="tab-panel">
+<!-- ====================================================================================
+     SOURCES PANEL REMOVED, per request - the nav tab and this whole section are gone.
+
+     The bibliography below is kept in the DOM but hidden, NOT deleted: it is the only
+     record of the project's citations anywhere in the codebase, and #footer-note inside
+     it is still written to by the script (the long methodology / disclosed-interpretive-
+     choices text). Deleting the element would make that write throw on a null and take
+     the rest of the boot sequence with it. Hidden costs nothing and loses nothing.
+     ==================================================================================== -->
+<section id="tab-sources" class="tab-panel" hidden aria-hidden="true">
   <div class="page-inner">
     <h1 class="page-title">Sources</h1>
     <div class="sub-nav">
@@ -3400,15 +3408,11 @@ function initConflictToggle(){
       // #tab-prosthesis (narrative text + photo gallery) is being reworked in Figma into
       // that page; #tab-prosthesis itself is left in the DOM as reference material for now
       // (unreachable via nav, still display:none by default, harmless) rather than deleted.
-      /* Matrix / PFM / Carousel are plain links now. Only Sources still switches a
-         panel in-page, so it is the only one intercepted here. */
-      if (!btn.classList.contains('nav-tab-sources')) return;
-      e.preventDefault();
-      navTabs.forEach(function(b){ b.classList.remove('active'); });
-      panels.forEach(function(p){ p.classList.remove('active'); });
-      btn.classList.add('active');
-      var target = document.getElementById(btn.getAttribute('data-tab'));
-      if (target) target.classList.add('active');
+      /* Every nav tab is a plain link now. Sources was the last one that switched a panel
+         in-page, and with it removed there is nothing left to intercept - so this handler
+         does nothing and simply lets the browser follow the href. Kept rather than deleted
+         because the sub-tab handler below still shares this block. */
+      return;
     });
   });
 
