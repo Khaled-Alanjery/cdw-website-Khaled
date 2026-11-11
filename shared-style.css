@@ -75,3 +75,5 @@ html,body{ margin:0; height:100%; background:var(--bg); color:var(--ink); font-f
 /* .nav-tab-sources rules removed with the tab. Its Figma geometry was left:428 / 471,
    i.e. the fourth marker in the band - the other three keep their measured positions,
    so removing it leaves the row ending after Carousel rather than shifting anything. */
+.nav-tab-witness    .nt-box{ left:428px; top:23px; width:66px;  height:23px; }
+.nav-tab-witness    .nt-label{ left:428px; top:56px; }
